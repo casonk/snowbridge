@@ -1,0 +1,26 @@
+@startuml classes_snowbridge
+set namespaceSeparator none
+class "<color:red>ConfigError</color>" as setup_bind_share.ConfigError {
+}
+class "FolderMount" as setup_bind_share.FolderMount {
+  acl_mode : str
+  create_missing_source : bool
+  default_acl_mode : str
+  grant_parent_traverse : bool
+  name : str
+  persist : bool
+  recursive_acl : bool
+  source : Path
+  target_path : Path
+  target_relative : PurePosixPath
+}
+class "GlobalSettings" as setup_bind_share.GlobalSettings {
+  acl_group : str | None
+  acl_user : str
+  mount_dir_mode : int
+  share_root : Path
+  share_root_mode : int
+  smb_group : str
+  smb_user : str
+}
+@enduml
