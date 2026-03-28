@@ -17,17 +17,17 @@
         <mxCell id="20" value="Access boundary&#10;home LAN or private VPN overlay" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#DB2777;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
           <mxGeometry x="390" y="180" width="320" height="130" as="geometry" />
         </mxCell>
-        <mxCell id="30" value="snowbridge repo&#10;README / AGENTS / LESSONSLEARNED&#10;docs/host-setup.md&#10;config/samba/smb.conf.example" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E2E8F0;strokeColor=#64748B;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="820" y="120" width="390" height="170" as="geometry" />
+        <mxCell id="30" value="snowbridge repo&#10;README / AGENTS / LESSONSLEARNED&#10;docs/host-setup.md&#10;config/samba/smb.conf.example&#10;config/share-layout/*.ini&#10;scripts/setup_bind_share.py" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E2E8F0;strokeColor=#64748B;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="780" y="100" width="430" height="230" as="geometry" />
         </mxCell>
-        <mxCell id="40" value="Host runtime&#10;Samba service&#10;dedicated SMB user&#10;share root /srv/snowbridge/share" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="1260" y="120" width="420" height="170" as="geometry" />
+        <mxCell id="40" value="Host runtime&#10;Samba service&#10;dedicated SMB user&#10;share root /srv/snowbridge/share&#10;bind-mounted folders under the share root" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="100" width="420" height="210" as="geometry" />
         </mxCell>
-        <mxCell id="50" value="Host-only state&#10;actual shared files&#10;Samba passdb / logs / runtime metadata" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+        <mxCell id="50" value="Host-only state&#10;external source folders elsewhere on the host&#10;Samba passdb / logs / runtime metadata" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
           <mxGeometry x="1260" y="380" width="420" height="140" as="geometry" />
         </mxCell>
-        <mxCell id="60" value="Do not expose SMB directly to the public internet.&#10;Remote access should traverse a private VPN first." style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FDE68A;strokeColor=#D97706;fontColor=#111827;fontSize=16;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="380" y="590" width="1280" height="90" as="geometry" />
+        <mxCell id="60" value="Do not expose SMB directly to the public internet.&#10;Remote access should traverse a private VPN first.&#10;Prefer bind mounts over Samba wide links for external folders." style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FDE68A;strokeColor=#D97706;fontColor=#111827;fontSize=16;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="300" y="590" width="1360" height="100" as="geometry" />
         </mxCell>
         <mxCell id="500" style="rounded=0;html=0;strokeColor=#1F2937;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=12;endArrow=classic;endFill=1;endSize=10;strokeWidth=2;" edge="1" parent="1" source="10" target="20">
           <mxGeometry relative="1" as="geometry" />

@@ -26,6 +26,8 @@ custom client app or a separate sync workflow.
 ## Repository Layout
 
 - `config/samba/smb.conf.example`: baseline Samba share configuration
+- `config/share-layout/folders.example.ini`: bind-mounted folder layout example
+- `scripts/setup_bind_share.py`: creates mountpoints, ACLs, and bind mounts
 - `docs/host-setup.md`: host-side setup and client connection notes
 - `docs/contributor-architecture-blueprint.md`: contributor-facing architecture
 - `docs/diagrams/repo-architecture.puml`: PlantUML architecture source
@@ -36,13 +38,17 @@ custom client app or a separate sync workflow.
 1. Install Samba on the home desktop.
 2. Create a dedicated local account such as `snowbridge`.
 3. Create the share root outside the repo, for example `/srv/snowbridge/share`.
-4. Adapt `config/samba/smb.conf.example` into the host Samba configuration.
-5. Create the Samba password for the dedicated account and validate the config
+4. Adapt `config/share-layout/folders.local.ini` so the share root exposes
+   bind-mounted folders from elsewhere on the host.
+5. Run `scripts/setup_bind_share.py` to create mountpoints, ACLs, and bind
+   mounts from that layout.
+6. Adapt `config/samba/smb.conf.example` into the host Samba configuration.
+7. Create the Samba password for the dedicated account and validate the config
    with `testparm`.
-6. Start the Samba service and allow LAN-only SMB access through the firewall.
-7. On iPhone, open Files, choose `Browse`, then `...`, then `Connect to
+8. Start the Samba service and allow LAN-only SMB access through the firewall.
+9. On iPhone, open Files, choose `Browse`, then `...`, then `Connect to
    Server`, and connect to `smb://<desktop-hostname-or-ip>`.
-8. For remote access, connect through a VPN overlay first. Do not expose SMB
+10. For remote access, connect through a VPN overlay first. Do not expose SMB
    directly to the public internet.
 
 See `docs/host-setup.md` for the detailed workflow.

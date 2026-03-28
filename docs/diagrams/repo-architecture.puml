@@ -16,16 +16,18 @@ package "snowbridge Repo" #F8FAFC {
   rectangle "README.md\nAGENTS.md\nLESSONSLEARNED.md" as repo_docs #E2E8F0
   rectangle "docs/host-setup.md\narchitecture blueprint" as ops_docs #DBEAFE
   rectangle "config/samba/smb.conf.example" as smb_template #E0F2FE
+  rectangle "config/share-layout/*.ini\nscripts/setup_bind_share.py" as bind_layout #E0F2FE
 }
 
 package "Host Runtime" #F8FAFC {
   rectangle "Samba service\nsmbd / smb" as samba_service #DCFCE7
   rectangle "Dedicated SMB user\nsnowbridge" as smb_user #DCFCE7
   rectangle "Share root\n/srv/snowbridge/share" as share_root #FEF3C7
+  rectangle "Bind-mounted folders\nDocuments / Media / Archive" as bind_mounts #FEF3C7
 }
 
 package "Host-Only State" #F8FAFC {
-  rectangle "Actual shared files" as shared_files #FEF3C7
+  rectangle "External source folders\n/home/... /mnt/..." as shared_files #FEF3C7
   rectangle "Samba passdb\nlogs / runtime metadata" as host_state #FDE68A
 }
 
@@ -35,11 +37,15 @@ access_boundary --> samba_service
 
 repo_docs --> ops_docs
 ops_docs --> smb_template
+ops_docs --> bind_layout
 smb_template --> samba_service
+bind_layout --> share_root
+bind_layout --> bind_mounts
 
 samba_service --> smb_user
 samba_service --> share_root
-share_root --> shared_files
+share_root --> bind_mounts
+bind_mounts --> shared_files
 samba_service --> host_state
 
 note right of access_boundary
@@ -48,6 +54,12 @@ note right of access_boundary
 end note
 
 note right of share_root
-  The share root and file contents live outside git.
+  The share root lives outside git and is populated
+  by bind mounts instead of storing the canonical files.
+end note
+
+note right of bind_mounts
+  Prefer bind mounts over Samba wide links when
+  the source folders live elsewhere on the host.
 end note
 @enduml

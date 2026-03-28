@@ -31,6 +31,14 @@
 - When remote access is needed, route it through a private VPN or equivalent
   tunnel first.
 
+### 2026-03-28 — Prefer bind mounts over Samba wide links for external folders
+
+- When the SMB share needs to expose folders that live outside the share root,
+  bind-mount them underneath `/srv/snowbridge/share` instead of using Samba
+  `wide links`.
+- Use ACLs to grant the dedicated SMB account access to the source folders while
+  leaving the actual data in place on the host.
+
 ### 2026-03-28 — Regenerated SVG diagrams should be normalized before pushing
 
 - Architecture renderers can produce checked-in SVG files without a trailing

@@ -1,6 +1,8 @@
 ; snowbridge Samba baseline
 ; Copy this file into the host Samba configuration path and adapt the values
 ; for the real machine before enabling the service.
+; Keep the share root as a bind-mount staging area rather than storing the
+; actual files directly underneath it.
 
 [global]
     workgroup = WORKGROUP
@@ -15,6 +17,8 @@
 
 [snowbridge]
     comment = Personal cross-device fileshare
+    ; Bind-mount external folders into this path with
+    ; scripts/setup_bind_share.py and config/share-layout/*.ini.
     path = /srv/snowbridge/share
     browseable = yes
     read only = no

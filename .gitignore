@@ -7,6 +7,8 @@ CHATHISTORY.md
 secrets/
 runtime/
 state/
+config/samba/smb.conf.local
+config/share-layout/folders.local.ini
 
 # Editor and OS noise
 .DS_Store
@@ -17,6 +19,8 @@ desktop.ini
 *~
 .idea/
 .vscode/
+__pycache__/
+*.pyc
 
 # Local automation scratch space
 artifacts/

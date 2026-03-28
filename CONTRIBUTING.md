@@ -17,6 +17,8 @@
 - `README.md` should stay accurate for the intended deployment path.
 - `config/samba/smb.conf.example` should remain a safe baseline and should not
   include secrets.
+- `config/share-layout/folders.example.ini` should stay generic and should not
+  encode host-specific private paths.
 - `LESSONSLEARNED.md` is the tracked durable-lessons file.
 - `CHATHISTORY.md` is local-only and should stay concise.
 - `docs/contributor-architecture-blueprint.md` and `docs/diagrams/` should stay
@@ -27,6 +29,8 @@
 - Run `pre-commit run --all-files` when pre-commit is available.
 - Run `testparm -s config/samba/smb.conf.example` or equivalent host-side
   validation when the Samba template changes.
+- Run `python3 scripts/setup_bind_share.py --config config/share-layout/folders.example.ini --dry-run`
+  when the bind-mounted share workflow changes.
 
 ## Pull Requests
 
