@@ -30,3 +30,10 @@
 - Do not expose SMB directly to the public internet.
 - When remote access is needed, route it through a private VPN or equivalent
   tunnel first.
+
+### 2026-03-28 — Regenerated SVG diagrams should be normalized before pushing
+
+- Architecture renderers can produce checked-in SVG files without a trailing
+  newline even when the visual output is otherwise correct.
+- Run the repo's formatting or pre-commit checks after regenerating diagram
+  artifacts so `end-of-file-fixer` does not fail later in CI.
