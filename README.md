@@ -27,9 +27,15 @@ custom client app or a separate sync workflow.
 
 - `config/samba/smb.conf.example`: baseline Samba share configuration
 - `config/share-layout/folders.example.ini`: bind-mounted folder layout example
+- `config/network/`: stable-address examples for the host network
+- `config/access/`: VPN templates for Tailscale and WireGuard
+- `config/web/`: optional Caddy and File Browser templates for web access
 - `scripts/setup_bind_share.py`: creates mountpoints, ACLs, and bind mounts
+- `scripts/setup_wireguard.sh`: installs a local WireGuard config and optional iPhone QR
+- `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack
 - `docs/host-setup.md`: host-side setup and client connection notes
 - `docs/iphone-shortcut.md`: iPhone shortcut and import/export guidance
+- `docs/access-patterns.md`: optional access templates and risk tradeoffs
 - `docs/contributor-architecture-blueprint.md`: contributor-facing architecture
 - `docs/diagrams/repo-architecture.puml`: PlantUML architecture source
 - `docs/diagrams/repo-architecture.drawio`: draw.io architecture source
@@ -52,7 +58,10 @@ custom client app or a separate sync workflow.
 10. For remote access, connect through a VPN overlay first. Do not expose SMB
    directly to the public internet.
 
-See `docs/host-setup.md` for the detailed workflow.
+See `docs/host-setup.md` for the detailed workflow, including hostname/IP
+discovery, stable-address guidance, VPN access patterns, and optional web access
+notes. See `docs/access-patterns.md` for the concrete template files backing the
+optional static-IP, VPN, and HTTPS access patterns.
 
 ## Contributing
 

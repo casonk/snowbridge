@@ -1,0 +1,22 @@
+{
+	email admin@example.com
+}
+
+# snowbridge private HTTPS example
+#
+# Use this only behind a private VPN or another trusted private boundary.
+# The example terminates HTTPS with Caddy's internal CA and reverse-proxies to a
+# local File Browser instance.
+
+https://files.snowbridge.internal {
+	tls internal
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8080
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "no-referrer"
+	}
+}

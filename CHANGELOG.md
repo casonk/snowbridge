@@ -12,3 +12,5 @@ All notable changes to `snowbridge` are documented here.
   iPhone compatibility.
 - Added a bind-mounted share layout workflow, including config templates and a
   host setup script for ACLs, bind mounts, and `/etc/fstab` management.
+- Added optional access templates for stable private addressing, Tailscale,
+  WireGuard, and separate HTTPS web access patterns.

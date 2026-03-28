@@ -39,6 +39,12 @@
 - Use ACLs to grant the dedicated SMB account access to the source folders while
   leaving the actual data in place on the host.
 
+### 2026-03-28 — Public access should terminate at a separate HTTPS layer
+
+- If browser access is needed, expose a dedicated HTTPS service such as a web UI
+  or reverse proxy rather than broadening the Samba exposure boundary.
+- Do not treat public HTTPS access as permission to expose TCP 445 directly.
+
 ### 2026-03-28 — Regenerated SVG diagrams should be normalized before pushing
 
 - Architecture renderers can produce checked-in SVG files without a trailing

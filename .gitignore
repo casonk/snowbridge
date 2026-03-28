@@ -9,6 +9,9 @@ runtime/
 state/
 config/samba/smb.conf.local
 config/share-layout/folders.local.ini
+config/access/wireguard/*.local.conf
+config/web/filebrowser/filebrowser.env.local
+config/web/caddy/*.local
 
 # Editor and OS noise
 .DS_Store
@@ -26,6 +29,7 @@ __pycache__/
 artifacts/
 reports/
 scan-cache/
+artifacts/wireguard/
 
 # Validation leftovers
 *.log
