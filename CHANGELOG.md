@@ -1,0 +1,12 @@
+# Changelog
+
+All notable changes to `snowbridge` are documented here.
+
+## Unreleased
+
+- Initialized `snowbridge` as a personal fileshare utility repo.
+- Added the baseline governance and contributor files used across the
+  portfolio.
+- Documented a Samba-first access model for authenticated cross-device sharing.
+- Added host setup notes and architecture docs for a home-desktop SMB share with
+  iPhone compatibility.

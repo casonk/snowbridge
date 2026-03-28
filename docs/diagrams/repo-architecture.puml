@@ -1,0 +1,53 @@
+@startuml
+!pragma layout smetana
+title snowbridge Repository Architecture
+skinparam shadowing false
+skinparam defaultFontName Monospace
+skinparam packageStyle rectangle
+
+actor "iPhone Files app" as iphone
+actor "Other trusted devices" as other_clients
+
+package "Access Boundary" #F8FAFC {
+  rectangle "Home LAN\nor private VPN overlay" as access_boundary #FCE7F3
+}
+
+package "snowbridge Repo" #F8FAFC {
+  rectangle "README.md\nAGENTS.md\nLESSONSLEARNED.md" as repo_docs #E2E8F0
+  rectangle "docs/host-setup.md\narchitecture blueprint" as ops_docs #DBEAFE
+  rectangle "config/samba/smb.conf.example" as smb_template #E0F2FE
+}
+
+package "Host Runtime" #F8FAFC {
+  rectangle "Samba service\nsmbd / smb" as samba_service #DCFCE7
+  rectangle "Dedicated SMB user\nsnowbridge" as smb_user #DCFCE7
+  rectangle "Share root\n/srv/snowbridge/share" as share_root #FEF3C7
+}
+
+package "Host-Only State" #F8FAFC {
+  rectangle "Actual shared files" as shared_files #FEF3C7
+  rectangle "Samba passdb\nlogs / runtime metadata" as host_state #FDE68A
+}
+
+iphone --> access_boundary
+other_clients --> access_boundary
+access_boundary --> samba_service
+
+repo_docs --> ops_docs
+ops_docs --> smb_template
+smb_template --> samba_service
+
+samba_service --> smb_user
+samba_service --> share_root
+share_root --> shared_files
+samba_service --> host_state
+
+note right of access_boundary
+  Do not expose SMB directly to the public internet.
+  Remote access should traverse a private VPN first.
+end note
+
+note right of share_root
+  The share root and file contents live outside git.
+end note
+@enduml
