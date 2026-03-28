@@ -467,8 +467,10 @@ def ensure_mountpoint(
 
 
 def ensure_bind_mount(folder: FolderMount, dry_run: bool, skip_mount: bool) -> None:
-    current_source = mounted_source(folder.target_path)
-    if current_source is not None:
+    if is_mountpoint(folder.target_path):
+        current_source = mounted_source(folder.target_path)
+        if current_source is None:
+            raise ConfigError(f"could not determine mounted source for {folder.target_path}")
         resolved_source = pathlib.Path(os.path.realpath(folder.source))
         resolved_current = pathlib.Path(os.path.realpath(current_source))
         if resolved_source != resolved_current:

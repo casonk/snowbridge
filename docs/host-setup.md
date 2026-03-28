@@ -170,6 +170,11 @@ Do not port-forward TCP 445 to the public internet.
 The server address should point at the host, not at the share path. The Files
 app will present the available shares after authentication.
 
+Optional convenience automation:
+
+- See `docs/iphone-shortcut.md` for a Shortcuts-based workflow that opens Files
+  and prepares the SMB address when you join your home Wi-Fi.
+
 ## 10. Remote Access
 
 If the share needs to be reachable away from home, use a private VPN or similar

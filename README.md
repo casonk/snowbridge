@@ -29,6 +29,7 @@ custom client app or a separate sync workflow.
 - `config/share-layout/folders.example.ini`: bind-mounted folder layout example
 - `scripts/setup_bind_share.py`: creates mountpoints, ACLs, and bind mounts
 - `docs/host-setup.md`: host-side setup and client connection notes
+- `docs/iphone-shortcut.md`: iPhone shortcut and import/export guidance
 - `docs/contributor-architecture-blueprint.md`: contributor-facing architecture
 - `docs/diagrams/repo-architecture.puml`: PlantUML architecture source
 - `docs/diagrams/repo-architecture.drawio`: draw.io architecture source
