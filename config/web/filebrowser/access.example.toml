@@ -1,0 +1,37 @@
+# snowbridge File Browser access example
+#
+# Copy this file to access.local.toml before use. Do not commit real passwords.
+# If you paste a shell-style password that is not valid TOML yet, the setup
+# script will normalize fixable password lines automatically. Ambiguous cases,
+# such as unmatched quotes plus inline comments, still fail with a targeted
+# error.
+
+[runtime]
+# Relative paths are resolved from this file's directory.
+web_env_file = "filebrowser.env.local"
+web_setup_script = "../../../scripts/setup_caddy_filebrowser.sh"
+mode = "private-vpn"
+container_runtime = "auto"
+filebrowser_image = "docker.io/filebrowser/filebrowser:latest"
+container_name = "snowbridge-filebrowser"
+share_mount_path = "/srv"
+database_path = "/database/filebrowser.db"
+run_as_account = "snowbridge"
+run_as_group = "snowbridge"
+sync_web_env_uid_gid = true
+restart_strategy = "recreate"
+
+[app]
+root = "/srv"
+
+[[users]]
+username = "admin"
+password = 'CHOOSE_ADMIN_PASSWORD'
+scope = "."
+admin = true
+
+[[users]]
+username = "snowbridge"
+password = 'CHOOSE_FILEBROWSER_PASSWORD'
+scope = "."
+admin = false

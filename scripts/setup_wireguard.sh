@@ -37,6 +37,9 @@ Options:
   --qr-output PATH         Write a PNG QR code for the iPhone peer config.
   --help                   Show this help text.
 
+This installer will install missing runtime packages automatically when a
+supported package manager is available. Currently supported: dnf, apt-get, yum.
+
 Typical flow:
   ./scripts/setup_wireguard.sh --init-local-configs
   # edit config/access/wireguard/*.local.conf
@@ -55,6 +58,72 @@ fail() {
 
 require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "required command not found: $1"
+}
+
+find_package_manager() {
+  if command -v dnf >/dev/null 2>&1; then
+    printf 'dnf\n'
+    return
+  fi
+  if command -v apt-get >/dev/null 2>&1; then
+    printf 'apt-get\n'
+    return
+  fi
+  if command -v yum >/dev/null 2>&1; then
+    printf 'yum\n'
+    return
+  fi
+  fail "missing runtime packages and no supported package manager found (supported: dnf, apt-get, yum)"
+}
+
+install_os_packages() {
+  local package_manager
+  package_manager="$(find_package_manager)"
+
+  case "${package_manager}" in
+    dnf)
+      log "install missing packages with dnf: $*"
+      dnf install -y "$@"
+      ;;
+    apt-get)
+      log "refresh apt package metadata"
+      apt-get update
+      log "install missing packages with apt-get: $*"
+      DEBIAN_FRONTEND=noninteractive apt-get install -y "$@"
+      ;;
+    yum)
+      log "install missing packages with yum: $*"
+      yum install -y "$@"
+      ;;
+    *)
+      fail "unsupported package manager: ${package_manager}"
+      ;;
+  esac
+}
+
+install_runtime_packages_if_needed() {
+  local missing_packages=()
+
+  if ! command -v wg-quick >/dev/null 2>&1; then
+    missing_packages+=(wireguard-tools)
+  fi
+
+  if (( PRINT_IPHONE_QR == 1 )) || [[ -n "${QR_OUTPUT}" ]]; then
+    if ! command -v qrencode >/dev/null 2>&1; then
+      missing_packages+=(qrencode)
+    fi
+  fi
+
+  if (( ${#missing_packages[@]} == 0 )); then
+    return
+  fi
+
+  install_os_packages "${missing_packages[@]}"
+
+  command -v wg-quick >/dev/null 2>&1 || fail "wg-quick still missing after package install"
+  if (( PRINT_IPHONE_QR == 1 )) || [[ -n "${QR_OUTPUT}" ]]; then
+    command -v qrencode >/dev/null 2>&1 || fail "qrencode still missing after package install"
+  fi
 }
 
 require_root() {
@@ -155,7 +224,7 @@ fi
 require_root
 require_command install
 require_command systemctl
-require_command wg-quick
+install_runtime_packages_if_needed
 
 check_local_config "${SERVER_CONFIG}" "server config"
 INTERFACE_NAME="$(basename "${SERVER_DEST}" .conf)"

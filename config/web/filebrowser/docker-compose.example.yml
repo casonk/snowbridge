@@ -1,26 +1,29 @@
 services:
   filebrowser:
-    image: filebrowser/filebrowser:latest
+    image: docker.io/filebrowser/filebrowser:latest
     container_name: snowbridge-filebrowser
     restart: unless-stopped
     user: "${SNOWBRIDGE_UID}:${SNOWBRIDGE_GID}"
+    environment:
+      FB_ADDRESS: 0.0.0.0
+      FB_PORT: "8080"
     ports:
-      - "127.0.0.1:${FILEBROWSER_HTTP_PORT}:80"
+      - "127.0.0.1:${FILEBROWSER_HTTP_PORT}:8080"
     volumes:
-      - "${SNOWBRIDGE_SHARE_ROOT}:/srv"
-      - "${FILEBROWSER_DB_DIR}:/database"
-      - "${FILEBROWSER_CONFIG_DIR}:/config"
+      - "${SNOWBRIDGE_SHARE_ROOT}:/srv:Z"
+      - "${FILEBROWSER_DB_DIR}:/database:Z"
+      - "${FILEBROWSER_CONFIG_DIR}:/config:Z"
 
   caddy:
-    image: caddy:2
+    image: docker.io/library/caddy:2
     container_name: snowbridge-caddy
     restart: unless-stopped
     depends_on:
       - filebrowser
     ports:
-      - "${CADDY_HTTP_BIND}:80"
-      - "${CADDY_HTTPS_BIND}:443"
+      - "${CADDY_HTTP_BIND}:80:80"
+      - "${CADDY_HTTPS_BIND}:443:443"
     volumes:
-      - "${CADDYFILE_PATH}:/etc/caddy/Caddyfile:ro"
-      - "${CADDY_DATA_DIR}:/data"
-      - "${CADDY_CONFIG_DIR}:/config"
+      - "${CADDYFILE_PATH}:/etc/caddy/Caddyfile:ro,Z"
+      - "${CADDY_DATA_DIR}:/data:Z"
+      - "${CADDY_CONFIG_DIR}:/config:Z"

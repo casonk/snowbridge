@@ -72,6 +72,9 @@ Suggested flow:
 3. Edit `config/access/wireguard/iphone-peer.local.conf`.
 4. Run `sudo ./scripts/setup_wireguard.sh --enable-ip-forward --print-iphone-qr`.
 
+The setup script installs missing `wireguard-tools` automatically, and it adds
+`qrencode` when you request terminal or PNG QR output.
+
 ## 4. Private HTTPS Web Access Behind a VPN
 
 Use this when you want browser access in addition to SMB, but still want to
@@ -81,8 +84,10 @@ Templates:
 
 - [docker-compose.example.yml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/docker-compose.example.yml)
 - [filebrowser.env.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/filebrowser.env.example)
+- [access.example.toml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/access.example.toml)
 - [Caddyfile.private-vpn.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/caddy/Caddyfile.private-vpn.example)
 - [setup_caddy_filebrowser.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_caddy_filebrowser.sh)
+- [setup_filebrowser_access.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_access.py)
 
 Suggested pattern:
 
@@ -96,7 +101,35 @@ Suggested flow:
 1. Run `./scripts/setup_caddy_filebrowser.sh --init-local-configs --mode private-vpn`.
 2. Edit `config/web/filebrowser/filebrowser.env.local`.
 3. Edit `config/web/caddy/Caddyfile.private-vpn.local`.
-4. Run `sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn`.
+4. Run `./scripts/setup_filebrowser_access.py --init-local-configs`.
+5. Edit `config/web/filebrowser/access.local.toml`.
+6. Run `sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn`.
+7. Run `sudo ./scripts/setup_filebrowser_access.py`.
+8. If you later change mounts, labels, ports, or image definitions, rerun with
+   `sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn --recreate`.
+9. If you later change File Browser users, scopes, root, or runtime UID/GID,
+   rerun `sudo ./scripts/setup_filebrowser_access.py`.
+10. If you want to browse the site from the desktop host itself, run
+   `sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn --bootstrap-local-browser`.
+
+The setup script installs a supported local container runtime and Compose
+frontend automatically when they are missing. On Fedora-class systems it
+prefers `podman` plus `podman-compose`.
+
+On SELinux-enforcing Fedora-class hosts, the compose template also uses `:Z`
+bind mount options so Podman can relabel the mounted host paths.
+The File Browser container listens on port `8080` internally so it can run as a
+non-root user while Caddy proxies to it over the compose network.
+For host-local browsing with `tls internal`, the setup script can also install
+the generated Caddy root CA into host trust and add a local hosts entry for the
+configured site hostname.
+The File Browser access script can also sync the runtime UID/GID in
+`filebrowser.env.local` to the configured host account before recreating the
+stack, which avoids the "web user can log in but cannot see files" failure mode
+when the share root is only traversable by the dedicated SMB account.
+If a pasted password line in `access.local.toml` is not valid TOML yet, the
+access script will normalize fixable cases automatically and fail only when the
+line is too ambiguous to repair safely.
 
 ## 5. Public HTTPS Web Access
 
@@ -107,8 +140,10 @@ Templates:
 
 - [docker-compose.example.yml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/docker-compose.example.yml)
 - [filebrowser.env.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/filebrowser.env.example)
+- [access.example.toml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/access.example.toml)
 - [Caddyfile.public.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/caddy/Caddyfile.public.example)
 - [setup_caddy_filebrowser.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_caddy_filebrowser.sh)
+- [setup_filebrowser_access.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_access.py)
 
 Minimum hardening expectations:
 
@@ -126,4 +161,20 @@ Suggested flow:
 1. Run `./scripts/setup_caddy_filebrowser.sh --init-local-configs --mode public`.
 2. Edit `config/web/filebrowser/filebrowser.env.local`.
 3. Edit `config/web/caddy/Caddyfile.public.local`.
-4. Run `sudo ./scripts/setup_caddy_filebrowser.sh --mode public`.
+4. Run `./scripts/setup_filebrowser_access.py --init-local-configs`.
+5. Edit `config/web/filebrowser/access.local.toml`.
+6. Run `sudo ./scripts/setup_caddy_filebrowser.sh --mode public`.
+7. Run `sudo ./scripts/setup_filebrowser_access.py`.
+8. If you later change mounts, labels, ports, or image definitions, rerun with
+   `sudo ./scripts/setup_caddy_filebrowser.sh --mode public --recreate`.
+9. If you later change File Browser users, scopes, root, or runtime UID/GID,
+   rerun `sudo ./scripts/setup_filebrowser_access.py`.
+
+The same installer behavior applies here: missing container runtime or Compose
+dependencies are installed automatically when a supported package manager is
+available.
+
+The same SELinux note applies here as well: the compose template uses `:Z`
+mount options for Podman-friendly bind relabeling on Fedora-class hosts.
+The same internal-port behavior applies here too: Caddy proxies to File Browser
+on `filebrowser:8080`.

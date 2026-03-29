@@ -31,8 +31,9 @@ custom client app or a separate sync workflow.
 - `config/access/`: VPN templates for Tailscale and WireGuard
 - `config/web/`: optional Caddy and File Browser templates for web access
 - `scripts/setup_bind_share.py`: creates mountpoints, ACLs, and bind mounts
-- `scripts/setup_wireguard.sh`: installs a local WireGuard config and optional iPhone QR
-- `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack
+- `scripts/setup_wireguard.sh`: installs a local WireGuard config, required tools, and optional iPhone QR
+- `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack, installing a supported container runtime and Compose frontend when needed, with optional local-browser bootstrap for hostname mapping and Caddy CA trust
+- `scripts/setup_filebrowser_access.py`: applies File Browser root, users, and runtime UID/GID sync from a local TOML config
 - `docs/host-setup.md`: host-side setup and client connection notes
 - `docs/iphone-shortcut.md`: iPhone shortcut and import/export guidance
 - `docs/access-patterns.md`: optional access templates and risk tradeoffs

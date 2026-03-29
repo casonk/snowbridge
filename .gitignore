@@ -10,8 +10,12 @@ state/
 config/samba/smb.conf.local
 config/share-layout/folders.local.ini
 config/access/wireguard/*.local.conf
+config/access/tailscale/tailscale-subnet-router.local.sh
 config/web/filebrowser/filebrowser.env.local
+config/web/filebrowser/access.local.toml
 config/web/caddy/*.local
+config/web/filebrowser/docker-compose.local.yml
+config/network/networkmanager-static-ip.local.sh
 
 # Editor and OS noise
 .DS_Store

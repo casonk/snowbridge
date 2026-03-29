@@ -263,6 +263,10 @@ Example WireGuard script flow:
 sudo ./scripts/setup_wireguard.sh --enable-ip-forward --print-iphone-qr
 ```
 
+The WireGuard setup script will install missing `wireguard-tools` itself when a
+supported package manager is present. If you request QR output, it will also
+install `qrencode` automatically.
+
 ## 12. Optional Web Access
 
 If you need browser-based access, add a separate HTTPS front end. Do not expose
@@ -289,16 +293,59 @@ Templates:
 
 - `config/web/filebrowser/docker-compose.example.yml`
 - `config/web/filebrowser/filebrowser.env.example`
+- `config/web/filebrowser/access.example.toml`
 - `config/web/caddy/Caddyfile.private-vpn.example`
 - `config/web/caddy/Caddyfile.public.example`
 - `scripts/setup_caddy_filebrowser.sh`
+- `scripts/setup_filebrowser_access.py`
 
 Example private-VPN web flow:
 
 ```bash
 ./scripts/setup_caddy_filebrowser.sh --init-local-configs --mode private-vpn
+./scripts/setup_filebrowser_access.py --init-local-configs
 sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn
+sudo ./scripts/setup_filebrowser_access.py
 ```
+
+If you change bind mounts, labels, ports, or image definitions later, rerun it
+with `--recreate` so the containers are rebuilt from the updated definition:
+
+```bash
+sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn --recreate
+```
+
+If you want to browse the private HTTPS endpoint from the desktop host itself,
+bootstrap the local hostname mapping and install Caddy's local root CA into the
+host trust store:
+
+```bash
+sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn --bootstrap-local-browser
+```
+
+This fixes two separate local-browser prerequisites:
+
+- the configured hostname such as `files.snowbridge.internal` must resolve on
+  the host, usually through a hosts entry or local DNS
+- the host browser must trust Caddy's internal CA if the site uses
+  `tls internal`
+
+The web-stack setup script will install a supported local container runtime and
+Compose frontend when they are missing. On Fedora-class systems it prefers
+`podman` plus `podman-compose`. On Debian or Ubuntu systems without Podman it
+uses Docker plus the Compose plugin.
+
+On SELinux-enforcing hosts such as Fedora, the compose template uses `:Z` bind
+mount options so Podman can relabel the mounted host paths for container use.
+The File Browser container also listens on unprivileged port `8080` inside the
+container so it can run as a non-root UID/GID.
+The File Browser access script applies the app root and user database from a
+local TOML config, and it can sync the runtime UID/GID in
+`filebrowser.env.local` to the configured host account before recreating the
+stack.
+If a password line in `access.local.toml` is pasted in a shell-friendly form
+that is not TOML-safe yet, the script will normalize fixable cases
+automatically.
 
 Do not port-forward TCP 445 as part of any web-access design.
 

@@ -45,6 +45,87 @@
   or reverse proxy rather than broadening the Samba exposure boundary.
 - Do not treat public HTTPS access as permission to expose TCP 445 directly.
 
+### 2026-03-28 — Guided setup scripts should handle known package prerequisites
+
+- When a repo-managed installer depends on a small set of distro-known runtime
+  packages, prefer installing them inside the script instead of failing on a
+  missing command and forcing an undocumented manual recovery step.
+- Keep the package installation scope tight and conditional so optional
+  capabilities only pull optional dependencies.
+
+### 2026-03-28 — Compose-based host installers should not hardcode Docker
+
+- Fedora-class systems often expose Podman through a Docker-compatible CLI, so
+  repo installers should detect a supported Compose frontend rather than assume
+  `docker compose` works directly.
+- When an installer is meant to be host-portable, prefer explicit runtime
+  detection and a small package bootstrap path over a single hardcoded container
+  command.
+
+### 2026-03-28 — Podman-facing compose templates should use fully qualified image names
+
+- Short image names can resolve through a distro-specific default registry under
+  Podman, which can silently redirect pulls away from the intended upstream
+  image source.
+- For repo templates that should work across Docker and Podman hosts, prefer
+  explicit image references such as `docker.io/...` over ambiguous short names.
+
+### 2026-03-28 — Containerized reverse proxies should target service names, not host loopback
+
+- When Caddy and its upstream run in separate compose services, `127.0.0.1`
+  inside the Caddy container points back to Caddy itself, not the sibling app
+  container.
+- Compose-backed reverse-proxy templates should use the peer service name, such
+  as `filebrowser:80`, for the upstream target.
+
+### 2026-03-28 — Podman bind mounts need SELinux relabeling on Fedora-class hosts
+
+- A bind-mounted host path can have correct Unix ownership and still fail inside
+  a container when SELinux labels remain at a generic host type such as
+  `var_lib_t`.
+- Podman-facing compose templates should add `:Z` or `:z` on bind mounts when
+  the intended default target is a Fedora-class host with SELinux enforcing.
+
+### 2026-03-28 — Non-root containers should not bind privileged ports
+
+- If a service is configured to run as a non-root UID/GID inside the container,
+  it should not be expected to bind a privileged port such as `80`.
+- In compose-backed reverse-proxy stacks, prefer an unprivileged internal app
+  port such as `8080` and let the reverse proxy own the public-facing ports.
+
+### 2026-03-28 — Host setup scripts should expose an explicit recreate path
+
+- Idempotent `up -d` should remain the default for compose-backed installers,
+  but the script should also expose a built-in recreate path for mount, label,
+  port, or image-definition changes that cannot be applied in place.
+- Prefer an explicit flag such as `--recreate` over unconditional container
+  removal at the start of every run.
+
+### 2026-03-28 — Host-local HTTPS testing needs both trust and name resolution
+
+- A browser error like "not found" against a local HTTPS hostname is usually a
+  host resolution problem, not a TLS problem.
+- For private HTTPS setups that use `tls internal`, local desktop browsing
+  needs two separate host-side steps: the hostname must resolve locally and the
+  generated Caddy root CA must be installed into the host trust store.
+
+### 2026-03-28 — File Browser auth and process identity should be managed declaratively
+
+- File Browser does not reuse Samba credentials automatically; it has its own
+  user database and root/scope model.
+- The web process UID/GID must also match a host identity that can traverse the
+  share root, so user setup should manage both the File Browser database state
+  and the runtime UID/GID together instead of relying on ad hoc manual
+  one-liners.
+
+### 2026-03-28 — Local credential configs should self-heal obvious quoting mistakes
+
+- Password-heavy local configs are easy to break with shell-style quoting or
+  backslashes that are not valid in the target file format.
+- When the intended recovery is mechanically clear, prefer normalizing the
+  local config automatically and only fail when the line is genuinely
+  ambiguous.
+
 ### 2026-03-28 — Regenerated SVG diagrams should be normalized before pushing
 
 - Architecture renderers can produce checked-in SVG files without a trailing
