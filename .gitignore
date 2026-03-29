@@ -37,3 +37,6 @@ artifacts/wireguard/
 
 # Validation leftovers
 *.log
+
+# Transient diagram export sidecars
+*.cmapx

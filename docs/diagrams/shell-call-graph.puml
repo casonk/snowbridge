@@ -1,0 +1,87 @@
+@startuml
+title snowbridge Shell Script Flow
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Monospace
+skinparam componentStyle rectangle
+skinparam linetype ortho
+rectangle "config/access/tailscale/tailscale-subnet-router.example.sh\\n0 local shell edges\\n1 external tool" as shell_config_access_tailscale_tailscale_subnet_router_example_sh #DBEAFE
+rectangle "config/access/tailscale/tailscale-subnet-router.local.sh\\n0 local shell edges\\n1 external tool" as shell_config_access_tailscale_tailscale_subnet_router_local_sh #DBEAFE
+rectangle "config/network/networkmanager-static-ip.example.sh\\n0 local shell edges\\n2 external tools" as shell_config_network_networkmanager_static_ip_example_sh #DBEAFE
+rectangle "config/network/networkmanager-static-ip.local.sh\\n0 local shell edges\\n2 external tools" as shell_config_network_networkmanager_static_ip_local_sh #DBEAFE
+rectangle "scripts/setup_caddy_filebrowser.sh\\n0 local shell edges\\n24 external tools" as shell_scripts_setup_caddy_filebrowser_sh #DBEAFE
+rectangle "scripts/setup_wireguard.sh\\n0 local shell edges\\n9 external tools" as shell_scripts_setup_wireguard_sh #DBEAFE
+cloud "!in_global" as tool_in_global #FEF3C7
+cloud "(command_exists" as tool_command_exists #FEF3C7
+cloud "^[[:space:]]*" as tool_space #FEF3C7
+cloud "^[[:space:]]+" as tool_space_2 #FEF3C7
+cloud "apt-get" as tool_apt_get #FEF3C7
+cloud "cat" as tool_cat #FEF3C7
+cloud "dnf" as tool_dnf #FEF3C7
+cloud "docker" as tool_docker #FEF3C7
+cloud "docker compose" as tool_docker_compose #FEF3C7
+cloud "docker-compose" as tool_docker_compose_2 #FEF3C7
+cloud "grep" as tool_grep #FEF3C7
+cloud "host" as tool_host #FEF3C7
+cloud "in_global" as tool_in_global_2 #FEF3C7
+cloud "install" as tool_install #FEF3C7
+cloud "ipv6.method" as tool_ipv6_method #FEF3C7
+cloud "mv" as tool_mv #FEF3C7
+cloud "next" as tool_next #FEF3C7
+cloud "nmcli" as tool_nmcli #FEF3C7
+cloud "podman-compose" as tool_podman_compose #FEF3C7
+cloud "print" as tool_print #FEF3C7
+cloud "private-vpn" as tool_private_vpn #FEF3C7
+cloud "qrencode" as tool_qrencode #FEF3C7
+cloud "site" as tool_site #FEF3C7
+cloud "split(site," as tool_split_site #FEF3C7
+cloud "sysctl" as tool_sysctl #FEF3C7
+cloud "systemctl" as tool_systemctl #FEF3C7
+cloud "update-ca-certificates" as tool_update_ca_certificates #FEF3C7
+cloud "update-ca-trust" as tool_update_ca_trust #FEF3C7
+cloud "yum" as tool_yum #FEF3C7
+shell_config_access_tailscale_tailscale_subnet_router_example_sh --> tool_systemctl
+shell_config_access_tailscale_tailscale_subnet_router_local_sh --> tool_systemctl
+shell_config_network_networkmanager_static_ip_example_sh --> tool_ipv6_method
+shell_config_network_networkmanager_static_ip_example_sh --> tool_nmcli
+shell_config_network_networkmanager_static_ip_local_sh --> tool_ipv6_method
+shell_config_network_networkmanager_static_ip_local_sh --> tool_nmcli
+shell_scripts_setup_caddy_filebrowser_sh --> tool_in_global
+shell_scripts_setup_caddy_filebrowser_sh --> tool_command_exists
+shell_scripts_setup_caddy_filebrowser_sh --> tool_space
+shell_scripts_setup_caddy_filebrowser_sh --> tool_space_2
+shell_scripts_setup_caddy_filebrowser_sh --> tool_apt_get
+shell_scripts_setup_caddy_filebrowser_sh --> tool_cat
+shell_scripts_setup_caddy_filebrowser_sh --> tool_dnf
+shell_scripts_setup_caddy_filebrowser_sh --> tool_docker
+shell_scripts_setup_caddy_filebrowser_sh --> tool_docker_compose
+shell_scripts_setup_caddy_filebrowser_sh --> tool_docker_compose_2
+shell_scripts_setup_caddy_filebrowser_sh --> tool_grep
+shell_scripts_setup_caddy_filebrowser_sh --> tool_host
+shell_scripts_setup_caddy_filebrowser_sh --> tool_in_global_2
+shell_scripts_setup_caddy_filebrowser_sh --> tool_install
+shell_scripts_setup_caddy_filebrowser_sh --> tool_mv
+shell_scripts_setup_caddy_filebrowser_sh --> tool_next
+shell_scripts_setup_caddy_filebrowser_sh --> tool_podman_compose
+shell_scripts_setup_caddy_filebrowser_sh --> tool_print
+shell_scripts_setup_caddy_filebrowser_sh --> tool_private_vpn
+shell_scripts_setup_caddy_filebrowser_sh --> tool_site
+shell_scripts_setup_caddy_filebrowser_sh --> tool_split_site
+shell_scripts_setup_caddy_filebrowser_sh --> tool_update_ca_certificates
+shell_scripts_setup_caddy_filebrowser_sh --> tool_update_ca_trust
+shell_scripts_setup_caddy_filebrowser_sh --> tool_yum
+shell_scripts_setup_wireguard_sh --> tool_apt_get
+shell_scripts_setup_wireguard_sh --> tool_cat
+shell_scripts_setup_wireguard_sh --> tool_dnf
+shell_scripts_setup_wireguard_sh --> tool_grep
+shell_scripts_setup_wireguard_sh --> tool_install
+shell_scripts_setup_wireguard_sh --> tool_qrencode
+shell_scripts_setup_wireguard_sh --> tool_sysctl
+shell_scripts_setup_wireguard_sh --> tool_systemctl
+shell_scripts_setup_wireguard_sh --> tool_yum
+note as shellGraphSummary
+Scanned 6 shell scripts.
+Detected 0 local shell edges.
+Detected 29 external tools.
+end note
+@enduml

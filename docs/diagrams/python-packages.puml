@@ -1,0 +1,7 @@
+@startuml packages_snowbridge
+set namespaceSeparator none
+top to bottom direction
+skinparam componentStyle rectangle
+rectangle "setup_bind_share\n1 python file" as setup_bind_share
+rectangle "setup_filebrowser_access\n1 python file" as setup_filebrowser_access
+@enduml

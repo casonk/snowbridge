@@ -1,5 +1,8 @@
 @startuml classes_snowbridge
 set namespaceSeparator none
+class "AppSpec" as setup_filebrowser_access.AppSpec {
+  root : str
+}
 class "<color:red>ConfigError</color>" as setup_bind_share.ConfigError {
 }
 class "FolderMount" as setup_bind_share.FolderMount {
@@ -22,5 +25,27 @@ class "GlobalSettings" as setup_bind_share.GlobalSettings {
   share_root_mode : int
   smb_group : str
   smb_user : str
+}
+class "RuntimeSpec" as setup_filebrowser_access.RuntimeSpec {
+  container_name : str
+  container_runtime : str
+  database_path : str
+  filebrowser_image : str
+  mode : str
+  restart_strategy : str
+  run_as_account : str
+  run_as_group : str | None
+  share_mount_path : str
+  sync_web_env_uid_gid : bool
+  web_env_file : Path
+  web_setup_script : Path
+}
+class "<color:red>SetupError</color>" as setup_filebrowser_access.SetupError {
+}
+class "UserSpec" as setup_filebrowser_access.UserSpec {
+  admin : bool
+  password : str
+  scope : str
+  username : str
 }
 @enduml
