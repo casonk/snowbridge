@@ -11,6 +11,10 @@
 
 ## Lessons
 
+- Document the repository around its real execution, curation, or integration flow instead of only the top-level folder list.
+- Keep local-only, private, reference-only, or generated boundaries explicit so published or runtime behavior is not confused with offline material or non-committable inputs.
+- Re-run repo-appropriate validation after changing generated artifacts, diagrams, workflows, or other CI-facing files so formatting and compatibility issues are caught before push.
+
 ### 2026-03-28 — iPhone read/write access should target authenticated SMB first
 
 - The native iOS Files app can mount SMB shares directly, so authenticated SMB
@@ -125,6 +129,14 @@
 - When the intended recovery is mechanically clear, prefer normalizing the
   local config automatically and only fail when the line is genuinely
   ambiguous.
+
+### 2026-03-28 — WireGuard peer templates should generate missing key pairs coherently
+
+- The server private key and the iPhone public key form one pair, and the
+  iPhone private key and the server public key form the other.
+- When both placeholders for a pair are still present, the setup script should
+  generate and write a coherent pair automatically instead of failing on a
+  missing key that the repo is already in a position to create.
 
 ### 2026-03-28 — Regenerated SVG diagrams should be normalized before pushing
 
