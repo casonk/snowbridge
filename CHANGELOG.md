@@ -35,3 +35,31 @@ All notable changes to `snowbridge` are documented here.
   users, and runtime UID/GID sync.
 - Updated the File Browser access script to auto-normalize fixable password
   lines in the local TOML config before parsing.
+- Updated the WireGuard setup script to auto-generate missing server and iPhone
+  key pairs when the paired placeholders are still present.
+- Updated the WireGuard iPhone peer template and installer to treat the sample
+  endpoint as incomplete config and to render QR output before attempting the
+  `wg-quick` start path.
+- Updated the WireGuard installer to auto-fill the iPhone peer endpoint from
+  the current public IP when the sample endpoint is still present, while
+  printing a warning that the value should be replaced with a stable endpoint.
+- Updated the private File Browser HTTPS examples to serve both a private
+  hostname and the default WireGuard tunnel IP, and clarified that VPN-phone
+  access needs a host-reachable Caddy bind instead of loopback-only listeners.
+- Added a profile-export script that converts Caddy's local root certificate
+  into an iPhone-installable `.mobileconfig` and stages it into the SMB share.
+- Updated the WireGuard installer to set up a dnsmasq-based split-DNS helper so
+  `files.snowbridge.internal` resolves on WireGuard clients by default.
+- Reverted the private HTTPS example from dual hostname-plus-IP serving back to
+  hostname-only serving, because the browser path should use VPN DNS instead of
+  raw-IP TLS.
+- Added a private-access debug script that collects WireGuard, dnsmasq,
+  firewalld, Samba, Caddy, and File Browser state into a single report under
+  `reports/`.
+- Updated the WireGuard installer to prevent `/etc/hosts` from leaking extra
+  A records into the WireGuard DNS response and to map the WireGuard interface
+  into a firewalld zone that permits private VPN traffic.
+- Updated the File Browser share-root mount to use `rbind,rslave` so the web
+  container can see bind-mounted folders underneath `/srv/snowbridge/share`,
+  and aligned the one-shot access-management container with the same runtime
+  behavior.

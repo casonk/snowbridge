@@ -90,6 +90,22 @@
 - Podman-facing compose templates should add `:Z` or `:z` on bind mounts when
   the intended default target is a Fedora-class host with SELinux enforcing.
 
+### 2026-03-30 — Container mounts that point at a bind-mounted share root need both recursive bind and host-to-container propagation
+
+- The Snowbridge share root is a parent directory whose visible folders are
+  often themselves separate bind mounts from elsewhere on the host.
+- Podman short `-v` syntax defaults to a non-recursive bind, and the default
+  propagation mode is also `rprivate`; together that can hide nested host
+  submounts from the container and make File Browser show only directories that
+  physically live in the root such as `tmp`.
+- When a container should see bind-mounted children under a mounted parent path,
+  use both recursive bind semantics and an explicit host-to-container
+  propagation mode such as `rbind,rslave`, and keep any one-shot management
+  containers aligned with the same mount behavior.
+- Do not self-bind the share root onto itself as a generic fix. On this host
+  that overlaid the original child mounts and replaced working share folders
+  with empty directories from the root filesystem.
+
 ### 2026-03-28 — Non-root containers should not bind privileged ports
 
 - If a service is configured to run as a non-root UID/GID inside the container,
@@ -137,6 +153,60 @@
 - When both placeholders for a pair are still present, the setup script should
   generate and write a coherent pair automatically instead of failing on a
   missing key that the repo is already in a position to create.
+
+### 2026-03-28 — Setup scripts should treat checked-in sample values as incomplete config
+
+- Generic placeholder detection is not enough when an example uses a realistic
+  sample value such as `vpn.example.com:51820`.
+- If a sample value would still produce a syntactically valid but unusable
+  config, the setup script should fail with a targeted message instead of
+  quietly proceeding or exporting a misleading client artifact.
+- When there is a safe mechanical fallback, such as substituting the current
+  public IP for a still-sample VPN endpoint, the script can apply it
+  automatically but should still warn that a stable endpoint is the better
+  final state.
+
+### 2026-03-28 — Private VPN web examples should distinguish loopback-only from phone-reachable binds
+
+- A private HTTPS stack that binds Caddy only to `127.0.0.1` is usable for
+  host-local testing but not for phones or other VPN clients.
+- For iPhone access over WireGuard, prefer serving both a private hostname and
+  the tunnel IP, and use a host-reachable bind such as `0.0.0.0` or the
+  specific tunnel IP instead of loopback-only listeners.
+
+### 2026-03-30 — iPhone trust setup is more reliable with a configuration profile than a raw cert copy
+
+- A raw `.crt` file on an SMB share is not always a smooth installation path on
+  iPhone, even when the certificate itself is valid.
+- For private HTTPS trust bootstrapping, prefer generating a `.mobileconfig`
+  profile that installs the root certificate payload, then document the
+  follow-up `Certificate Trust Settings` step explicitly.
+
+### 2026-03-30 — If a VPN profile advertises DNS, the installer should actually provide it
+
+- Advertising `DNS = 10.99.0.1` in the WireGuard client profile is not enough
+  on its own; the repo also needs to configure a resolver on that tunnel
+  address.
+- For private hostname access such as `files.snowbridge.internal`, prefer a
+  small split-DNS helper over teaching clients to browse the raw tunnel IP,
+  especially when the HTTPS layer depends on hostname-based certificate
+  selection.
+- When the host also has a desktop-only `/etc/hosts` override for the same
+  private name, the WireGuard DNS helper must ignore `/etc/hosts` or it will
+  hand VPN clients a bogus `127.0.0.1` answer alongside the real tunnel IP.
+- On firewalld-based systems, the VPN interface itself needs an explicit zone
+  assignment; otherwise SMB might work because the default zone allows `samba`
+  while private HTTPS and DNS silently fail because that same zone does not
+  allow `https` or `dns`.
+
+### 2026-03-30 — Repeated multi-service troubleshooting should have a single capture script
+
+- Private-access failures span WireGuard, DNS, firewall, Samba, and the web
+  stack, so ad hoc command lists are slow to repeat and easy to execute
+  inconsistently.
+- When a failure mode repeatedly needs the same cross-service evidence, add a
+  repo debug script that writes one timestamped report under an ignored
+  directory such as `reports/`.
 
 ### 2026-03-28 — Regenerated SVG diagrams should be normalized before pushing
 

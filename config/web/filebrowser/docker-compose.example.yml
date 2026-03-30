@@ -4,13 +4,15 @@ services:
     container_name: snowbridge-filebrowser
     restart: unless-stopped
     user: "${SNOWBRIDGE_UID}:${SNOWBRIDGE_GID}"
+    security_opt:
+      - label=disable
     environment:
       FB_ADDRESS: 0.0.0.0
       FB_PORT: "8080"
     ports:
       - "127.0.0.1:${FILEBROWSER_HTTP_PORT}:8080"
     volumes:
-      - "${SNOWBRIDGE_SHARE_ROOT}:/srv:Z"
+      - "${SNOWBRIDGE_SHARE_ROOT}:/srv:Z,rbind,rslave"
       - "${FILEBROWSER_DB_DIR}:/database:Z"
       - "${FILEBROWSER_CONFIG_DIR}:/config:Z"
 

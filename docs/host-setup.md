@@ -265,7 +265,19 @@ sudo ./scripts/setup_wireguard.sh --enable-ip-forward --print-iphone-qr
 
 The WireGuard setup script will install missing `wireguard-tools` itself when a
 supported package manager is present. If you request QR output, it will also
-install `qrencode` automatically.
+install `qrencode` automatically, and by default it also installs `dnsmasq` to
+publish the private web hostname such as `files.snowbridge.internal` to
+WireGuard clients at the tunnel DNS address advertised in the iPhone peer
+config. On firewalld-based hosts it also assigns the WireGuard interface to the
+trusted zone by default so HTTPS and DNS are actually reachable over the tunnel
+without relying on the broader desktop default zone.
+If the local configs still contain the paired server/iPhone key placeholders,
+the script will generate a matching server key pair and iPhone key pair
+automatically before install. If the iPhone peer `Endpoint` is still on the
+checked-in sample value, the script will replace it with the host's current
+public IP and print a warning that you should still move to a stable DNS name
+or other stable public endpoint. It will still stop for any other non-key
+placeholders you have not filled yet.
 
 ## 12. Optional Web Access
 
@@ -298,6 +310,7 @@ Templates:
 - `config/web/caddy/Caddyfile.public.example`
 - `scripts/setup_caddy_filebrowser.sh`
 - `scripts/setup_filebrowser_access.py`
+- `scripts/export_caddy_root_profile.py`
 
 Example private-VPN web flow:
 
@@ -335,8 +348,34 @@ Compose frontend when they are missing. On Fedora-class systems it prefers
 `podman` plus `podman-compose`. On Debian or Ubuntu systems without Podman it
 uses Docker plus the Compose plugin.
 
-On SELinux-enforcing hosts such as Fedora, the compose template uses `:Z` bind
-mount options so Podman can relabel the mounted host paths for container use.
+For iPhone access behind WireGuard, prefer the private hostname served by
+Caddy, for example `https://files.snowbridge.internal`. The WireGuard setup
+script now installs a small split-DNS resolver so that hostname resolves to the
+host's tunnel IP for VPN clients. The raw tunnel IP can still be useful for SMB
+or debugging, but it should not be the primary browser URL for the private web
+path.
+
+If the iPhone does not reliably install or trust the raw `root.crt` file, build
+an Apple configuration profile and stage it into the SMB share instead:
+
+```bash
+sudo ./scripts/export_caddy_root_profile.py
+```
+
+That generates `snowbridge-caddy-local-root.mobileconfig` in
+`/srv/snowbridge/share/tmp/` by default, alongside a copy of the raw
+certificate. On the iPhone:
+
+1. Open `snowbridge-caddy-local-root.mobileconfig` from the SMB share in
+   Files.
+2. Allow the profile download if prompted.
+3. Open Settings and tap `Profile Downloaded`.
+4. Install the profile.
+5. Go to `Settings > General > About > Certificate Trust Settings`.
+6. Enable full trust for the Snowbridge Caddy root certificate.
+
+On SELinux-enforcing hosts such as Fedora, the compose template uses SELinux
+relabeling for the mounted host paths.
 The File Browser container also listens on unprivileged port `8080` inside the
 container so it can run as a non-root UID/GID.
 The File Browser access script applies the app root and user database from a
@@ -346,6 +385,17 @@ stack.
 If a password line in `access.local.toml` is pasted in a shell-friendly form
 that is not TOML-safe yet, the script will normalize fixable cases
 automatically.
+
+If the iPhone still cannot reach the private HTTPS endpoint after WireGuard,
+split DNS, and CA trust are in place, collect a single host-side report with:
+
+```bash
+sudo ./scripts/debug_private_access.sh
+```
+
+The script writes a timestamped report under `reports/` covering WireGuard,
+dnsmasq, firewalld, Samba, container status, port listeners, hostname
+resolution, and the relevant HTTPS probes.
 
 Do not port-forward TCP 445 as part of any web-access design.
 

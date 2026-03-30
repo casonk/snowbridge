@@ -29,11 +29,13 @@ custom client app or a separate sync workflow.
 - `config/share-layout/folders.example.ini`: bind-mounted folder layout example
 - `config/network/`: stable-address examples for the host network
 - `config/access/`: VPN templates for Tailscale and WireGuard
-- `config/web/`: optional Caddy and File Browser templates for web access
+- `config/web/`: optional Caddy and File Browser templates for web access, including private-VPN HTTPS behind a private hostname
 - `scripts/setup_bind_share.py`: creates mountpoints, ACLs, and bind mounts
-- `scripts/setup_wireguard.sh`: installs a local WireGuard config, required tools, and optional iPhone QR
+- `scripts/setup_wireguard.sh`: installs a local WireGuard config, required tools, auto-generates missing peer keys, configures split DNS and firewalld for private WireGuard clients, auto-fills the iPhone peer endpoint from the current public IP when needed, validates the remaining peer values, and can render an optional iPhone QR
 - `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack, installing a supported container runtime and Compose frontend when needed, with optional local-browser bootstrap for hostname mapping and Caddy CA trust
 - `scripts/setup_filebrowser_access.py`: applies File Browser root, users, and runtime UID/GID sync from a local TOML config
+- `scripts/export_caddy_root_profile.py`: generates an iPhone-installable `.mobileconfig` for Caddy's local CA and stages it into the SMB share
+- `scripts/debug_private_access.sh`: collects a single report covering WireGuard, dnsmasq, firewalld, Samba, Caddy, and File Browser state for private-access debugging
 - `docs/host-setup.md`: host-side setup and client connection notes
 - `docs/iphone-shortcut.md`: iPhone shortcut and import/export guidance
 - `docs/access-patterns.md`: optional access templates and risk tradeoffs

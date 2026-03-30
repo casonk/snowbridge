@@ -73,7 +73,16 @@ Suggested flow:
 4. Run `sudo ./scripts/setup_wireguard.sh --enable-ip-forward --print-iphone-qr`.
 
 The setup script installs missing `wireguard-tools` automatically, and it adds
-`qrencode` when you request terminal or PNG QR output.
+`qrencode` when you request terminal or PNG QR output. By default it also
+installs and configures `dnsmasq` so the private web hostname from the private
+Caddy config resolves over the WireGuard tunnel, and on firewalld-based hosts
+it also assigns the WireGuard interface to the trusted zone so private DNS and
+HTTPS traffic can actually reach the host.
+The same script also generates matching server and iPhone key pairs when those
+paired placeholders are still present in the local configs. If the iPhone peer
+`Endpoint` is still on the checked-in sample value, the script will replace it
+with the host's current public IP and warn that you should still move to a
+stable DNS name or other stable public endpoint.
 
 ## 4. Private HTTPS Web Access Behind a VPN
 
@@ -88,12 +97,14 @@ Templates:
 - [Caddyfile.private-vpn.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/caddy/Caddyfile.private-vpn.example)
 - [setup_caddy_filebrowser.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_caddy_filebrowser.sh)
 - [setup_filebrowser_access.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_access.py)
+- [export_caddy_root_profile.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/export_caddy_root_profile.py)
 
 Suggested pattern:
 
 1. Run File Browser on `127.0.0.1:8080`.
 2. Reverse-proxy it through Caddy with internal TLS.
-3. Expose the HTTPS endpoint only on the VPN boundary.
+3. Expose the HTTPS endpoint only on the VPN boundary, using a private hostname
+   that WireGuard clients resolve through the VPN DNS helper.
 4. Keep SMB itself limited to the LAN or VPN.
 
 Suggested flow:
@@ -111,13 +122,27 @@ Suggested flow:
    rerun `sudo ./scripts/setup_filebrowser_access.py`.
 10. If you want to browse the site from the desktop host itself, run
    `sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn --bootstrap-local-browser`.
+11. If the iPhone will not install the raw root certificate cleanly, run
+    `sudo ./scripts/export_caddy_root_profile.py` and install the generated
+    `snowbridge-caddy-local-root.mobileconfig` from the SMB share instead.
 
 The setup script installs a supported local container runtime and Compose
 frontend automatically when they are missing. On Fedora-class systems it
 prefers `podman` plus `podman-compose`.
 
-On SELinux-enforcing Fedora-class hosts, the compose template also uses `:Z`
-bind mount options so Podman can relabel the mounted host paths.
+For iPhone access behind WireGuard, use the private hostname served by Caddy,
+for example `https://files.snowbridge.internal`. The WireGuard setup script now
+installs a small split-DNS resolver so that hostname resolves to the tunnel IP
+for VPN clients.
+The profile-export script stages an Apple configuration profile in
+`/srv/snowbridge/share/tmp/` by default so the iPhone can install and trust the
+local Caddy CA through Files plus `Certificate Trust Settings`.
+If the private browser path still fails after reconnecting WireGuard and
+recreating the web stack, run `sudo ./scripts/debug_private_access.sh` to write
+a timestamped troubleshooting report under `reports/`.
+
+On SELinux-enforcing Fedora-class hosts, the compose template also uses SELinux
+relabeling for the mounted host paths.
 The File Browser container listens on port `8080` internally so it can run as a
 non-root user while Caddy proxies to it over the compose network.
 For host-local browsing with `tls internal`, the setup script can also install

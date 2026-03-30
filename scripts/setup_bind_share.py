@@ -339,7 +339,7 @@ def is_mountpoint(path: pathlib.Path) -> bool:
     return result.returncode == 0
 
 
-def mounted_source(path: pathlib.Path) -> pathlib.Path | None:
+def mounted_sources(path: pathlib.Path) -> list[str]:
     result = subprocess.run(
         ["findmnt", "-n", "-o", "SOURCE", "--target", str(path)],
         check=False,
@@ -347,9 +347,41 @@ def mounted_source(path: pathlib.Path) -> pathlib.Path | None:
         text=True,
     )
     if result.returncode != 0:
+        return []
+    seen: set[str] = set()
+    sources: list[str] = []
+    for line in result.stdout.splitlines():
+        value = line.strip()
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        sources.append(value)
+    return sources
+
+
+def mounted_source_subpath(source: str) -> pathlib.Path | None:
+    if "[" not in source or not source.endswith("]"):
         return None
-    output = result.stdout.strip()
-    return pathlib.Path(output) if output else None
+    _, _, remainder = source.partition("[")
+    subpath = remainder[:-1].strip()
+    return pathlib.Path(subpath) if subpath else None
+
+
+def path_matches_source(candidate: pathlib.Path, expected: pathlib.Path) -> bool:
+    candidate_text = str(candidate)
+    expected_text = str(expected)
+    return candidate_text == expected_text or candidate_text.endswith(expected_text)
+
+
+def mounted_source_matches(source: str, expected: pathlib.Path) -> bool:
+    subpath = mounted_source_subpath(source)
+    if subpath is not None and path_matches_source(subpath, expected):
+        return True
+
+    plain_path = pathlib.Path(source)
+    resolved_expected = pathlib.Path(os.path.realpath(expected))
+    resolved_plain = pathlib.Path(os.path.realpath(plain_path))
+    return resolved_expected == resolved_plain
 
 
 def ensure_source_exists(folder: FolderMount, dry_run: bool) -> None:
@@ -468,14 +500,15 @@ def ensure_mountpoint(
 
 def ensure_bind_mount(folder: FolderMount, dry_run: bool, skip_mount: bool) -> None:
     if is_mountpoint(folder.target_path):
-        current_source = mounted_source(folder.target_path)
-        if current_source is None:
+        current_sources = mounted_sources(folder.target_path)
+        if not current_sources:
             raise ConfigError(f"could not determine mounted source for {folder.target_path}")
-        resolved_source = pathlib.Path(os.path.realpath(folder.source))
-        resolved_current = pathlib.Path(os.path.realpath(current_source))
-        if resolved_source != resolved_current:
+        if not any(
+            mounted_source_matches(current_source, folder.source)
+            for current_source in current_sources
+        ):
             raise ConfigError(
-                f"{folder.target_path} is already mounted from {current_source}, "
+                f"{folder.target_path} is already mounted from {', '.join(current_sources)}, "
                 f"expected {folder.source}"
             )
         log(f"bind mount already active: {folder.source} -> {folder.target_path}")
@@ -500,7 +533,10 @@ def escape_fstab_field(value: str) -> str:
     )
 
 
-def build_fstab_block(config_path: pathlib.Path, folders: list[FolderMount]) -> str:
+def build_fstab_block(
+    config_path: pathlib.Path,
+    folders: list[FolderMount],
+) -> str:
     lines = [
         MANAGED_BLOCK_START,
         f"# Managed by scripts/setup_bind_share.py --config {config_path}",
@@ -578,7 +614,12 @@ def main() -> int:
             ensure_bind_mount(folder, args.dry_run, args.skip_mount)
 
         if args.write_fstab:
-            write_fstab_block(pathlib.Path(args.fstab_path), config_path, folders, args.dry_run)
+            write_fstab_block(
+                pathlib.Path(args.fstab_path),
+                config_path,
+                folders,
+                args.dry_run,
+            )
 
     except ConfigError as exc:
         print(f"error: {exc}", file=sys.stderr)

@@ -406,10 +406,18 @@ def build_filebrowser_run_command(
         runtime,
         "run",
         "--rm",
+        "--security-opt",
+        "label=disable",
         "--user",
         f"{uid}:{gid}",
-        "-v",
-        f"{share_root}:{mount_path}:Z",
+        "--mount",
+        (
+            "type=bind,"
+            f"src={share_root},"
+            f"dst={mount_path},"
+            "relabel=private,"
+            "bind-propagation=rslave"
+        ),
         "-v",
         f"{db_dir}:/database:Z",
         "-v",
