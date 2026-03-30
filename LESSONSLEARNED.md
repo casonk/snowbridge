@@ -214,3 +214,11 @@
   newline even when the visual output is otherwise correct.
 - Run the repo's formatting or pre-commit checks after regenerating diagram
   artifacts so `end-of-file-fixer` does not fail later in CI.
+
+### 2026-03-30 — Do not carry legacy Samba `socket options` tuning into share sections
+
+- `socket options` is a global Samba parameter, so putting it inside a share
+  section such as `[snowbridge]` only produces warnings like `Global parameter
+  socket options found in service section!`.
+- For this repo's baseline, prefer leaving `socket options` unset entirely
+  unless there is a measured host-specific need to add a global override.
