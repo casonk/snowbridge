@@ -28,13 +28,14 @@ custom client app or a separate sync workflow.
 - `config/samba/smb.conf.example`: baseline Samba share configuration
 - `config/share-layout/folders.example.ini`: bind-mounted folder layout example
 - `config/network/`: stable-address examples for the host network
-- `config/access/`: VPN templates for Tailscale and WireGuard
-- `config/web/`: optional Caddy and File Browser templates for web access, including private-VPN HTTPS behind a private hostname
+- `config/access/`: VPN templates for Tailscale plus two WireGuard profiles: host-only `wireguard-public-vpn` and wider-subnet `wireguard-lan-vpn`
+- `config/web/`: optional Caddy and File Browser templates for web access, including private-VPN HTTPS, private-VPN HTTPS with mTLS client certificates, and public HTTPS modes that can bind on either all interfaces or a specific private host IP behind router/NAT forwarding
 - `scripts/setup_bind_share.py`: creates mountpoints, ACLs, and bind mounts
-- `scripts/setup_wireguard.sh`: installs a local WireGuard config, required tools, auto-generates missing peer keys, configures split DNS and firewalld for private WireGuard clients, auto-fills the iPhone peer endpoint from the current public IP when needed, validates the remaining peer values, and can render an optional iPhone QR
-- `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack, installing a supported container runtime and Compose frontend when needed, with optional local-browser bootstrap for hostname mapping and Caddy CA trust
+- `scripts/setup_wireguard.sh`: installs a local WireGuard config for either `wireguard-public-vpn` or `wireguard-lan-vpn`, auto-generates missing peer keys, configures split DNS and firewalld for private WireGuard clients, auto-fills the iPhone peer endpoint from the current public IP when needed, validates the remaining peer values, and can render an optional iPhone QR
+- `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack in `private-vpn`, `private-vpn-mtls`, `public`, or `public-private-ip` mode, installing a supported container runtime and Compose frontend when needed, with optional local-browser bootstrap for hostname mapping and Caddy CA trust
 - `scripts/setup_filebrowser_access.py`: applies File Browser root, users, and runtime UID/GID sync from a local TOML config
 - `scripts/export_caddy_root_profile.py`: generates an iPhone-installable `.mobileconfig` for Caddy's local CA and stages it into the SMB share
+- `scripts/export_caddy_mtls_profile.py`: issues a per-device mTLS client identity, packages it with the private Caddy root CA into an iPhone-installable `.mobileconfig`, and stages the results into the SMB share
 - `scripts/debug_private_access.sh`: collects a single report covering WireGuard, dnsmasq, firewalld, Samba, Caddy, and File Browser state for private-access debugging
 - `docs/host-setup.md`: host-side setup and client connection notes
 - `docs/iphone-shortcut.md`: iPhone shortcut and import/export guidance
@@ -62,8 +63,10 @@ custom client app or a separate sync workflow.
    directly to the public internet.
 
 See `docs/host-setup.md` for the detailed workflow, including hostname/IP
-discovery, stable-address guidance, VPN access patterns, and optional web access
-notes. See `docs/access-patterns.md` for the concrete template files backing the
+discovery, stable-address guidance, the split between `wireguard-public-vpn`,
+`wireguard-lan-vpn`, `private-vpn-mtls`, and public HTTPS access, and optional
+web access notes.
+See `docs/access-patterns.md` for the concrete template files backing the
 optional static-IP, VPN, and HTTPS access patterns.
 
 ## Contributing

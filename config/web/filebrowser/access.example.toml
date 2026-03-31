@@ -10,6 +10,7 @@
 # Relative paths are resolved from this file's directory.
 web_env_file = "filebrowser.env.local"
 web_setup_script = "../../../scripts/setup_caddy_filebrowser.sh"
+# Supported modes: "private-vpn", "private-vpn-mtls", "public", "public-private-ip"
 mode = "private-vpn"
 container_runtime = "auto"
 filebrowser_image = "docker.io/filebrowser/filebrowser:latest"

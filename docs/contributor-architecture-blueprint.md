@@ -17,6 +17,9 @@ architecture handoff documentation for a home-desktop fileshare.
    - Access is intended for the home LAN first.
    - Remote access, when needed, should traverse a private VPN overlay instead
      of exposing SMB to the public internet.
+   - The repo now distinguishes a host-only WireGuard profile
+     (`wireguard-public-vpn`) from a wider-LAN WireGuard profile
+     (`wireguard-lan-vpn`) so the routing boundary is explicit.
    - Stable private addressing should come from local hostname resolution or a
      reserved private IP rather than a frequently changing DHCP lease.
 3. Share-service layer
@@ -34,8 +37,10 @@ architecture handoff documentation for a home-desktop fileshare.
      moving the actual files under `/srv`.
    - Samba account state, logs, and runtime metadata stay on the host and are
      not committed.
-   - If browser-based access is added later, it should arrive as a separate
-     HTTPS-facing service layer rather than as public SMB exposure.
+  - If browser-based access is added later, it should arrive as a separate
+    HTTPS-facing service layer rather than as public SMB exposure, whether it
+    stays VPN-only, layers on private-VPN mutual TLS device certificates, or
+    is published through router/NAT to a private host IP.
 5. Repo-governance layer
    - `README.md` explains the purpose and quick-start path.
    - `docs/host-setup.md` captures the deployment workflow.
@@ -56,10 +61,14 @@ architecture handoff documentation for a home-desktop fileshare.
 - `config/network/networkmanager-static-ip.example.sh`
 - `config/access/tailscale/tailscale-subnet-router.example.sh`
 - `config/access/wireguard/wg0-server.example.conf`
+- `config/access/wireguard/wg0-server.lan-vpn.example.conf`
+- `config/access/wireguard/iphone-peer.lan-vpn.example.conf`
 - `config/web/caddy/Caddyfile.private-vpn.example`
+- `config/web/caddy/Caddyfile.private-vpn-mtls.example`
 - `scripts/setup_bind_share.py`
 - `scripts/setup_wireguard.sh`
 - `scripts/setup_caddy_filebrowser.sh`
+- `scripts/export_caddy_mtls_profile.py`
 - `docs/host-setup.md`
 - `docs/access-patterns.md`
 - `docs/diagrams/repo-architecture.puml`
@@ -81,6 +90,9 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m archility render ../snowbrid
   tradeoff.
 - Keep direct SMB limited to the LAN or a private VPN. If a web surface is
   added later, document it as a distinct HTTPS front end.
+- If the private web surface adds device-bound authentication, prefer a
+  dedicated client-certificate CA and exported install profile rather than
+  trying to repurpose VPN keys or hardware identifiers in the browser layer.
 - Update the Samba template, host setup guide, and architecture docs together
   when the access model changes.
 - Preserve iPhone compatibility unless the user explicitly chooses a different

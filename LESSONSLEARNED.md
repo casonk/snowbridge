@@ -215,6 +215,31 @@
 - Run the repo's formatting or pre-commit checks after regenerating diagram
   artifacts so `end-of-file-fixer` does not fail later in CI.
 
+### 2026-03-30 — Separate access modes should validate the bind boundary they imply
+
+- A host-local installer mode is not actually separate if the generated config
+  silently falls back to the same broad bind behavior as another mode.
+- When a mode is meant to bind a service only on a host's private RFC1918
+  address, prefer explicit validation and a best-effort default over leaving
+  `0.0.0.0` in place and hoping the user narrows it later.
+
+### 2026-03-30 — VPN profile names should describe routing scope, not just transport
+
+- A single generic WireGuard example blurs together two materially different
+  setups: "publicly reachable VPN to the host only" and "publicly reachable VPN
+  that also routes the wider home LAN".
+- Prefer explicit repo profiles for host-only versus wider-LAN WireGuard so the
+  intended `AllowedIPs`, forwarding requirements, and firewall expectations are
+  visible at the template and installer level.
+
+### 2026-03-30 — Multiple local profiles need distinct local filenames, not just profile flags
+
+- If two profiles share the same ignored local config paths, initializing the
+  second profile silently overwrites or mutates the first profile's local state.
+- When the repo supports side-by-side profile variants, the default local file
+  names should also be profile-specific so users can keep both variants ready at
+  once.
+
 ### 2026-03-30 — Do not carry legacy Samba `socket options` tuning into share sections
 
 - `socket options` is a global Samba parameter, so putting it inside a share
@@ -222,3 +247,14 @@
   socket options found in service section!`.
 - For this repo's baseline, prefer leaving `socket options` unset entirely
   unless there is a measured host-specific need to add a global override.
+
+### 2026-03-30 — Private browser mTLS should be a separate VPN-only web mode with its own client CA
+
+- Device-bound web authentication belongs in the optional HTTPS layer, not in
+  Samba or in the WireGuard peer definition.
+- When private HTTPS adds client-certificate auth, use a dedicated host-local
+  client CA and per-device issued identities rather than trying to reuse the
+  Caddy server CA or invent a browser flow around hardware identifiers.
+- For iPhone installability, export the client identity and the private Caddy
+  root CA together as a staged `.mobileconfig`, but keep the signing CA private
+  key outside git and outside the SMB share.

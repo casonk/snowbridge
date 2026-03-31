@@ -9,8 +9,12 @@ ENV_EXAMPLE="${REPO_ROOT}/config/web/filebrowser/filebrowser.env.example"
 ENV_LOCAL_DEFAULT="${REPO_ROOT}/config/web/filebrowser/filebrowser.env.local"
 PRIVATE_CADDY_EXAMPLE="${REPO_ROOT}/config/web/caddy/Caddyfile.private-vpn.example"
 PRIVATE_CADDY_LOCAL_DEFAULT="${REPO_ROOT}/config/web/caddy/Caddyfile.private-vpn.local"
+PRIVATE_MTLS_CADDY_EXAMPLE="${REPO_ROOT}/config/web/caddy/Caddyfile.private-vpn-mtls.example"
+PRIVATE_MTLS_CADDY_LOCAL_DEFAULT="${REPO_ROOT}/config/web/caddy/Caddyfile.private-vpn-mtls.local"
 PUBLIC_CADDY_EXAMPLE="${REPO_ROOT}/config/web/caddy/Caddyfile.public.example"
 PUBLIC_CADDY_LOCAL_DEFAULT="${REPO_ROOT}/config/web/caddy/Caddyfile.public.local"
+PUBLIC_PRIVATE_IP_CADDY_EXAMPLE="${REPO_ROOT}/config/web/caddy/Caddyfile.public-private-ip.example"
+PUBLIC_PRIVATE_IP_CADDY_LOCAL_DEFAULT="${REPO_ROOT}/config/web/caddy/Caddyfile.public-private-ip.local"
 
 MODE="private-vpn"
 ENV_FILE="${ENV_LOCAL_DEFAULT}"
@@ -30,7 +34,8 @@ Prepare and launch the optional File Browser + Caddy stack with a supported
 Compose frontend.
 
 Options:
-  --mode private-vpn|public   Choose which Caddy template to initialize or expect.
+  --mode private-vpn|private-vpn-mtls|public|public-private-ip
+                              Choose which Caddy template to initialize or expect.
   --init-local-configs        Copy the example env and chosen Caddyfile to local-only files.
   --env-file PATH             Local env file to use. Default: config/web/filebrowser/filebrowser.env.local
   --compose-file PATH         Compose file to use. Default: config/web/filebrowser/docker-compose.example.yml
@@ -48,15 +53,25 @@ Typical flow:
   ./scripts/setup_caddy_filebrowser.sh --init-local-configs --mode private-vpn
   # edit config/web/filebrowser/filebrowser.env.local and the chosen Caddyfile
   sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn
+  # for private HTTPS with mutual TLS device certs:
+  ./scripts/setup_caddy_filebrowser.sh --init-local-configs --mode private-vpn-mtls
+  sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn-mtls
   # if mounts, labels, ports, or images changed:
   sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn --recreate
   # for desktop-browser access on this host:
   sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn --bootstrap-local-browser
+  # for router/NAT forwarding to a specific private host IP:
+  ./scripts/setup_caddy_filebrowser.sh --init-local-configs --mode public-private-ip
+  sudo ./scripts/setup_caddy_filebrowser.sh --mode public-private-ip
 EOF
 }
 
 log() {
   printf '%s\n' "$*"
+}
+
+warn() {
+  printf 'warning: %s\n' "$*" >&2
 }
 
 fail() {
@@ -78,11 +93,50 @@ require_root() {
 
 ensure_mode() {
   case "${MODE}" in
-    private-vpn|public) ;;
+    private-vpn|private-vpn-mtls|public|public-private-ip) ;;
     *)
       fail "invalid mode: ${MODE}"
       ;;
   esac
+}
+
+is_private_ipv4() {
+  local ip="$1"
+
+  [[ "${ip}" =~ ^10\. ]] && return 0
+  [[ "${ip}" =~ ^192\.168\. ]] && return 0
+  [[ "${ip}" =~ ^172\.(1[6-9]|2[0-9]|3[0-1])\. ]] && return 0
+  return 1
+}
+
+detect_private_bind_ip() {
+  local candidate
+
+  if command_exists ip; then
+    candidate="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '
+      {
+        for (i = 1; i <= NF; i++) {
+          if ($i == "src") {
+            print $(i + 1)
+            exit
+          }
+        }
+      }
+    ')"
+    if [[ -n "${candidate}" ]] && is_private_ipv4 "${candidate}"; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  fi
+
+  while read -r candidate; do
+    if is_private_ipv4 "${candidate}"; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  done < <(hostname -I 2>/dev/null | tr ' ' '\n')
+
+  return 1
 }
 
 compose_cmd() {
@@ -200,6 +254,73 @@ install_runtime_packages_if_needed() {
   esac
 
   set_compose_command || fail "no supported Compose frontend available after package install"
+}
+
+ensure_mtls_tools_if_needed() {
+  if command_exists openssl; then
+    return
+  fi
+
+  install_os_packages openssl
+  command_exists openssl || fail "openssl is still missing after package install"
+}
+
+ensure_mtls_client_ca_if_needed() {
+  local mtls_dir
+  local client_ca_cert
+  local client_ca_key
+  local tmp_config
+
+  mtls_dir="${CADDY_DATA_DIR}/mtls"
+  client_ca_cert="${mtls_dir}/client-ca.crt"
+  client_ca_key="${mtls_dir}/client-ca.key"
+
+  install -d -m 0750 "${mtls_dir}"
+
+  if [[ -f "${client_ca_cert}" ]] && [[ -f "${client_ca_key}" ]]; then
+    return
+  fi
+
+  if [[ -f "${client_ca_cert}" ]] || [[ -f "${client_ca_key}" ]]; then
+    fail "incomplete mTLS client CA state under ${mtls_dir}; expected both client-ca.crt and client-ca.key"
+  fi
+
+  ensure_mtls_tools_if_needed
+
+  tmp_config="$(mktemp)"
+  cat > "${tmp_config}" <<'EOF'
+[req]
+distinguished_name = req_dn
+x509_extensions = v3_ca
+prompt = no
+
+[req_dn]
+CN = Snowbridge Caddy mTLS Client CA
+O = snowbridge
+
+[v3_ca]
+basicConstraints = critical,CA:TRUE
+keyUsage = critical,keyCertSign,cRLSign
+subjectKeyIdentifier = hash
+EOF
+
+  if ! openssl req \
+    -x509 \
+    -newkey rsa:4096 \
+    -sha256 \
+    -days 3650 \
+    -nodes \
+    -keyout "${client_ca_key}" \
+    -out "${client_ca_cert}" \
+    -config "${tmp_config}" >/dev/null 2>&1; then
+    rm -f "${tmp_config}"
+    fail "failed to generate the local Caddy mTLS client CA under ${mtls_dir}"
+  fi
+
+  rm -f "${tmp_config}"
+  chmod 0600 "${client_ca_key}"
+  chmod 0644 "${client_ca_cert}"
+  log "generated local Caddy mTLS client CA under ${mtls_dir}"
 }
 
 copy_if_missing() {
@@ -323,27 +444,54 @@ bootstrap_local_browser_access() {
 }
 
 selected_caddy_example() {
-  if [[ "${MODE}" == "public" ]]; then
-    printf '%s\n' "${PUBLIC_CADDY_EXAMPLE}"
-  else
-    printf '%s\n' "${PRIVATE_CADDY_EXAMPLE}"
-  fi
+  case "${MODE}" in
+    private-vpn-mtls)
+      printf '%s\n' "${PRIVATE_MTLS_CADDY_EXAMPLE}"
+      ;;
+    public)
+      printf '%s\n' "${PUBLIC_CADDY_EXAMPLE}"
+      ;;
+    public-private-ip)
+      printf '%s\n' "${PUBLIC_PRIVATE_IP_CADDY_EXAMPLE}"
+      ;;
+    *)
+      printf '%s\n' "${PRIVATE_CADDY_EXAMPLE}"
+      ;;
+  esac
 }
 
 selected_caddy_local() {
-  if [[ "${MODE}" == "public" ]]; then
-    printf '%s\n' "${PUBLIC_CADDY_LOCAL_DEFAULT}"
-  else
-    printf '%s\n' "${PRIVATE_CADDY_LOCAL_DEFAULT}"
-  fi
+  case "${MODE}" in
+    private-vpn-mtls)
+      printf '%s\n' "${PRIVATE_MTLS_CADDY_LOCAL_DEFAULT}"
+      ;;
+    public)
+      printf '%s\n' "${PUBLIC_CADDY_LOCAL_DEFAULT}"
+      ;;
+    public-private-ip)
+      printf '%s\n' "${PUBLIC_PRIVATE_IP_CADDY_LOCAL_DEFAULT}"
+      ;;
+    *)
+      printf '%s\n' "${PRIVATE_CADDY_LOCAL_DEFAULT}"
+      ;;
+  esac
 }
 
 selected_caddy_runtime_path() {
-  if [[ "${MODE}" == "public" ]]; then
-    printf '/etc/caddy/Caddyfile.public\n'
-  else
-    printf '/etc/caddy/Caddyfile.private-vpn\n'
-  fi
+  case "${MODE}" in
+    private-vpn-mtls)
+      printf '/etc/caddy/Caddyfile.private-vpn-mtls\n'
+      ;;
+    public)
+      printf '/etc/caddy/Caddyfile.public\n'
+      ;;
+    public-private-ip)
+      printf '/etc/caddy/Caddyfile.public-private-ip\n'
+      ;;
+    *)
+      printf '/etc/caddy/Caddyfile.private-vpn\n'
+      ;;
+  esac
 }
 
 repair_caddyfile_path_if_needed() {
@@ -413,12 +561,22 @@ done
 ensure_mode
 
 if (( INIT_LOCAL_CONFIGS == 1 )); then
+  bind_ip=""
   local_caddyfile="$(selected_caddy_local)"
   copy_if_missing "${ENV_EXAMPLE}" "${ENV_FILE}"
   copy_if_missing "$(selected_caddy_example)" "${local_caddyfile}"
   absolute_caddyfile="$(readlink -f "${local_caddyfile}")"
   replace_setting "${ENV_FILE}" "CADDYFILE_PATH" "${absolute_caddyfile}"
-  if [[ "${MODE}" == "public" ]]; then
+
+  if [[ "${MODE}" == "public-private-ip" ]]; then
+    if bind_ip="$(detect_private_bind_ip)"; then
+      replace_setting "${ENV_FILE}" "CADDY_HTTP_BIND" "${bind_ip}"
+      replace_setting "${ENV_FILE}" "CADDY_HTTPS_BIND" "${bind_ip}"
+      log "auto-set Caddy binds to detected private host IP: ${bind_ip}"
+    else
+      warn "could not auto-detect a private host IP; edit ${ENV_FILE} so CADDY_HTTP_BIND and CADDY_HTTPS_BIND use the host's RFC1918 address"
+    fi
+  elif [[ "${MODE}" == "public" ]]; then
     replace_setting "${ENV_FILE}" "CADDY_HTTP_BIND" "0.0.0.0"
     replace_setting "${ENV_FILE}" "CADDY_HTTPS_BIND" "0.0.0.0"
   else
@@ -469,6 +627,15 @@ for absolute_path_var in \
   [[ "${!absolute_path_var}" == /* ]] || fail "${absolute_path_var} must be an absolute path"
 done
 
+if [[ "${MODE}" == "public-private-ip" ]]; then
+  is_private_ipv4 "${CADDY_HTTP_BIND}" || \
+    fail "CADDY_HTTP_BIND must be the host's private RFC1918 IP in ${ENV_FILE} when --mode public-private-ip is used"
+  is_private_ipv4 "${CADDY_HTTPS_BIND}" || \
+    fail "CADDY_HTTPS_BIND must be the host's private RFC1918 IP in ${ENV_FILE} when --mode public-private-ip is used"
+  [[ "${CADDY_HTTP_BIND}" == "${CADDY_HTTPS_BIND}" ]] || \
+    fail "CADDY_HTTP_BIND and CADDY_HTTPS_BIND must match in ${ENV_FILE} for --mode public-private-ip"
+fi
+
 [[ -d "${SNOWBRIDGE_SHARE_ROOT}" ]] || fail "share root does not exist: ${SNOWBRIDGE_SHARE_ROOT}"
 repair_caddyfile_path_if_needed
 
@@ -476,6 +643,10 @@ install -d -m 0750 -o "${SNOWBRIDGE_UID}" -g "${SNOWBRIDGE_GID}" "${FILEBROWSER_
 install -d -m 0750 -o "${SNOWBRIDGE_UID}" -g "${SNOWBRIDGE_GID}" "${FILEBROWSER_CONFIG_DIR}"
 install -d -m 0750 "${CADDY_DATA_DIR}"
 install -d -m 0750 "${CADDY_CONFIG_DIR}"
+
+if [[ "${MODE}" == "private-vpn-mtls" ]]; then
+  ensure_mtls_client_ca_if_needed
+fi
 
 compose_cmd -f "${COMPOSE_FILE}" config >/dev/null
 log "validated ${COMPOSE_CMD_TEXT} configuration"
@@ -491,6 +662,9 @@ fi
 
 if (( BOOTSTRAP_LOCAL_BROWSER == 1 )); then
   bootstrap_local_browser_access
+  if [[ "${MODE}" == "private-vpn-mtls" ]]; then
+    warn "local CA trust and hostname mapping are installed, but mTLS mode still requires a client identity; run ./scripts/export_caddy_mtls_profile.py to generate one"
+  fi
 fi
 
 log "next checks:"

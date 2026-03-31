@@ -245,7 +245,8 @@ Practical options:
 
 Examples of private-VPN patterns:
 
-- a WireGuard tunnel that routes the home subnet
+- a WireGuard tunnel that exposes only the host's tunnel IP and private web UI
+- a WireGuard tunnel that routes the wider home subnet
 - a mesh VPN such as Tailscale, either by installing the client on the host
   itself or by advertising the home subnet through a subnet router
 
@@ -254,14 +255,41 @@ Templates:
 - `config/access/tailscale/tailscale-subnet-router.example.sh`
 - `config/access/wireguard/wg0-server.example.conf`
 - `config/access/wireguard/iphone-peer.example.conf`
+- `config/access/wireguard/wg0-server.lan-vpn.example.conf`
+- `config/access/wireguard/iphone-peer.lan-vpn.example.conf`
 - `scripts/setup_wireguard.sh`
 
-Example WireGuard script flow:
+WireGuard profiles:
+
+- `wireguard-public-vpn`: publicly reachable WireGuard UDP endpoint, but SMB
+  and the optional private web UI stay reachable only after VPN auth on the
+  host's tunnel IP or private hostname
+- `wireguard-lan-vpn`: same public WireGuard endpoint, but the client also
+  routes the wider home LAN through the tunnel
+
+Example host-only WireGuard flow:
 
 ```bash
-./scripts/setup_wireguard.sh --init-local-configs
-sudo ./scripts/setup_wireguard.sh --enable-ip-forward --print-iphone-qr
+./scripts/setup_wireguard.sh --init-local-configs --profile wireguard-public-vpn
+sudo ./scripts/setup_wireguard.sh --profile wireguard-public-vpn --print-iphone-qr
 ```
+
+This creates and expects:
+
+- `config/access/wireguard/wg0-server.public-vpn.local.conf`
+- `config/access/wireguard/iphone-peer.public-vpn.local.conf`
+
+Example wider-LAN WireGuard flow:
+
+```bash
+./scripts/setup_wireguard.sh --init-local-configs --profile wireguard-lan-vpn --lan-subnet 192.168.0.0/24
+sudo ./scripts/setup_wireguard.sh --profile wireguard-lan-vpn --lan-subnet 192.168.0.0/24 --enable-ip-forward --print-iphone-qr
+```
+
+This creates and expects:
+
+- `config/access/wireguard/wg0-server.lan-vpn.local.conf`
+- `config/access/wireguard/iphone-peer.lan-vpn.local.conf`
 
 The WireGuard setup script will install missing `wireguard-tools` itself when a
 supported package manager is present. If you request QR output, it will also
@@ -277,7 +305,10 @@ automatically before install. If the iPhone peer `Endpoint` is still on the
 checked-in sample value, the script will replace it with the host's current
 public IP and print a warning that you should still move to a stable DNS name
 or other stable public endpoint. It will still stop for any other non-key
-placeholders you have not filled yet.
+placeholders you have not filled yet. For `wireguard-lan-vpn`, you can either
+replace the checked-in `<lan-subnet-cidr>` placeholder manually or pass
+`--lan-subnet <cidr>` to the setup script so it fills the route into the iPhone
+profile before validation.
 
 ## 12. Optional Web Access
 
@@ -296,10 +327,18 @@ Recommended default:
 
 - private HTTPS access behind the same VPN used for SMB
 
+Stronger private-device option:
+
+- private HTTPS behind that same VPN, plus Caddy mutual TLS with per-device
+  client certificates
+
 Higher-risk option:
 
 - public HTTPS access with a reverse proxy, strong authentication, TLS, logging,
   and regular updates
+- if the host sits behind a home router/NAT, a separate public mode can bind
+  Caddy only on the host's private RFC1918 address while the router forwards
+  public `80/443` to that private address
 
 Templates:
 
@@ -307,10 +346,13 @@ Templates:
 - `config/web/filebrowser/filebrowser.env.example`
 - `config/web/filebrowser/access.example.toml`
 - `config/web/caddy/Caddyfile.private-vpn.example`
+- `config/web/caddy/Caddyfile.private-vpn-mtls.example`
 - `config/web/caddy/Caddyfile.public.example`
+- `config/web/caddy/Caddyfile.public-private-ip.example`
 - `scripts/setup_caddy_filebrowser.sh`
 - `scripts/setup_filebrowser_access.py`
 - `scripts/export_caddy_root_profile.py`
+- `scripts/export_caddy_mtls_profile.py`
 
 Example private-VPN web flow:
 
@@ -343,6 +385,34 @@ This fixes two separate local-browser prerequisites:
 - the host browser must trust Caddy's internal CA if the site uses
   `tls internal`
 
+Example private-VPN mTLS web flow:
+
+```bash
+./scripts/setup_caddy_filebrowser.sh --init-local-configs --mode private-vpn-mtls
+./scripts/setup_filebrowser_access.py --init-local-configs
+sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn-mtls
+sudo ./scripts/setup_filebrowser_access.py
+sudo ./scripts/export_caddy_mtls_profile.py --device-name iphone
+```
+
+This mode keeps the service inside the same private VPN boundary as SMB, but it
+also requires a client certificate signed by a host-local mTLS client CA before
+the browser can reach File Browser at all. The web-setup script generates that
+client CA automatically under `CADDY_DATA_DIR/mtls/` when the mode is first
+applied, and the mTLS export script issues a per-device identity and packages
+it with the private Caddy root CA into an Apple `.mobileconfig`.
+
+On the iPhone:
+
+1. Open the generated `snowbridge-caddy-mtls-<device>.mobileconfig` from the
+   SMB share in Files.
+2. Allow the profile download if prompted.
+3. Open Settings and tap `Profile Downloaded`.
+4. Install the profile and, when prompted, enter the identity password printed
+   by `export_caddy_mtls_profile.py`.
+5. Go to `Settings > General > About > Certificate Trust Settings`.
+6. Enable full trust for the Snowbridge Caddy root certificate.
+
 The web-stack setup script will install a supported local container runtime and
 Compose frontend when they are missing. On Fedora-class systems it prefers
 `podman` plus `podman-compose`. On Debian or Ubuntu systems without Podman it
@@ -374,10 +444,35 @@ certificate. On the iPhone:
 5. Go to `Settings > General > About > Certificate Trust Settings`.
 6. Enable full trust for the Snowbridge Caddy root certificate.
 
+For the stronger private-device mTLS path, use the dedicated exporter instead:
+
+```bash
+sudo ./scripts/export_caddy_mtls_profile.py --device-name iphone
+```
+
+That stages a device-specific `.mobileconfig` plus a fallback `.p12` identity
+bundle in `/srv/snowbridge/share/tmp/` by default and prints the import
+password you will need during installation.
+
 On SELinux-enforcing hosts such as Fedora, the compose template uses SELinux
 relabeling for the mounted host paths.
 The File Browser container also listens on unprivileged port `8080` inside the
 container so it can run as a non-root UID/GID.
+
+Example public-NAT web flow:
+
+```bash
+./scripts/setup_caddy_filebrowser.sh --init-local-configs --mode public-private-ip
+./scripts/setup_filebrowser_access.py --init-local-configs
+sudo ./scripts/setup_caddy_filebrowser.sh --mode public-private-ip
+sudo ./scripts/setup_filebrowser_access.py
+```
+
+For `--mode public-private-ip`, set `CADDY_HTTP_BIND` and `CADDY_HTTPS_BIND` in
+`config/web/filebrowser/filebrowser.env.local` to the host's private RFC1918
+address, for example `192.168.1.10`, not `0.0.0.0`. Then forward public
+`80/443` on the router to that same private host IP. This still does not expose
+SMB itself; only the separate HTTPS layer should be port-forwarded.
 The File Browser access script applies the app root and user database from a
 local TOML config, and it can sync the runtime UID/GID in
 `filebrowser.env.local` to the configured host account before recreating the

@@ -5,9 +5,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 SERVER_EXAMPLE="${REPO_ROOT}/config/access/wireguard/wg0-server.example.conf"
-SERVER_LOCAL_DEFAULT="${REPO_ROOT}/config/access/wireguard/wg0-server.local.conf"
+SERVER_LAN_EXAMPLE="${REPO_ROOT}/config/access/wireguard/wg0-server.lan-vpn.example.conf"
+LEGACY_SERVER_LOCAL_DEFAULT="${REPO_ROOT}/config/access/wireguard/wg0-server.local.conf"
+SERVER_PUBLIC_LOCAL_DEFAULT="${REPO_ROOT}/config/access/wireguard/wg0-server.public-vpn.local.conf"
+SERVER_LAN_LOCAL_DEFAULT="${REPO_ROOT}/config/access/wireguard/wg0-server.lan-vpn.local.conf"
 IPHONE_EXAMPLE="${REPO_ROOT}/config/access/wireguard/iphone-peer.example.conf"
-IPHONE_LOCAL_DEFAULT="${REPO_ROOT}/config/access/wireguard/iphone-peer.local.conf"
+IPHONE_LAN_EXAMPLE="${REPO_ROOT}/config/access/wireguard/iphone-peer.lan-vpn.example.conf"
+LEGACY_IPHONE_LOCAL_DEFAULT="${REPO_ROOT}/config/access/wireguard/iphone-peer.local.conf"
+IPHONE_PUBLIC_LOCAL_DEFAULT="${REPO_ROOT}/config/access/wireguard/iphone-peer.public-vpn.local.conf"
+IPHONE_LAN_LOCAL_DEFAULT="${REPO_ROOT}/config/access/wireguard/iphone-peer.lan-vpn.local.conf"
 PRIVATE_CADDY_EXAMPLE="${REPO_ROOT}/config/web/caddy/Caddyfile.private-vpn.example"
 PRIVATE_CADDY_LOCAL_DEFAULT="${REPO_ROOT}/config/web/caddy/Caddyfile.private-vpn.local"
 SERVER_DEST_DEFAULT="/etc/wireguard/wg0.conf"
@@ -16,8 +22,8 @@ WIREGUARD_DNS_DEST_DEFAULT="/etc/dnsmasq.d/snowbridge-wireguard.conf"
 WIREGUARD_DNS_DROPIN_DEFAULT="/etc/systemd/system/dnsmasq.service.d/snowbridge-wireguard.conf"
 WIREGUARD_DNS_HOSTNAME_DEFAULT="files.snowbridge.internal"
 
-SERVER_CONFIG="${SERVER_LOCAL_DEFAULT}"
-IPHONE_CONFIG="${IPHONE_LOCAL_DEFAULT}"
+SERVER_CONFIG=""
+IPHONE_CONFIG=""
 SERVER_DEST="${SERVER_DEST_DEFAULT}"
 WIREGUARD_DNS_DEST="${WIREGUARD_DNS_DEST_DEFAULT}"
 WIREGUARD_DNS_DROPIN="${WIREGUARD_DNS_DROPIN_DEFAULT}"
@@ -31,6 +37,10 @@ SKIP_DNS=0
 WIREGUARD_DNS_HOSTNAME=""
 SKIP_FIREWALL=0
 WIREGUARD_FIREWALL_ZONE="trusted"
+WIREGUARD_PROFILE="wireguard-public-vpn"
+LAN_SUBNET=""
+SERVER_CONFIG_EXPLICIT=0
+IPHONE_CONFIG_EXPLICIT=0
 
 usage() {
   cat <<'EOF'
@@ -40,12 +50,16 @@ Set up the snowbridge WireGuard server from local-only config files.
 
 Options:
   --init-local-configs     Copy the example configs to local-only .local files.
+  --profile NAME           WireGuard profile to initialize or validate. Supported:
+                           wireguard-public-vpn, wireguard-lan-vpn.
   --server-config PATH     Local server config to install.
   --iphone-config PATH     Local iPhone peer config for QR rendering.
   --server-dest PATH       Destination server config path. Default: /etc/wireguard/wg0.conf
   --dns-dest PATH          Destination dnsmasq config path. Default: /etc/dnsmasq.d/snowbridge-wireguard.conf
   --dns-hostname HOST      Private hostname to publish to WireGuard clients. Default: first hostname from the
                            private Caddy config, or files.snowbridge.internal when none is found.
+  --lan-subnet CIDR        LAN subnet to route for wireguard-lan-vpn, for example 192.168.0.0/24.
+                           Replaces <lan-subnet-cidr> in the iPhone config when present.
   --generate-missing-keys  Generate and write missing server/iPhone key pairs when the
                            paired placeholders are still present.
   --enable-ip-forward      Write a sysctl drop-in enabling IPv4 and IPv6 forwarding.
@@ -61,9 +75,13 @@ This installer will install missing runtime packages automatically when a
 supported package manager is available. Currently supported: dnf, apt-get, yum.
 
 Typical flow:
-  ./scripts/setup_wireguard.sh --init-local-configs
-  # edit config/access/wireguard/*.local.conf
-  sudo ./scripts/setup_wireguard.sh --enable-ip-forward --print-iphone-qr
+  ./scripts/setup_wireguard.sh --init-local-configs --profile wireguard-public-vpn
+  # edit config/access/wireguard/*.public-vpn.local.conf
+  sudo ./scripts/setup_wireguard.sh --profile wireguard-public-vpn --print-iphone-qr
+
+  ./scripts/setup_wireguard.sh --init-local-configs --profile wireguard-lan-vpn --lan-subnet 192.168.0.0/24
+  # edit config/access/wireguard/*.lan-vpn.local.conf
+  sudo ./scripts/setup_wireguard.sh --profile wireguard-lan-vpn --lan-subnet 192.168.0.0/24 --enable-ip-forward --print-iphone-qr
 EOF
 }
 
@@ -78,6 +96,69 @@ warn() {
 fail() {
   printf 'error: %s\n' "$*" >&2
   exit 1
+}
+
+ensure_profile() {
+  case "${WIREGUARD_PROFILE}" in
+    wireguard-public-vpn|wireguard-lan-vpn) ;;
+    *)
+      fail "invalid WireGuard profile: ${WIREGUARD_PROFILE}"
+      ;;
+  esac
+}
+
+selected_server_example() {
+  case "${WIREGUARD_PROFILE}" in
+    wireguard-lan-vpn)
+      printf '%s\n' "${SERVER_LAN_EXAMPLE}"
+      ;;
+    *)
+      printf '%s\n' "${SERVER_EXAMPLE}"
+      ;;
+  esac
+}
+
+selected_server_local_default() {
+  case "${WIREGUARD_PROFILE}" in
+    wireguard-lan-vpn)
+      printf '%s\n' "${SERVER_LAN_LOCAL_DEFAULT}"
+      ;;
+    *)
+      printf '%s\n' "${SERVER_PUBLIC_LOCAL_DEFAULT}"
+      ;;
+  esac
+}
+
+selected_iphone_example() {
+  case "${WIREGUARD_PROFILE}" in
+    wireguard-lan-vpn)
+      printf '%s\n' "${IPHONE_LAN_EXAMPLE}"
+      ;;
+    *)
+      printf '%s\n' "${IPHONE_EXAMPLE}"
+      ;;
+  esac
+}
+
+selected_iphone_local_default() {
+  case "${WIREGUARD_PROFILE}" in
+    wireguard-lan-vpn)
+      printf '%s\n' "${IPHONE_LAN_LOCAL_DEFAULT}"
+      ;;
+    *)
+      printf '%s\n' "${IPHONE_PUBLIC_LOCAL_DEFAULT}"
+      ;;
+  esac
+}
+
+apply_profile_local_defaults() {
+  if (( SERVER_CONFIG_EXPLICIT == 0 )); then
+    SERVER_CONFIG="$(selected_server_local_default)"
+  fi
+
+  if (( IPHONE_CONFIG_EXPLICIT == 0 )); then
+    IPHONE_CONFIG="$(selected_iphone_local_default)"
+  fi
 }
 
 require_command() {
@@ -181,6 +262,52 @@ copy_if_missing() {
   log "created ${target}"
 }
 
+copy_seeded_local_if_missing() {
+  local example_source="$1"
+  local legacy_source="$2"
+  local target="$3"
+
+  if [[ -e "${target}" ]]; then
+    log "keep existing ${target}"
+    return
+  fi
+
+  if [[ -f "${legacy_source}" ]]; then
+    install -D -m 600 "${legacy_source}" "${target}"
+    log "seeded ${target} from legacy ${legacy_source}"
+    return
+  fi
+
+  install -D -m 600 "${example_source}" "${target}"
+  log "created ${target}"
+}
+
+apply_profile_overrides_if_needed() {
+  ensure_profile
+
+  case "${WIREGUARD_PROFILE}" in
+    wireguard-public-vpn)
+      [[ -n "${LAN_SUBNET}" ]] && warn "--lan-subnet is ignored for ${WIREGUARD_PROFILE}"
+      replace_config_value "${IPHONE_CONFIG}" "AllowedIPs" "10.99.0.1/32"
+      log "set WireGuard host-only AllowedIPs to 10.99.0.1/32 in ${IPHONE_CONFIG}"
+      ;;
+    wireguard-lan-vpn)
+      if [[ -n "${LAN_SUBNET}" ]]; then
+        replace_placeholder_in_file "${IPHONE_CONFIG}" "<lan-subnet-cidr>" "${LAN_SUBNET}"
+        replace_config_value "${IPHONE_CONFIG}" "AllowedIPs" "10.99.0.0/24, ${LAN_SUBNET}"
+        log "set WireGuard LAN AllowedIPs to 10.99.0.0/24, ${LAN_SUBNET} in ${IPHONE_CONFIG}"
+        return
+      fi
+
+      if grep -q '<lan-subnet-cidr>' "${IPHONE_CONFIG}" 2>/dev/null; then
+        warn "wireguard-lan-vpn still needs a real LAN subnet in ${IPHONE_CONFIG}; set it manually or rerun with --lan-subnet"
+      elif ! grep -Eq '^[[:space:]]*AllowedIPs[[:space:]]*=[[:space:]]*10\.99\.0\.0/24,' "${IPHONE_CONFIG}" 2>/dev/null; then
+        warn "wireguard-lan-vpn expects iPhone AllowedIPs to include the full tunnel subnet and a LAN subnet; rerun with --lan-subnet or update ${IPHONE_CONFIG} manually"
+      fi
+      ;;
+  esac
+}
+
 contains_placeholders() {
   grep -Eq '<[^>]+>' "$1"
 }
@@ -280,6 +407,13 @@ replace_placeholder_in_file() {
   local placeholder="$2"
   local value="$3"
   sed -i "s|${placeholder}|${value}|g" "${path}"
+}
+
+replace_config_value() {
+  local path="$1"
+  local key_name="$2"
+  local value="$3"
+  sed -i "s|^[[:space:]]*${key_name}[[:space:]]*=.*$|${key_name} = ${value}|" "${path}"
 }
 
 extract_first_config_value() {
@@ -557,12 +691,18 @@ while [[ $# -gt 0 ]]; do
       INIT_LOCAL_CONFIGS=1
       shift
       ;;
+    --profile)
+      WIREGUARD_PROFILE="$2"
+      shift 2
+      ;;
     --server-config)
       SERVER_CONFIG="$2"
+      SERVER_CONFIG_EXPLICIT=1
       shift 2
       ;;
     --iphone-config)
       IPHONE_CONFIG="$2"
+      IPHONE_CONFIG_EXPLICIT=1
       shift 2
       ;;
     --server-dest)
@@ -575,6 +715,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --dns-hostname)
       WIREGUARD_DNS_HOSTNAME="$2"
+      shift 2
+      ;;
+    --lan-subnet)
+      LAN_SUBNET="$2"
       shift 2
       ;;
     --generate-missing-keys)
@@ -619,9 +763,13 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+ensure_profile
+apply_profile_local_defaults
+
 if (( INIT_LOCAL_CONFIGS == 1 )); then
-  copy_if_missing "${SERVER_EXAMPLE}" "${SERVER_CONFIG}"
-  copy_if_missing "${IPHONE_EXAMPLE}" "${IPHONE_CONFIG}"
+  copy_seeded_local_if_missing "$(selected_server_example)" "${LEGACY_SERVER_LOCAL_DEFAULT}" "${SERVER_CONFIG}"
+  copy_seeded_local_if_missing "$(selected_iphone_example)" "${LEGACY_IPHONE_LOCAL_DEFAULT}" "${IPHONE_CONFIG}"
+  apply_profile_overrides_if_needed
   if (( GENERATE_MISSING_KEYS == 1 )); then
     require_command wg
     generate_missing_keys_if_needed
@@ -634,6 +782,7 @@ require_root
 require_command install
 require_command systemctl
 install_runtime_packages_if_needed
+apply_profile_overrides_if_needed
 generate_missing_keys_if_needed
 autofill_iphone_endpoint_if_needed
 
