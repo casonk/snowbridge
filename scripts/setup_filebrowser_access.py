@@ -59,6 +59,14 @@ class AppSpec:
     root: str
 
 
+@dataclass
+class AuthSpec:
+    method: str
+    proxy_header: str | None
+    proxy_username: str | None
+    hide_login_button: bool
+
+
 def log(message: str) -> None:
     print(message)
 
@@ -236,6 +244,46 @@ def parse_app_spec(data: dict, config_path: Path) -> AppSpec:
     return AppSpec(root=str(app.get("root", "/srv")))
 
 
+def parse_auth_spec(data: dict, config_path: Path, runtime_spec: RuntimeSpec) -> AuthSpec | None:
+    auth = data.get("auth")
+
+    if auth is None:
+        if runtime_spec.mode != "private-vpn-mtls":
+            return None
+        return AuthSpec(
+            method="proxy",
+            proxy_header="X-Snowbridge-Auth-User",
+            proxy_username="snowbridge",
+            hide_login_button=True,
+        )
+
+    if not isinstance(auth, dict):
+        fail(f"invalid [auth] section in {config_path}")
+
+    default_method = "proxy" if runtime_spec.mode == "private-vpn-mtls" else "json"
+    method = str(auth.get("method", default_method)).strip()
+    if not method:
+        fail(f"[auth] method is empty in {config_path}")
+
+    proxy_header: str | None = None
+    proxy_username: str | None = None
+    if method == "proxy":
+        proxy_header = str(auth.get("proxy_header", "X-Snowbridge-Auth-User")).strip()
+        proxy_username = str(auth.get("proxy_username", "snowbridge")).strip()
+        if not proxy_header:
+            fail(f"[auth] proxy_header is required when method=proxy in {config_path}")
+        if not proxy_username:
+            fail(f"[auth] proxy_username is required when method=proxy in {config_path}")
+
+    hide_login_button = bool(auth.get("hide_login_button", method == "proxy"))
+    return AuthSpec(
+        method=method,
+        proxy_header=proxy_header,
+        proxy_username=proxy_username,
+        hide_login_button=hide_login_button,
+    )
+
+
 def parse_users(data: dict, config_path: Path) -> list[UserSpec]:
     users = data.get("users", [])
     if not isinstance(users, list) or not users:
@@ -254,6 +302,18 @@ def parse_users(data: dict, config_path: Path) -> list[UserSpec]:
             fail(f"user {username} still has a placeholder password in {config_path}")
         parsed.append(UserSpec(username=username, password=password, scope=scope, admin=admin))
     return parsed
+
+
+def validate_auth_users(auth_spec: AuthSpec | None, users: list[UserSpec], config_path: Path) -> None:
+    if auth_spec is None or auth_spec.method != "proxy":
+        return
+
+    usernames = {user.username for user in users}
+    if auth_spec.proxy_username not in usernames:
+        fail(
+            f"[auth] proxy_username {auth_spec.proxy_username!r} is not present in [[users]] "
+            f"within {config_path}"
+        )
 
 
 def detect_container_runtime(preferred: str) -> str:
@@ -466,6 +526,7 @@ def apply_filebrowser_state(
     config_dir: str,
     runtime_spec: RuntimeSpec,
     app_spec: AppSpec,
+    auth_spec: AuthSpec | None,
     users: list[UserSpec],
     dry_run: bool,
 ) -> None:
@@ -481,6 +542,31 @@ def apply_filebrowser_state(
         ["config", "set", "--root", app_spec.root, "-d", runtime_spec.database_path],
     )
     run_command(config_set_command, dry_run)
+
+    if auth_spec is not None:
+        auth_args = [
+            "config",
+            "set",
+            f"--auth.method={auth_spec.method}",
+            f"--hideLoginButton={'true' if auth_spec.hide_login_button else 'false'}",
+            "-d",
+            runtime_spec.database_path,
+        ]
+        if auth_spec.method == "proxy":
+            auth_args.insert(2, f"--auth.header={auth_spec.proxy_header}")
+
+        auth_command = build_filebrowser_run_command(
+            runtime,
+            uid,
+            gid,
+            share_root,
+            db_dir,
+            config_dir,
+            runtime_spec.filebrowser_image,
+            runtime_spec.share_mount_path,
+            auth_args,
+        )
+        run_command(auth_command, dry_run)
 
     for user in users:
         exists = filebrowser_user_exists(
@@ -571,7 +657,9 @@ def main() -> int:
     config_data = load_toml_config(config_path, args.dry_run)
     runtime_spec = parse_runtime_spec(config_data, config_path)
     app_spec = parse_app_spec(config_data, config_path)
+    auth_spec = parse_auth_spec(config_data, config_path, runtime_spec)
     users = parse_users(config_data, config_path)
+    validate_auth_users(auth_spec, users, config_path)
 
     runtime = detect_container_runtime(runtime_spec.container_runtime)
     env_values = load_env_file(runtime_spec.web_env_file)
@@ -603,6 +691,7 @@ def main() -> int:
         config_dir,
         runtime_spec,
         app_spec,
+        auth_spec,
         users,
         args.dry_run,
     )

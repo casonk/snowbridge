@@ -214,6 +214,9 @@ This mode keeps the same private-VPN-only bind and hostname pattern as
 `CADDY_DATA_DIR/mtls/client-ca.crt`.
 The setup script creates that CA automatically if it is missing, and the mTLS
 profile exporter then issues a per-device identity from it.
+The File Browser access script also flips this mode to File Browser proxy auth
+and hides the extra login button, while the Caddyfile injects the trusted
+username `snowbridge` upstream through `X-Snowbridge-Auth-User`.
 The generated `.mobileconfig` includes both the local Caddy root CA and the
 client identity, while the fallback staged `.p12` file gives you a manual
 import path if the profile workflow fails on the device.

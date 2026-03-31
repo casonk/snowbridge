@@ -33,7 +33,7 @@ custom client app or a separate sync workflow.
 - `scripts/setup_bind_share.py`: creates mountpoints, ACLs, and bind mounts
 - `scripts/setup_wireguard.sh`: installs a local WireGuard config for either `wireguard-public-vpn` or `wireguard-lan-vpn`, auto-generates missing peer keys, configures split DNS and firewalld for private WireGuard clients, auto-fills the iPhone peer endpoint from the current public IP when needed, validates the remaining peer values, and can render an optional iPhone QR
 - `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack in `private-vpn`, `private-vpn-mtls`, `public`, or `public-private-ip` mode, installing a supported container runtime and Compose frontend when needed, with optional local-browser bootstrap for hostname mapping and Caddy CA trust
-- `scripts/setup_filebrowser_access.py`: applies File Browser root, users, and runtime UID/GID sync from a local TOML config
+- `scripts/setup_filebrowser_access.py`: applies File Browser root, users, auth mode, and runtime UID/GID sync from a local TOML config
 - `scripts/export_caddy_root_profile.py`: generates an iPhone-installable `.mobileconfig` for Caddy's local CA and stages it into the SMB share
 - `scripts/export_caddy_mtls_profile.py`: issues a per-device mTLS client identity, packages it with the private Caddy root CA into an iPhone-installable `.mobileconfig`, and stages the results into the SMB share
 - `scripts/debug_private_access.sh`: collects a single report covering WireGuard, dnsmasq, firewalld, Samba, Caddy, and File Browser state for private-access debugging

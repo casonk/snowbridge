@@ -24,7 +24,12 @@ https://files.snowbridge.internal {
 	}
 
 	encode zstd gzip
-	reverse_proxy filebrowser:8080
+	reverse_proxy filebrowser:8080 {
+		# In mTLS mode, Caddy is the authentication boundary. It injects the
+		# trusted File Browser username so the app can use proxy auth and skip the
+		# extra login page.
+		header_up X-Snowbridge-Auth-User snowbridge
+	}
 
 	header {
 		Strict-Transport-Security "max-age=31536000"

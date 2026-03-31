@@ -25,6 +25,17 @@ restart_strategy = "recreate"
 [app]
 root = "/srv"
 
+[auth]
+# When omitted, private-vpn-mtls defaults to File Browser proxy auth and maps
+# trusted client certificates to the "snowbridge" app user through Caddy's
+# injected X-Snowbridge-Auth-User header.
+# Supported methods depend on File Browser, but the common values are "json",
+# "proxy", and "noauth".
+method = "json"
+proxy_header = "X-Snowbridge-Auth-User"
+proxy_username = "snowbridge"
+hide_login_button = false
+
 [[users]]
 username = "admin"
 password = 'CHOOSE_ADMIN_PASSWORD'

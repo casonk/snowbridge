@@ -258,3 +258,13 @@
 - For iPhone installability, export the client identity and the private Caddy
   root CA together as a staged `.mobileconfig`, but keep the signing CA private
   key outside git and outside the SMB share.
+
+### 2026-03-30 — Private mTLS browser mode should terminate auth at Caddy and proxy the trusted app user
+
+- If the private HTTPS layer already requires a verified client certificate, do
+  not leave a second interactive username/password page in front of the same
+  app path by default.
+- For this repo's File Browser integration, prefer Caddy mTLS plus File Browser
+  proxy auth with an injected trusted username header so a valid device
+  certificate lands directly in the app while the service remains unreachable
+  without the client cert.

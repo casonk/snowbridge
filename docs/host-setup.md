@@ -401,6 +401,10 @@ the browser can reach File Browser at all. The web-setup script generates that
 client CA automatically under `CADDY_DATA_DIR/mtls/` when the mode is first
 applied, and the mTLS export script issues a per-device identity and packages
 it with the private Caddy root CA into an Apple `.mobileconfig`.
+In this mode the File Browser access script also switches File Browser to proxy
+auth automatically, and the Caddyfile injects the trusted app username
+`snowbridge`, so a valid client certificate lands directly in the file UI
+without a second username/password prompt.
 
 On the iPhone:
 
