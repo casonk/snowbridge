@@ -7,8 +7,9 @@ portfolio root. This repository is `./util-repos/snowbridge`.
 
 ## Repository Purpose
 
-`snowbridge` is the configuration and operations repo for a personal fileshare
-hosted on a home desktop.
+`snowbridge` is the portfolio-standard SMB-based private file-sharing utility
+repo and the configuration/operations home for a personal fileshare hosted on a
+home desktop.
 
 The current baseline is:
 
