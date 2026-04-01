@@ -28,7 +28,7 @@ fi
 mapfile -t LUKS_TARGETS < <(
     awk '/^# --- snowbridge bind mounts/,/^# --- snowbridge bind mounts.*end/' \
         /etc/fstab \
-    | awk '!/^#/ && $2 ~ /^'"${SHARE_ROOT}"'/ && $1 ~ /^\/mnt\// {print $2}'
+    | awk -v share="${SHARE_ROOT}" '!/^#/ && index($2, share) == 1 && $1 ~ /^\/mnt\// {print $2}'
 )
 
 if [[ ${#LUKS_TARGETS[@]} -eq 0 ]]; then
