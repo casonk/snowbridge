@@ -27,6 +27,7 @@ The current baseline is:
 - `./util-repos/nordility`: standard VPN-switching utility repo
 - `./util-repos/shock-relay`: standard external-messaging utility repo
 - `./util-repos/short-circuit`: standard WireGuard VPN setup and configuration
+- `./util-repos/dyno-lab`: standard unified test bench utility repo
   utility; use it to install and manage the WireGuard tunnel used for remote
   SMB and HTTPS access
 
