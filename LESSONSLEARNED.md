@@ -259,6 +259,26 @@
   root CA together as a staged `.mobileconfig`, but keep the signing CA private
   key outside git and outside the SMB share.
 
+### 2026-04-01 — fstab bind mounts over LUKS-backed ext4 paths capture empty btrfs stubs at boot
+
+- The fstab bind-mount block for the snowbridge share runs at boot, before the
+  LUKS-encrypted drives are unlocked and their ext4 filesystems are mounted.
+- Bind mounts created at that point capture the empty btrfs stub directories
+  that sit under the ext4 mount points (e.g. the root btrfs subvolume's
+  `/mnt/4tb-m2/read`), not the actual ext4 content.
+- After the user unlocks LUKS (via KeePassXC), the bind mounts remain stale —
+  `findmnt` reports the source as the btrfs device even though the ext4 content
+  is now accessible at the same path.
+- `setup_bind_share.py` currently treats the btrfs-subpath form
+  `nvme1n1p3[/root/mnt/4tb-m2/read]` as matching the expected source
+  `/mnt/4tb-m2/read` via an `endswith` check, so it silently skips the stale
+  bind mount without re-creating it.
+- Fix: run `sudo bash scripts/remount_luks_share.sh` once per session after
+  unlocking LUKS.  The script unmounts the stale binds and re-mounts them from
+  the fstab entries, this time going through the live ext4 paths.
+- Folders whose sources are on btrfs (e.g. `keepass` at `/home/user/luks`) are
+  unaffected because they are accessible at boot and the bind mount is correct.
+
 ### 2026-03-30 — Private mTLS browser mode should terminate auth at Caddy and proxy the trusted app user
 
 - If the private HTTPS layer already requires a verified client certificate, do

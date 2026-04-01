@@ -111,6 +111,27 @@ Useful flags:
 Bind mounts are the recommended path for exposing folders that live outside the
 share root. Avoid Samba `wide links` for this use case.
 
+### After Unlocking LUKS Drives
+
+If any of the source folders in `folders.local.ini` live on LUKS-encrypted
+drives (mounted under `/mnt/`), the fstab bind mounts created above will have
+run at boot **before** those drives were unlocked.  That means they captured
+empty btrfs stub directories rather than the actual drive content.
+
+After you unlock your LUKS volumes (e.g. via KeePassXC), run:
+
+```bash
+sudo bash scripts/remount_luks_share.sh
+```
+
+This unmounts the stale fstab bind mounts and re-mounts them through the
+now-live ext4 paths.  You need to run this **once per session** after unlocking
+your drives.  File Browser will reflect the correct folder contents on the next
+directory listing.
+
+Folders whose sources are on btrfs (e.g. a path under `/home/`) are unaffected
+and do not need a post-LUKS remount.
+
 ## 6. Apply the Samba Configuration
 
 Use `config/samba/smb.conf.example` as the baseline.
