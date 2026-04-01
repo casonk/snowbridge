@@ -28,12 +28,12 @@ custom client app or a separate sync workflow.
 - `config/samba/smb.conf.example`: baseline Samba share configuration
 - `config/share-layout/folders.example.ini`: bind-mounted folder layout example
 - `config/network/`: stable-address examples for the host network
-- `config/access/`: VPN templates for Tailscale plus two WireGuard profiles: host-only `wireguard-public-vpn` and wider-subnet `wireguard-lan-vpn`
+- `config/access/wireguard/`: WireGuard config examples for the `wireguard-public-vpn` and `wireguard-lan-vpn` profiles; use `./util-repos/short-circuit/scripts/setup_wireguard.sh` to install them
+- `config/access/tailscale/`: Tailscale subnet router example
 - `config/web/`: optional Caddy and File Browser templates for web access, including private-VPN HTTPS, private-VPN HTTPS with mTLS client certificates, and public HTTPS modes that can bind on either all interfaces or a specific private host IP behind router/NAT forwarding
 - `scripts/setup_bind_share.py`: creates mountpoints, ACLs, and bind mounts
 - `scripts/remount_luks_share.sh`: refreshes fstab bind mounts whose sources are on LUKS ext4 drives, for running after LUKS volumes are unlocked
 - `scripts/start_snowbridge.sh`: single post-LUKS startup script — refreshes bind mounts, starts Samba, and brings up the File Browser + Caddy stack; append to your LUKS bootstrap
-- `scripts/setup_wireguard.sh`: installs a local WireGuard config for either `wireguard-public-vpn` or `wireguard-lan-vpn`, auto-generates missing peer keys, configures split DNS and firewalld for private WireGuard clients, auto-fills the iPhone peer endpoint from the current public IP when needed, validates the remaining peer values, and can render an optional iPhone QR
 - `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack in `private-vpn`, `private-vpn-mtls`, `public`, or `public-private-ip` mode, installing a supported container runtime and Compose frontend when needed, with optional local-browser bootstrap for hostname mapping and Caddy CA trust
 - `scripts/setup_filebrowser_access.py`: applies File Browser root, users, auth mode, and runtime UID/GID sync from a local TOML config
 - `scripts/export_caddy_root_profile.py`: generates an iPhone-installable `.mobileconfig` for Caddy's local CA and stages it into the SMB share
@@ -84,6 +84,31 @@ discovery, stable-address guidance, the split between `wireguard-public-vpn`,
 web access notes.
 See `docs/access-patterns.md` for the concrete template files backing the
 optional static-IP, VPN, and HTTPS access patterns.
+
+## WireGuard Setup
+
+WireGuard installation and configuration tooling is provided by
+`./util-repos/short-circuit`. The config templates in `config/access/wireguard/`
+contain the snowbridge-specific profile examples for `wireguard-public-vpn` and
+`wireguard-lan-vpn`. Use `short-circuit` to initialize and install them:
+
+```bash
+# from short-circuit repo root
+./scripts/setup_wireguard.sh \
+  --init-local-configs \
+  --profile wireguard-public-vpn \
+  --server-config /path/to/snowbridge/config/access/wireguard/wg0-server.public-vpn.local.conf \
+  --client-config /path/to/snowbridge/config/access/wireguard/iphone-peer.public-vpn.local.conf
+
+sudo ./scripts/setup_wireguard.sh \
+  --profile wireguard-public-vpn \
+  --server-config /path/to/snowbridge/config/access/wireguard/wg0-server.public-vpn.local.conf \
+  --client-config /path/to/snowbridge/config/access/wireguard/iphone-peer.public-vpn.local.conf \
+  --dns-hostname files.snowbridge.internal \
+  --print-client-qr
+```
+
+See `./util-repos/short-circuit/docs/setup-guide.md` for the full walkthrough.
 
 ## Contributing
 
