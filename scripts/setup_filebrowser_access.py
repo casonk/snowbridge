@@ -20,6 +20,7 @@ from typing import NoReturn
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+AUTO_PASS_ROOT = REPO_ROOT.parent / "auto-pass"
 DEFAULT_CONFIG = REPO_ROOT / "config" / "web" / "filebrowser" / "access.local.toml"
 DEFAULT_EXAMPLE = REPO_ROOT / "config" / "web" / "filebrowser" / "access.example.toml"
 DEFAULT_WEB_ENV = REPO_ROOT / "config" / "web" / "filebrowser" / "filebrowser.env.local"
@@ -73,6 +74,27 @@ def log(message: str) -> None:
 
 def fail(message: str) -> NoReturn:
     raise SetupError(message)
+
+
+def _resolve_keepass_value(entry: str, field: str) -> str:
+    """Resolve a single field from a KeePassXC entry via the auto-pass sibling repo."""
+    if not entry:
+        return ""
+    try:
+        _src = str(AUTO_PASS_ROOT / "src")
+        if _src not in sys.path:
+            sys.path.insert(0, _src)
+        from auto_pass.envfile import load_config_environment  # noqa: PLC0415
+        from auto_pass.keepassxc import resolve_keepassxc_entry  # noqa: PLC0415
+        _ap_env = AUTO_PASS_ROOT / "config" / "auto-pass.env.local"
+        if _ap_env.is_file():
+            load_config_environment(_ap_env)
+        result = resolve_keepassxc_entry(entry, attrs_map={"value": field})
+        return result.get("value", "")
+    except Exception as exc:
+        raise SetupError(
+            f"auto-pass lookup failed for entry {entry!r} field {field!r}: {exc}"
+        ) from exc
 
 
 def require_root() -> None:
@@ -294,10 +316,13 @@ def parse_users(data: dict, config_path: Path) -> list[UserSpec]:
             fail(f"invalid [[users]] entry in {config_path}")
         username = str(entry.get("username", "")).strip()
         password = str(entry.get("password", ""))
+        password_entry = str(entry.get("password_keepass_entry", "")).strip()
         scope = str(entry.get("scope", "."))
         admin = bool(entry.get("admin", False))
         if not username:
             fail(f"[[users]] entry missing username in {config_path}")
+        if (not password or password.startswith("CHOOSE_") or password.startswith("REPLACE_")) and password_entry:
+            password = _resolve_keepass_value(password_entry, "password")
         if not password or password.startswith("CHOOSE_") or password.startswith("REPLACE_"):
             fail(f"user {username} still has a placeholder password in {config_path}")
         parsed.append(UserSpec(username=username, password=password, scope=scope, admin=admin))

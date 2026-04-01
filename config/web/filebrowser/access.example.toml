@@ -42,12 +42,15 @@ root = "/srv"
 
 [[users]]
 username = "admin"
-password = 'CHOOSE_ADMIN_PASSWORD'
+# Provide password as a plaintext value OR via a KeePassXC entry (preferred).
+# password = 'CHOOSE_ADMIN_PASSWORD'
+password_keepass_entry = "CHOOSE_KEEPASS_ENTRY_PATH"
 scope = "."
 admin = true
 
 [[users]]
 username = "snowbridge"
-password = 'CHOOSE_FILEBROWSER_PASSWORD'
+# password = 'CHOOSE_FILEBROWSER_PASSWORD'
+password_keepass_entry = "CHOOSE_KEEPASS_ENTRY_PATH"
 scope = "."
 admin = false
