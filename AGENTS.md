@@ -26,6 +26,9 @@ The current baseline is:
 - `./util-repos/auto-pass`: standard password-management utility repo
 - `./util-repos/nordility`: standard VPN-switching utility repo
 - `./util-repos/shock-relay`: standard external-messaging utility repo
+- `./util-repos/short-circuit`: standard WireGuard VPN setup and configuration
+  utility; use it to install and manage the WireGuard tunnel used for remote
+  SMB and HTTPS access
 
 ## Session Continuity
 
@@ -39,6 +42,8 @@ The current baseline is:
 
 - `README.md`
 - `config/samba/smb.conf.example`
+- `config/access/wireguard/`: WireGuard config examples (server and client peer);
+  use `./util-repos/short-circuit/scripts/setup_wireguard.sh` to install them
 - `docs/host-setup.md`
 - `docs/contributor-architecture-blueprint.md`
 - `docs/diagrams/repo-architecture.puml`

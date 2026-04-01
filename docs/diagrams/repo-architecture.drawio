@@ -9,71 +9,71 @@
           <mxGeometry x="30" y="20" width="1740" height="80" as="geometry" />
         </mxCell>
         <mxCell id="panel_clients" value="Clients" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F8FAFC;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=22;fontStyle=1;align=center;verticalAlign=top;spacingTop=12;" vertex="1" parent="1">
-          <mxGeometry x="40" y="140" width="320" height="320" as="geometry" />
+          <mxGeometry x="40" y="140" width="320" height="350" as="geometry" />
         </mxCell>
         <mxCell id="smb_clients" value="SMB clients&#10;iPhone Files app&#10;trusted devices" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#F472B6;fontColor=#1F2937;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
           <mxGeometry x="70" y="210" width="260" height="90" as="geometry" />
         </mxCell>
         <mxCell id="browser_clients" value="Browser clients&#10;iPhone Safari&#10;laptop browser" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#F472B6;fontColor=#1F2937;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="70" y="330" width="260" height="90" as="geometry" />
+          <mxGeometry x="70" y="360" width="260" height="90" as="geometry" />
         </mxCell>
         <mxCell id="panel_access" value="Access Profiles" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F8FAFC;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=22;fontStyle=1;align=center;verticalAlign=top;spacingTop=12;" vertex="1" parent="1">
-          <mxGeometry x="400" y="140" width="360" height="410" as="geometry" />
+          <mxGeometry x="400" y="140" width="360" height="485" as="geometry" />
         </mxCell>
         <mxCell id="lan_smb" value="LAN SMB&#10;local hostname / private IP" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#F472B6;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
           <mxGeometry x="430" y="205" width="300" height="80" as="geometry" />
         </mxCell>
         <mxCell id="wireguard_profiles" value="WireGuard VPN&#10;wireguard-public-vpn | wireguard-lan-vpn&#10;split DNS + firewall rules" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#F472B6;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="430" y="315" width="300" height="100" as="geometry" />
+          <mxGeometry x="430" y="345" width="300" height="100" as="geometry" />
         </mxCell>
         <mxCell id="https_profiles" value="HTTPS profiles&#10;private-vpn | private-vpn-mtls&#10;public | public-private-ip" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#F472B6;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="430" y="445" width="300" height="80" as="geometry" />
+          <mxGeometry x="430" y="505" width="300" height="80" as="geometry" />
         </mxCell>
         <mxCell id="panel_repo" value="snowbridge Repo" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F8FAFC;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=22;fontStyle=1;align=center;verticalAlign=top;spacingTop=12;" vertex="1" parent="1">
-          <mxGeometry x="800" y="140" width="420" height="430" as="geometry" />
+          <mxGeometry x="800" y="140" width="420" height="500" as="geometry" />
         </mxCell>
         <mxCell id="repo_docs" value="README.md&#10;docs/host-setup.md&#10;docs/access-patterns.md&#10;architecture blueprint" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E2E8F0;strokeColor=#94A3B8;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
           <mxGeometry x="830" y="205" width="360" height="90" as="geometry" />
         </mxCell>
         <mxCell id="repo_config" value="config/share-layout&#10;config/samba&#10;config/access&#10;config/web" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#60A5FA;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="830" y="325" width="360" height="90" as="geometry" />
+          <mxGeometry x="830" y="355" width="360" height="90" as="geometry" />
         </mxCell>
         <mxCell id="repo_scripts" value="setup_bind_share.py&#10;setup_wireguard.sh&#10;setup_caddy_filebrowser.sh&#10;setup_filebrowser_access.py&#10;export_caddy_*_profile.py&#10;debug_private_access.sh" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#60A5FA;fontColor=#1F2937;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="830" y="445" width="360" height="95" as="geometry" />
+          <mxGeometry x="830" y="505" width="360" height="95" as="geometry" />
         </mxCell>
         <mxCell id="panel_runtime" value="Host Runtime" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F8FAFC;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=22;fontStyle=1;align=center;verticalAlign=top;spacingTop=12;" vertex="1" parent="1">
-          <mxGeometry x="1260" y="140" width="500" height="540" as="geometry" />
+          <mxGeometry x="1260" y="140" width="500" height="635" as="geometry" />
         </mxCell>
         <mxCell id="samba_service" value="Samba service&#10;dedicated SMB user" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#4ADE80;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
           <mxGeometry x="1290" y="205" width="440" height="80" as="geometry" />
         </mxCell>
         <mxCell id="share_root" value="Share root&#10;/srv/snowbridge/share&#10;bind-mounted folders" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FEF3C7;strokeColor=#F59E0B;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="1290" y="315" width="440" height="90" as="geometry" />
+          <mxGeometry x="1290" y="345" width="440" height="90" as="geometry" />
         </mxCell>
         <mxCell id="private_access" value="WireGuard + dnsmasq + firewalld&#10;private routing and DNS" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#4ADE80;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="1290" y="435" width="440" height="90" as="geometry" />
+          <mxGeometry x="1290" y="495" width="440" height="90" as="geometry" />
         </mxCell>
         <mxCell id="web_stack" value="Caddy + File Browser&#10;optional browser access&#10;proxy auth or mTLS at edge" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#4ADE80;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="1290" y="555" width="440" height="90" as="geometry" />
+          <mxGeometry x="1290" y="645" width="440" height="90" as="geometry" />
         </mxCell>
         <mxCell id="shared_files" value="External source folders&#10;/home/... /mnt/..." style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FEF3C7;strokeColor=#F59E0B;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="400" y="620" width="360" height="90" as="geometry" />
+          <mxGeometry x="400" y="695" width="360" height="90" as="geometry" />
         </mxCell>
         <mxCell id="host_state" value="Local configs / passdb / Caddy PKI&#10;runtime metadata / debug reports" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FDE68A;strokeColor=#F59E0B;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="830" y="620" width="390" height="90" as="geometry" />
+          <mxGeometry x="830" y="690" width="390" height="90" as="geometry" />
         </mxCell>
         <mxCell id="staged_profiles" value="Staged install artifacts&#10;tmp/*.mobileconfig&#10;CA + client profiles" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FDE68A;strokeColor=#F59E0B;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="1290" y="715" width="440" height="90" as="geometry" />
+          <mxGeometry x="1290" y="810" width="440" height="90" as="geometry" />
         </mxCell>
         <mxCell id="note_boundary" value="Keep SMB, VPN, and HTTPS as separate access profiles.&#10;private-vpn-mtls terminates device certificates at Caddy while File Browser can stay on proxy-auth mode behind that edge.&#10;The share root is a bind-mounted staging tree, not the canonical file location, and host-only secrets or reports stay out of commits." style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFF7ED;strokeColor=#FDBA74;fontColor=#1F2937;fontSize=16;align=left;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
-          <mxGeometry x="250" y="860" width="1480" height="120" as="geometry" />
+          <mxGeometry x="250" y="1130" width="1480" height="120" as="geometry" />
         </mxCell>
         <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="smb_clients" target="lan_smb">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
               <mxPoint x="354" y="250" />
-              <mxPoint x="354" y="-30" />
-              <mxPoint x="406" y="-30" />
+              <mxPoint x="354" y="227" />
+              <mxPoint x="406" y="227" />
               <mxPoint x="406" y="245" />
             </Array>
           </mxGeometry>
@@ -82,29 +82,28 @@
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
               <mxPoint x="354" y="260" />
-              <mxPoint x="354" y="573" />
-              <mxPoint x="406" y="573" />
-              <mxPoint x="406" y="355" />
+              <mxPoint x="354" y="316" />
+              <mxPoint x="406" y="316" />
+              <mxPoint x="406" y="385" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="browser_clients" target="wireguard_profiles">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="354" y="370" />
-              <mxPoint x="354" y="591" />
-              <mxPoint x="406" y="591" />
-              <mxPoint x="406" y="375" />
+              <mxPoint x="354" y="400" />
+              <mxPoint x="354" y="334" />
+              <mxPoint x="406" y="334" />
+              <mxPoint x="406" y="405" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="browser_clients" target="https_profiles">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="354" y="380" />
-              <mxPoint x="354" y="742" />
-              <mxPoint x="406" y="742" />
-              <mxPoint x="406" y="485" />
+              <mxPoint x="354" y="410" />
+              <mxPoint x="354" y="545" />
+              <mxPoint x="406" y="545" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -112,8 +111,6 @@
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
               <mxPoint x="754" y="245" />
-              <mxPoint x="754" y="-12" />
-              <mxPoint x="1266" y="-12" />
               <mxPoint x="1266" y="245" />
             </Array>
           </mxGeometry>
@@ -121,9 +118,9 @@
         <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="wireguard_profiles" target="samba_service">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="754" y="355" />
-              <mxPoint x="754" y="6" />
-              <mxPoint x="1266" y="6" />
+              <mxPoint x="754" y="385" />
+              <mxPoint x="754" y="263" />
+              <mxPoint x="1266" y="263" />
               <mxPoint x="1266" y="245" />
             </Array>
           </mxGeometry>
@@ -131,30 +128,30 @@
         <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="wireguard_profiles" target="private_access">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="754" y="375" />
-              <mxPoint x="754" y="820" />
-              <mxPoint x="1266" y="820" />
-              <mxPoint x="1266" y="475" />
+              <mxPoint x="754" y="405" />
+              <mxPoint x="754" y="460" />
+              <mxPoint x="1266" y="460" />
+              <mxPoint x="1266" y="535" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="private_access" target="web_stack">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1330" y="549" />
-              <mxPoint x="1774" y="549" />
-              <mxPoint x="1774" y="531" />
-              <mxPoint x="1510" y="531" />
+              <mxPoint x="1330" y="609" />
+              <mxPoint x="1492" y="609" />
+              <mxPoint x="1492" y="621" />
+              <mxPoint x="1510" y="621" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="https_profiles" target="web_stack">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="754" y="485" />
-              <mxPoint x="754" y="1003" />
-              <mxPoint x="1266" y="1003" />
-              <mxPoint x="1266" y="595" />
+              <mxPoint x="754" y="545" />
+              <mxPoint x="754" y="623" />
+              <mxPoint x="1266" y="623" />
+              <mxPoint x="1266" y="685" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -162,9 +159,9 @@
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
               <mxPoint x="870" y="319" />
-              <mxPoint x="-10" y="319" />
-              <mxPoint x="-10" y="301" />
-              <mxPoint x="1010" y="301" />
+              <mxPoint x="992" y="319" />
+              <mxPoint x="992" y="331" />
+              <mxPoint x="1010" y="331" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -172,28 +169,28 @@
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
               <mxPoint x="1150" y="319" />
-              <mxPoint x="8" y="319" />
-              <mxPoint x="8" y="421" />
-              <mxPoint x="870" y="421" />
+              <mxPoint x="1010" y="319" />
+              <mxPoint x="1010" y="481" />
+              <mxPoint x="870" y="481" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_config" target="repo_scripts">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1010" y="439" />
-              <mxPoint x="26" y="439" />
-              <mxPoint x="26" y="421" />
-              <mxPoint x="1150" y="421" />
+              <mxPoint x="1010" y="469" />
+              <mxPoint x="1028" y="469" />
+              <mxPoint x="1028" y="481" />
+              <mxPoint x="1150" y="481" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_scripts" target="samba_service">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1010" y="421" />
-              <mxPoint x="1001" y="421" />
-              <mxPoint x="1001" y="309" />
+              <mxPoint x="1010" y="481" />
+              <mxPoint x="1249" y="481" />
+              <mxPoint x="1249" y="309" />
               <mxPoint x="1510" y="309" />
             </Array>
           </mxGeometry>
@@ -201,40 +198,39 @@
         <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_scripts" target="share_root">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1214" y="485" />
-              <mxPoint x="1214" y="492.5" />
-              <mxPoint x="1266" y="492.5" />
-              <mxPoint x="1266" y="360" />
+              <mxPoint x="1214" y="545" />
+              <mxPoint x="1214" y="173" />
+              <mxPoint x="1266" y="173" />
+              <mxPoint x="1266" y="390" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_scripts" target="private_access">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1214" y="492.5" />
-              <mxPoint x="1214" y="838" />
-              <mxPoint x="1266" y="838" />
-              <mxPoint x="1266" y="485" />
+              <mxPoint x="1214" y="552.5" />
+              <mxPoint x="1214" y="478" />
+              <mxPoint x="1266" y="478" />
+              <mxPoint x="1266" y="545" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_scripts" target="web_stack">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1214" y="500" />
-              <mxPoint x="1214" y="1021" />
-              <mxPoint x="1266" y="1021" />
-              <mxPoint x="1266" y="605" />
+              <mxPoint x="1214" y="560" />
+              <mxPoint x="1214" y="641" />
+              <mxPoint x="1266" y="641" />
+              <mxPoint x="1266" y="695" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_scripts" target="staged_profiles">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1010" y="564" />
-              <mxPoint x="1792" y="564" />
-              <mxPoint x="1792" y="691" />
-              <mxPoint x="1510" y="691" />
+              <mxPoint x="1010" y="624" />
+              <mxPoint x="1510" y="624" />
+              <mxPoint x="1510" y="786" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -242,59 +238,58 @@
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
               <mxPoint x="1510" y="309" />
-              <mxPoint x="1810" y="309" />
-              <mxPoint x="1810" y="291" />
-              <mxPoint x="1510" y="291" />
+              <mxPoint x="1528" y="309" />
+              <mxPoint x="1528" y="321" />
+              <mxPoint x="1510" y="321" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="share_root" target="shared_files">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1266" y="360" />
-              <mxPoint x="1266" y="351" />
-              <mxPoint x="784" y="351" />
-              <mxPoint x="784" y="665" />
+              <mxPoint x="1266" y="390" />
+              <mxPoint x="1266" y="932" />
+              <mxPoint x="784" y="932" />
+              <mxPoint x="784" y="740" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="private_access" target="host_state">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1690" y="549" />
-              <mxPoint x="368" y="549" />
-              <mxPoint x="368" y="596" />
-              <mxPoint x="1025" y="596" />
+              <mxPoint x="1690" y="609" />
+              <mxPoint x="1223" y="609" />
+              <mxPoint x="1223" y="666" />
+              <mxPoint x="1025" y="666" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="web_stack" target="share_root">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1510" y="531" />
-              <mxPoint x="1019" y="531" />
-              <mxPoint x="1019" y="429" />
-              <mxPoint x="1510" y="429" />
+              <mxPoint x="1510" y="621" />
+              <mxPoint x="1267" y="621" />
+              <mxPoint x="1267" y="459" />
+              <mxPoint x="1510" y="459" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="web_stack" target="host_state">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1266" y="600" />
-              <mxPoint x="1266" y="369" />
-              <mxPoint x="1244" y="369" />
-              <mxPoint x="1244" y="665" />
+              <mxPoint x="1266" y="690" />
+              <mxPoint x="1266" y="712.5" />
+              <mxPoint x="1244" y="712.5" />
+              <mxPoint x="1244" y="735" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="e23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="host_state" target="staged_profiles">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1244" y="665" />
-              <mxPoint x="1244" y="712.5" />
-              <mxPoint x="1266" y="712.5" />
-              <mxPoint x="1266" y="760" />
+              <mxPoint x="1244" y="735" />
+              <mxPoint x="1244" y="855" />
+              <mxPoint x="1266" y="855" />
             </Array>
           </mxGeometry>
         </mxCell>

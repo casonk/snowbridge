@@ -278,7 +278,10 @@ Templates:
 - `config/access/wireguard/iphone-peer.example.conf`
 - `config/access/wireguard/wg0-server.lan-vpn.example.conf`
 - `config/access/wireguard/iphone-peer.lan-vpn.example.conf`
-- `scripts/setup_wireguard.sh`
+
+WireGuard setup and installation is handled by `./util-repos/short-circuit`.
+Use its `setup_wireguard.sh` installer with the snowbridge config files as
+explicit inputs:
 
 WireGuard profiles:
 
@@ -288,48 +291,52 @@ WireGuard profiles:
 - `wireguard-lan-vpn`: same public WireGuard endpoint, but the client also
   routes the wider home LAN through the tunnel
 
-Example host-only WireGuard flow:
+Example host-only WireGuard flow (from the `short-circuit` repo root):
 
 ```bash
-./scripts/setup_wireguard.sh --init-local-configs --profile wireguard-public-vpn
-sudo ./scripts/setup_wireguard.sh --profile wireguard-public-vpn --print-iphone-qr
+./scripts/setup_wireguard.sh \
+  --init-local-configs \
+  --profile wireguard-public-vpn \
+  --server-config /path/to/snowbridge/config/access/wireguard/wg0-server.public-vpn.local.conf \
+  --client-config /path/to/snowbridge/config/access/wireguard/iphone-peer.public-vpn.local.conf
+
+sudo ./scripts/setup_wireguard.sh \
+  --profile wireguard-public-vpn \
+  --server-config /path/to/snowbridge/config/access/wireguard/wg0-server.public-vpn.local.conf \
+  --client-config /path/to/snowbridge/config/access/wireguard/iphone-peer.public-vpn.local.conf \
+  --dns-hostname files.snowbridge.internal \
+  --print-client-qr
 ```
-
-This creates and expects:
-
-- `config/access/wireguard/wg0-server.public-vpn.local.conf`
-- `config/access/wireguard/iphone-peer.public-vpn.local.conf`
 
 Example wider-LAN WireGuard flow:
 
 ```bash
-./scripts/setup_wireguard.sh --init-local-configs --profile wireguard-lan-vpn --lan-subnet 192.168.0.0/24
-sudo ./scripts/setup_wireguard.sh --profile wireguard-lan-vpn --lan-subnet 192.168.0.0/24 --enable-ip-forward --print-iphone-qr
+./scripts/setup_wireguard.sh \
+  --init-local-configs \
+  --profile wireguard-lan-vpn \
+  --lan-subnet 192.168.0.0/24 \
+  --server-config /path/to/snowbridge/config/access/wireguard/wg0-server.lan-vpn.local.conf \
+  --client-config /path/to/snowbridge/config/access/wireguard/iphone-peer.lan-vpn.local.conf
+
+sudo ./scripts/setup_wireguard.sh \
+  --profile wireguard-lan-vpn \
+  --lan-subnet 192.168.0.0/24 \
+  --enable-ip-forward \
+  --server-config /path/to/snowbridge/config/access/wireguard/wg0-server.lan-vpn.local.conf \
+  --client-config /path/to/snowbridge/config/access/wireguard/iphone-peer.lan-vpn.local.conf \
+  --dns-hostname files.snowbridge.internal \
+  --print-client-qr
 ```
 
-This creates and expects:
+The installer will install missing `wireguard-tools` and `dnsmasq` automatically
+when a supported package manager is present. If the local configs still contain
+paired key placeholders, it generates a matching key pair automatically. If the
+client peer `Endpoint` is still on the sample value, it replaces it with the
+current public IP and warns you to move to a stable DNS name. For
+`wireguard-lan-vpn`, pass `--lan-subnet <cidr>` so it fills the route into the
+client peer profile before validation.
 
-- `config/access/wireguard/wg0-server.lan-vpn.local.conf`
-- `config/access/wireguard/iphone-peer.lan-vpn.local.conf`
-
-The WireGuard setup script will install missing `wireguard-tools` itself when a
-supported package manager is present. If you request QR output, it will also
-install `qrencode` automatically, and by default it also installs `dnsmasq` to
-publish the private web hostname such as `files.snowbridge.internal` to
-WireGuard clients at the tunnel DNS address advertised in the iPhone peer
-config. On firewalld-based hosts it also assigns the WireGuard interface to the
-trusted zone by default so HTTPS and DNS are actually reachable over the tunnel
-without relying on the broader desktop default zone.
-If the local configs still contain the paired server/iPhone key placeholders,
-the script will generate a matching server key pair and iPhone key pair
-automatically before install. If the iPhone peer `Endpoint` is still on the
-checked-in sample value, the script will replace it with the host's current
-public IP and print a warning that you should still move to a stable DNS name
-or other stable public endpoint. It will still stop for any other non-key
-placeholders you have not filled yet. For `wireguard-lan-vpn`, you can either
-replace the checked-in `<lan-subnet-cidr>` placeholder manually or pass
-`--lan-subnet <cidr>` to the setup script so it fills the route into the iPhone
-profile before validation.
+See `./util-repos/short-circuit/docs/setup-guide.md` for the full walkthrough.
 
 ## 12. Optional Web Access
 

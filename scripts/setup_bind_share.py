@@ -17,7 +17,7 @@ from dataclasses import dataclass
 
 MANAGED_BLOCK_START = "# --- snowbridge bind mounts: managed block start ---"
 MANAGED_BLOCK_END = "# --- snowbridge bind mounts: managed block end ---"
-DEFAULT_CONFIG = pathlib.Path("config/share-layout/folders.local.ini")
+DEFAULT_CONFIG = pathlib.Path("../config/share-layout/folders.local.ini")
 FOLDER_SECTION_PREFIX = "folder "
 
 
