@@ -31,6 +31,8 @@ custom client app or a separate sync workflow.
 - `config/access/`: VPN templates for Tailscale plus two WireGuard profiles: host-only `wireguard-public-vpn` and wider-subnet `wireguard-lan-vpn`
 - `config/web/`: optional Caddy and File Browser templates for web access, including private-VPN HTTPS, private-VPN HTTPS with mTLS client certificates, and public HTTPS modes that can bind on either all interfaces or a specific private host IP behind router/NAT forwarding
 - `scripts/setup_bind_share.py`: creates mountpoints, ACLs, and bind mounts
+- `scripts/remount_luks_share.sh`: refreshes fstab bind mounts whose sources are on LUKS ext4 drives, for running after LUKS volumes are unlocked
+- `scripts/start_snowbridge.sh`: single post-LUKS startup script — refreshes bind mounts, starts Samba, and brings up the File Browser + Caddy stack; append to your LUKS bootstrap
 - `scripts/setup_wireguard.sh`: installs a local WireGuard config for either `wireguard-public-vpn` or `wireguard-lan-vpn`, auto-generates missing peer keys, configures split DNS and firewalld for private WireGuard clients, auto-fills the iPhone peer endpoint from the current public IP when needed, validates the remaining peer values, and can render an optional iPhone QR
 - `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack in `private-vpn`, `private-vpn-mtls`, `public`, or `public-private-ip` mode, installing a supported container runtime and Compose frontend when needed, with optional local-browser bootstrap for hostname mapping and Caddy CA trust
 - `scripts/setup_filebrowser_access.py`: applies File Browser root, users, auth mode, and runtime UID/GID sync from a local TOML config
@@ -61,6 +63,20 @@ custom client app or a separate sync workflow.
    Server`, and connect to `smb://<desktop-hostname-or-ip>`.
 10. For remote access, connect through a VPN overlay first. Do not expose SMB
    directly to the public internet.
+
+### After LUKS Unlock (each session)
+
+If any share folders are sourced from LUKS-encrypted drives, the fstab bind
+mounts run at boot before those drives are unlocked and will be stale. Append
+`start_snowbridge.sh` to your LUKS bootstrap script, or run it manually after
+unlocking:
+
+```bash
+sudo bash scripts/start_snowbridge.sh
+```
+
+This refreshes the bind mounts, starts Samba, and brings up the File Browser +
+Caddy container stack in one step.
 
 See `docs/host-setup.md` for the detailed workflow, including hostname/IP
 discovery, stable-address guidance, the split between `wireguard-public-vpn`,
