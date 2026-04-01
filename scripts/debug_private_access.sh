@@ -174,8 +174,8 @@ EOF
   run_shell "firewalld Full Config" "firewall-cmd --list-all || true"
   run_shell "firewalld Trusted Zone" "firewall-cmd --zone=trusted --list-all || true"
 
-  run_shell "dnsmasq Config" "sed -n '1,200p' /etc/dnsmasq.d/snowbridge-wireguard.conf || true"
-  run_shell "dnsmasq Drop-in" "sed -n '1,200p' /etc/systemd/system/dnsmasq.service.d/snowbridge-wireguard.conf || true"
+  run_shell "dnsmasq Config" "sed -n '1,200p' /etc/dnsmasq.d/short-circuit-wireguard.conf 2>/dev/null || sed -n '1,200p' /etc/dnsmasq.d/snowbridge-wireguard.conf 2>/dev/null || true"
+  run_shell "dnsmasq Drop-in" "sed -n '1,200p' /etc/systemd/system/dnsmasq.service.d/short-circuit-wireguard.conf 2>/dev/null || sed -n '1,200p' /etc/systemd/system/dnsmasq.service.d/snowbridge-wireguard.conf 2>/dev/null || true"
 
   run_shell "Runtime Web Env" "sed -n '1,200p' '${ENV_FILE}' || true"
   run_shell "Private Caddyfile" "sed -n '1,200p' '${PRIVATE_CADDYFILE}' || true"
