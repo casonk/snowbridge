@@ -45,9 +45,9 @@ for target in "${LUKS_TARGETS[@]}"; do
         continue
     fi
 
-    # Verify the source is actually mounted (i.e. LUKS is unlocked).
-    if ! mountpoint -q "$(dirname "$src")" && ! mountpoint -q "$src"; then
-        echo "  warning: source ${src} does not appear to be mounted; LUKS may not be unlocked" >&2
+    # Verify the source is actually accessible (i.e. LUKS is unlocked).
+    if [[ ! -d "$src" ]]; then
+        echo "  warning: source ${src} does not exist; LUKS may not be unlocked" >&2
         echo "           skipping ${target}" >&2
         continue
     fi
