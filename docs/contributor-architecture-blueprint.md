@@ -1,76 +1,78 @@
 # Contributor Architecture Blueprint
 
-This document maps the operating model implemented by `snowbridge`.
-
-The repository itself is not the share payload. It is the control surface for a
-personal Samba deployment: configuration templates, deployment notes, and
-architecture handoff documentation for a home-desktop fileshare.
+This document maps the current `snowbridge` operating model: repo-managed
+templates and setup scripts drive a host-local Samba share, optional VPN-backed
+private access, and optional browser-based access through a separate HTTPS
+front end.
 
 ## High-Level Layers
 
-1. Client layer
-   - iPhone uses the iOS Files app to connect over SMB with authenticated
-     read/write access.
-   - Other trusted devices such as laptops or tablets connect over the same SMB
-     endpoint.
-2. Network-access layer
-   - Access is intended for the home LAN first.
-   - Remote access, when needed, should traverse a private VPN overlay instead
-     of exposing SMB to the public internet.
-   - The repo now distinguishes a host-only WireGuard profile
-     (`wireguard-public-vpn`) from a wider-LAN WireGuard profile
-     (`wireguard-lan-vpn`) so the routing boundary is explicit.
-   - Stable private addressing should come from local hostname resolution or a
-     reserved private IP rather than a frequently changing DHCP lease.
-3. Share-service layer
-   - Samba is the baseline implementation because it is natively compatible with
-     iPhone and other common client platforms.
-   - `config/samba/smb.conf.example` is the primary checked-in service template.
-   - `scripts/setup_bind_share.py` materializes the share root from a
-     repo-managed bind layout before Samba serves it.
-   - `scripts/setup_wireguard.sh` and `scripts/setup_caddy_filebrowser.sh`
-     operationalize the optional remote-access and web-access templates.
-4. Host-storage layer
-   - The share root lives outside the repo, for example
-     `/srv/snowbridge/share`.
-   - External host folders are bind-mounted into that share root rather than
-     moving the actual files under `/srv`.
-   - Samba account state, logs, and runtime metadata stay on the host and are
-     not committed.
-  - If browser-based access is added later, it should arrive as a separate
-    HTTPS-facing service layer rather than as public SMB exposure, whether it
-    stays VPN-only, layers on private-VPN mutual TLS device certificates, or
-    is published through router/NAT to a private host IP.
-5. Repo-governance layer
-   - `README.md` explains the purpose and quick-start path.
-   - `docs/host-setup.md` captures the deployment workflow.
-   - `docs/access-patterns.md` captures the optional static-IP, VPN, and HTTPS
-     access templates.
-   - `config/share-layout/` holds the bind-mounted folder layout templates.
-   - `config/network/`, `config/access/`, and `config/web/` hold optional
-     network and web-access templates.
-   - `AGENTS.md` and `LESSONSLEARNED.md` keep repo-specific operating guidance
-     durable.
-   - `docs/diagrams/` is the architecture handoff surface.
+1. Client surfaces
+   - SMB clients are the default surface: iPhone Files plus other trusted
+     devices use authenticated SMB read/write access.
+   - Browser clients are optional and only appear when the File Browser plus
+     Caddy stack is enabled.
+2. Access-profile layer
+   - LAN SMB remains the simplest baseline for local access.
+   - Remote private access can use either `wireguard-public-vpn` for
+     host-only reachability or `wireguard-lan-vpn` when the wider LAN should be
+     reachable through the tunnel.
+   - Optional HTTPS access is split into `private-vpn`, `private-vpn-mtls`,
+     `public`, and `public-private-ip` profiles so the exposure boundary is
+     explicit.
+   - `private-vpn-mtls` now keeps device-certificate validation at Caddy while
+     File Browser can stay on proxy-auth mode behind the reverse proxy.
+3. Repo control layer
+   - `README.md`, `docs/host-setup.md`, `docs/access-patterns.md`, and this
+     blueprint explain the supported deployment modes.
+   - `config/share-layout/`, `config/samba/`, `config/access/`, and
+     `config/web/` hold the checked-in templates for share layout, network
+     access, and optional web access.
+   - `scripts/setup_bind_share.py`, `scripts/setup_wireguard.sh`,
+     `scripts/setup_caddy_filebrowser.sh`, and
+     `scripts/setup_filebrowser_access.py` convert those templates into host
+     runtime state.
+   - `scripts/export_caddy_root_profile.py`,
+     `scripts/export_caddy_mtls_profile.py`, and
+     `scripts/debug_private_access.sh` support phone trust bootstrap and
+     multi-service troubleshooting.
+4. Host runtime layer
+   - Samba and the dedicated SMB account serve the share root.
+   - The share root is a staging tree under `/srv/snowbridge/share` whose
+     visible folders are often bind-mounted from elsewhere on the host.
+   - WireGuard, dnsmasq, and firewalld implement private routing plus split DNS
+     for VPN-backed access.
+   - Caddy and File Browser implement the optional browser surface, including
+     proxy-auth or mTLS gating at the HTTPS edge.
+   - Exported `.mobileconfig` profiles are staged into the share so iPhone
+     clients can install the trust or mTLS material.
+5. Host-only state layer
+   - Canonical files remain outside git in the real host folders that are
+     bind-mounted into the share root.
+   - Local configs, Samba passdb state, Caddy PKI material, generated client
+     identities, and debug reports stay on the host and out of commits.
 
 ## Key Entry Points
 
 - `README.md`
-- `config/samba/smb.conf.example`
+- `docs/host-setup.md`
+- `docs/access-patterns.md`
 - `config/share-layout/folders.example.ini`
-- `config/network/networkmanager-static-ip.example.sh`
-- `config/access/tailscale/tailscale-subnet-router.example.sh`
+- `config/samba/smb.conf.example`
 - `config/access/wireguard/wg0-server.example.conf`
 - `config/access/wireguard/wg0-server.lan-vpn.example.conf`
-- `config/access/wireguard/iphone-peer.lan-vpn.example.conf`
 - `config/web/caddy/Caddyfile.private-vpn.example`
 - `config/web/caddy/Caddyfile.private-vpn-mtls.example`
+- `config/web/caddy/Caddyfile.public.example`
+- `config/web/caddy/Caddyfile.public-private-ip.example`
+- `config/web/filebrowser/access.example.toml`
 - `scripts/setup_bind_share.py`
 - `scripts/setup_wireguard.sh`
 - `scripts/setup_caddy_filebrowser.sh`
+- `scripts/setup_filebrowser_access.py`
+- `scripts/export_caddy_root_profile.py`
 - `scripts/export_caddy_mtls_profile.py`
-- `docs/host-setup.md`
-- `docs/access-patterns.md`
+- `scripts/debug_private_access.sh`
 - `docs/diagrams/repo-architecture.puml`
 - `docs/diagrams/repo-architecture.drawio`
 
@@ -83,17 +85,13 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m archility render ../snowbrid
 
 ## Contributor Notes
 
-- Keep the distinction explicit between repo-managed configuration and host-held
-  data.
-- Prefer bind mounts for exposing folders outside the share root. Do not fall
-  back to Samba `wide links` unless the user explicitly accepts the security
-  tradeoff.
-- Keep direct SMB limited to the LAN or a private VPN. If a web surface is
-  added later, document it as a distinct HTTPS front end.
-- If the private web surface adds device-bound authentication, prefer a
-  dedicated client-certificate CA and exported install profile rather than
-  trying to repurpose VPN keys or hardware identifiers in the browser layer.
-- Update the Samba template, host setup guide, and architecture docs together
-  when the access model changes.
-- Preserve iPhone compatibility unless the user explicitly chooses a different
-  design.
+- Keep the distinction explicit between repo-managed templates and host-held
+  state.
+- Model SMB, VPN, and HTTPS as separate access profiles rather than collapsing
+  them into one generic “remote access” path.
+- When `private-vpn-mtls` changes, document both the Caddy client-certificate
+  gate and the File Browser auth mode so the identity handoff stays clear.
+- Treat generated CA bundles, client identities, Samba credentials, and debug
+  reports as host-only artifacts.
+- Update `README.md`, `docs/host-setup.md`, `docs/access-patterns.md`, and the
+  diagram sources together when the access model changes.

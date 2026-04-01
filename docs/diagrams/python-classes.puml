@@ -3,6 +3,12 @@ set namespaceSeparator none
 class "AppSpec" as setup_filebrowser_access.AppSpec {
   root : str
 }
+class "AuthSpec" as setup_filebrowser_access.AuthSpec {
+  hide_login_button : bool
+  method : str
+  proxy_header : str | None
+  proxy_username : str | None
+}
 class "<color:red>ConfigError</color>" as setup_bind_share.ConfigError {
 }
 class "FolderMount" as setup_bind_share.FolderMount {
@@ -26,6 +32,28 @@ class "GlobalSettings" as setup_bind_share.GlobalSettings {
   smb_group : str
   smb_user : str
 }
+class "IdentityPaths" as export_caddy_mtls_profile.IdentityPaths {
+  cert_path : Path
+  key_path : Path
+  p12_path : Path
+  passphrase_path : Path
+  serial_path : Path
+  slug : str
+  staged_p12_path : Path
+  staged_profile_path : Path
+}
+class "Ownership" as export_caddy_mtls_profile.Ownership {
+  gid : int
+  group_name : str
+  owner_name : str
+  uid : int
+}
+class "Ownership" as export_caddy_root_profile.Ownership {
+  gid : int
+  group_name : str
+  owner_name : str
+  uid : int
+}
 class "RuntimeSpec" as setup_filebrowser_access.RuntimeSpec {
   container_name : str
   container_runtime : str
@@ -39,6 +67,10 @@ class "RuntimeSpec" as setup_filebrowser_access.RuntimeSpec {
   sync_web_env_uid_gid : bool
   web_env_file : Path
   web_setup_script : Path
+}
+class "<color:red>SetupError</color>" as export_caddy_mtls_profile.SetupError {
+}
+class "<color:red>SetupError</color>" as export_caddy_root_profile.SetupError {
 }
 class "<color:red>SetupError</color>" as setup_filebrowser_access.SetupError {
 }

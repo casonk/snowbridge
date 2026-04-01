@@ -4,62 +4,75 @@ title snowbridge Repository Architecture
 skinparam shadowing false
 skinparam defaultFontName Monospace
 skinparam packageStyle rectangle
+skinparam linetype ortho
 
-actor "iPhone Files app" as iphone
-actor "Other trusted devices" as other_clients
+actor "SMB clients\niPhone Files app\ntrusted devices" as smb_clients
+actor "Browser clients\niPhone Safari\nlaptop browser" as browser_clients
 
-package "Access Boundary" #F8FAFC {
-  rectangle "Home LAN\nor private VPN overlay" as access_boundary #FCE7F3
+package "Access Profiles" #F8FAFC {
+  rectangle "LAN SMB\nlocal hostname / private IP" as lan_smb #FCE7F3
+  rectangle "WireGuard VPN\nwireguard-public-vpn | wireguard-lan-vpn\nsplit DNS + firewall rules" as wireguard_profiles #FCE7F3
+  rectangle "HTTPS profiles\nprivate-vpn | private-vpn-mtls\npublic | public-private-ip" as https_profiles #FCE7F3
 }
 
 package "snowbridge Repo" #F8FAFC {
-  rectangle "README.md\nAGENTS.md\nLESSONSLEARNED.md" as repo_docs #E2E8F0
-  rectangle "docs/host-setup.md\narchitecture blueprint" as ops_docs #DBEAFE
-  rectangle "config/samba/smb.conf.example" as smb_template #E0F2FE
-  rectangle "config/share-layout/*.ini\nscripts/setup_bind_share.py" as bind_layout #E0F2FE
+  rectangle "README.md\ndocs/host-setup.md\ndocs/access-patterns.md\narchitecture blueprint" as repo_docs #E2E8F0
+  rectangle "config/share-layout\nconfig/samba\nconfig/access\nconfig/web" as repo_config #DBEAFE
+  rectangle "setup_bind_share.py\nsetup_wireguard.sh\nsetup_caddy_filebrowser.sh\nsetup_filebrowser_access.py\nexport_caddy_*_profile.py\ndebug_private_access.sh" as repo_scripts #E0F2FE
 }
 
 package "Host Runtime" #F8FAFC {
-  rectangle "Samba service\nsmbd / smb" as samba_service #DCFCE7
-  rectangle "Dedicated SMB user\nsnowbridge" as smb_user #DCFCE7
-  rectangle "Share root\n/srv/snowbridge/share" as share_root #FEF3C7
-  rectangle "Bind-mounted folders\nDocuments / Media / Archive" as bind_mounts #FEF3C7
+  rectangle "Samba service\ndedicated SMB user" as samba_service #DCFCE7
+  rectangle "Share root\n/srv/snowbridge/share\nbind-mounted folders" as share_root #FEF3C7
+  rectangle "WireGuard + dnsmasq + firewalld\nprivate routing and DNS" as private_access #DCFCE7
+  rectangle "Caddy + File Browser\noptional browser access\nproxy auth or mTLS at edge" as web_stack #DCFCE7
+  rectangle "Staged install artifacts\ntmp/*.mobileconfig\nCA + client profiles" as staged_profiles #FDE68A
 }
 
 package "Host-Only State" #F8FAFC {
   rectangle "External source folders\n/home/... /mnt/..." as shared_files #FEF3C7
-  rectangle "Samba passdb\nlogs / runtime metadata" as host_state #FDE68A
+  rectangle "Local configs / passdb / Caddy PKI\nruntime metadata / debug reports" as host_state #FDE68A
 }
 
-iphone --> access_boundary
-other_clients --> access_boundary
-access_boundary --> samba_service
+smb_clients --> lan_smb
+smb_clients --> wireguard_profiles
+browser_clients --> wireguard_profiles
+browser_clients --> https_profiles
 
-repo_docs --> ops_docs
-ops_docs --> smb_template
-ops_docs --> bind_layout
-smb_template --> samba_service
-bind_layout --> share_root
-bind_layout --> bind_mounts
+lan_smb --> samba_service
+wireguard_profiles --> samba_service
+wireguard_profiles --> private_access
+private_access --> web_stack
+https_profiles --> web_stack
 
-samba_service --> smb_user
+repo_docs --> repo_config
+repo_docs --> repo_scripts
+repo_config --> repo_scripts
+repo_scripts --> samba_service
+repo_scripts --> share_root
+repo_scripts --> private_access
+repo_scripts --> web_stack
+repo_scripts --> staged_profiles
+
 samba_service --> share_root
-share_root --> bind_mounts
-bind_mounts --> shared_files
-samba_service --> host_state
+share_root --> shared_files
+private_access --> host_state
+web_stack --> share_root
+web_stack --> host_state
+host_state --> staged_profiles
 
-note right of access_boundary
-  Do not expose SMB directly to the public internet.
-  Remote access should traverse a private VPN first.
+note right of https_profiles
+  private-vpn-mtls terminates device certificates at Caddy.
+  File Browser can stay on proxy-auth mode behind that edge.
 end note
 
 note right of share_root
-  The share root lives outside git and is populated
-  by bind mounts instead of storing the canonical files.
+  The share root lives outside git and acts as a bind-mounted
+  staging tree instead of the canonical file location.
 end note
 
-note right of bind_mounts
-  Prefer bind mounts over Samba wide links when
-  the source folders live elsewhere on the host.
+note right of host_state
+  Keep local configs, secrets, passdb exports, cert material,
+  and debug reports out of commits.
 end note
 @enduml

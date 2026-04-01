@@ -1,79 +1,300 @@
 <?xml version='1.0' encoding='utf-8'?>
-<mxfile host="app.diagrams.net" modified="2026-03-28T00:00:00-04:00" agent="Codex GPT-5" version="24.7.17" type="device" compressed="false">
+<mxfile host="app.diagrams.net" modified="2026-03-30T00:00:00-04:00" agent="Codex GPT-5" version="24.7.17" type="device" compressed="false">
   <diagram id="repo-architecture" name="Repo Architecture">
     <mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1200" math="0" shadow="0" keepEdgesInForeground="1" keepEdgesInBackground="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="2" value="snowbridge Repository Architecture" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#1F2937;strokeColor=#111827;fontColor=#FFFFFF;fontSize=26;fontStyle=1;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
-          <mxGeometry x="40" y="20" width="1720" height="80" as="geometry" />
+        <mxCell id="title" value="snowbridge Repository Architecture" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#1F2937;strokeColor=#111827;fontColor=#FFFFFF;fontSize=26;fontStyle=1;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="30" y="20" width="1740" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="10" value="iPhone Files app&#10;authenticated SMB client" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#DB2777;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="60" y="130" width="260" height="90" as="geometry" />
+        <mxCell id="panel_clients" value="Clients" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F8FAFC;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=22;fontStyle=1;align=center;verticalAlign=top;spacingTop=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="140" width="320" height="320" as="geometry" />
         </mxCell>
-        <mxCell id="11" value="Other trusted devices&#10;laptop / tablet / desktop" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#DB2777;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="60" y="260" width="260" height="100" as="geometry" />
+        <mxCell id="smb_clients" value="SMB clients&#10;iPhone Files app&#10;trusted devices" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#F472B6;fontColor=#1F2937;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="70" y="210" width="260" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="20" value="Access boundary&#10;home LAN or private VPN overlay" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#DB2777;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="390" y="180" width="320" height="130" as="geometry" />
+        <mxCell id="browser_clients" value="Browser clients&#10;iPhone Safari&#10;laptop browser" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#F472B6;fontColor=#1F2937;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="70" y="330" width="260" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="30" value="snowbridge repo&#10;README / AGENTS / LESSONSLEARNED&#10;docs/host-setup.md&#10;config/samba/smb.conf.example&#10;config/share-layout/*.ini&#10;scripts/setup_bind_share.py" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E2E8F0;strokeColor=#64748B;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="780" y="100" width="430" height="230" as="geometry" />
+        <mxCell id="panel_access" value="Access Profiles" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F8FAFC;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=22;fontStyle=1;align=center;verticalAlign=top;spacingTop=12;" vertex="1" parent="1">
+          <mxGeometry x="400" y="140" width="360" height="410" as="geometry" />
         </mxCell>
-        <mxCell id="40" value="Host runtime&#10;Samba service&#10;dedicated SMB user&#10;share root /srv/snowbridge/share&#10;bind-mounted folders under the share root" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="1260" y="100" width="420" height="210" as="geometry" />
+        <mxCell id="lan_smb" value="LAN SMB&#10;local hostname / private IP" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#F472B6;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="430" y="205" width="300" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="50" value="Host-only state&#10;external source folders elsewhere on the host&#10;Samba passdb / logs / runtime metadata" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#111827;fontSize=18;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="1260" y="380" width="420" height="140" as="geometry" />
+        <mxCell id="wireguard_profiles" value="WireGuard VPN&#10;wireguard-public-vpn | wireguard-lan-vpn&#10;split DNS + firewall rules" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#F472B6;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="430" y="315" width="300" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="60" value="Do not expose SMB directly to the public internet.&#10;Remote access should traverse a private VPN first.&#10;Prefer bind mounts over Samba wide links for external folders." style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FDE68A;strokeColor=#D97706;fontColor=#111827;fontSize=16;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="300" y="590" width="1360" height="100" as="geometry" />
+        <mxCell id="https_profiles" value="HTTPS profiles&#10;private-vpn | private-vpn-mtls&#10;public | public-private-ip" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FCE7F3;strokeColor=#F472B6;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="430" y="445" width="300" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="500" style="rounded=0;html=0;strokeColor=#1F2937;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=12;endArrow=classic;endFill=1;endSize=10;strokeWidth=2;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="10" target="20">
+        <mxCell id="panel_repo" value="snowbridge Repo" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F8FAFC;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=22;fontStyle=1;align=center;verticalAlign=top;spacingTop=12;" vertex="1" parent="1">
+          <mxGeometry x="800" y="140" width="420" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="repo_docs" value="README.md&#10;docs/host-setup.md&#10;docs/access-patterns.md&#10;architecture blueprint" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E2E8F0;strokeColor=#94A3B8;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="830" y="205" width="360" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="repo_config" value="config/share-layout&#10;config/samba&#10;config/access&#10;config/web" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#60A5FA;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="830" y="325" width="360" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="repo_scripts" value="setup_bind_share.py&#10;setup_wireguard.sh&#10;setup_caddy_filebrowser.sh&#10;setup_filebrowser_access.py&#10;export_caddy_*_profile.py&#10;debug_private_access.sh" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#60A5FA;fontColor=#1F2937;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="830" y="445" width="360" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="panel_runtime" value="Host Runtime" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F8FAFC;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=22;fontStyle=1;align=center;verticalAlign=top;spacingTop=12;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="140" width="500" height="540" as="geometry" />
+        </mxCell>
+        <mxCell id="samba_service" value="Samba service&#10;dedicated SMB user" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#4ADE80;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="205" width="440" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="share_root" value="Share root&#10;/srv/snowbridge/share&#10;bind-mounted folders" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FEF3C7;strokeColor=#F59E0B;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="315" width="440" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="private_access" value="WireGuard + dnsmasq + firewalld&#10;private routing and DNS" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#4ADE80;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="435" width="440" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="web_stack" value="Caddy + File Browser&#10;optional browser access&#10;proxy auth or mTLS at edge" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#4ADE80;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="555" width="440" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="shared_files" value="External source folders&#10;/home/... /mnt/..." style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FEF3C7;strokeColor=#F59E0B;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="400" y="620" width="360" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="host_state" value="Local configs / passdb / Caddy PKI&#10;runtime metadata / debug reports" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FDE68A;strokeColor=#F59E0B;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="830" y="620" width="390" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="staged_profiles" value="Staged install artifacts&#10;tmp/*.mobileconfig&#10;CA + client profiles" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FDE68A;strokeColor=#F59E0B;fontColor=#1F2937;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="715" width="440" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="note_boundary" value="Keep SMB, VPN, and HTTPS as separate access profiles.&#10;private-vpn-mtls terminates device certificates at Caddy while File Browser can stay on proxy-auth mode behind that edge.&#10;The share root is a bind-mounted staging tree, not the canonical file location, and host-only secrets or reports stay out of commits." style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFF7ED;strokeColor=#FDBA74;fontColor=#1F2937;fontSize=16;align=left;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="250" y="860" width="1480" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="smb_clients" target="lan_smb">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="344" y="175" />
-              <mxPoint x="344" y="166" />
-              <mxPoint x="366" y="166" />
-              <mxPoint x="366" y="220" />
+              <mxPoint x="354" y="250" />
+              <mxPoint x="354" y="-30" />
+              <mxPoint x="406" y="-30" />
+              <mxPoint x="406" y="245" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="501" style="rounded=0;html=0;strokeColor=#1F2937;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=12;endArrow=classic;endFill=1;endSize=10;strokeWidth=2;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="11" target="20">
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="smb_clients" target="wireguard_profiles">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="344" y="310" />
-              <mxPoint x="344" y="319" />
-              <mxPoint x="366" y="319" />
-              <mxPoint x="366" y="270" />
+              <mxPoint x="354" y="260" />
+              <mxPoint x="354" y="573" />
+              <mxPoint x="406" y="573" />
+              <mxPoint x="406" y="355" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="502" style="rounded=0;html=0;strokeColor=#1F2937;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=12;endArrow=classic;endFill=1;endSize=10;strokeWidth=2;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="20" target="40">
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="browser_clients" target="wireguard_profiles">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="734" y="245" />
-              <mxPoint x="734" y="354" />
-              <mxPoint x="1236" y="354" />
-              <mxPoint x="1236" y="140" />
+              <mxPoint x="354" y="370" />
+              <mxPoint x="354" y="591" />
+              <mxPoint x="406" y="591" />
+              <mxPoint x="406" y="375" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="503" style="rounded=0;html=0;strokeColor=#1F2937;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=12;endArrow=classic;endFill=1;endSize=10;strokeWidth=2;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="30" target="40">
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="browser_clients" target="https_profiles">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1234" y="215" />
-              <mxPoint x="1234" y="251.5" />
-              <mxPoint x="1236" y="251.5" />
-              <mxPoint x="1236" y="270" />
+              <mxPoint x="354" y="380" />
+              <mxPoint x="354" y="742" />
+              <mxPoint x="406" y="742" />
+              <mxPoint x="406" y="485" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="504" style="rounded=0;html=0;strokeColor=#1F2937;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=12;endArrow=classic;endFill=1;endSize=10;strokeWidth=2;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="40" target="50">
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="lan_smb" target="samba_service">
           <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
             <Array as="points">
-              <mxPoint x="1470" y="334" />
-              <mxPoint x="1470" y="356" />
+              <mxPoint x="754" y="245" />
+              <mxPoint x="754" y="-12" />
+              <mxPoint x="1266" y="-12" />
+              <mxPoint x="1266" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="wireguard_profiles" target="samba_service">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="754" y="355" />
+              <mxPoint x="754" y="6" />
+              <mxPoint x="1266" y="6" />
+              <mxPoint x="1266" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="wireguard_profiles" target="private_access">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="754" y="375" />
+              <mxPoint x="754" y="820" />
+              <mxPoint x="1266" y="820" />
+              <mxPoint x="1266" y="475" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="private_access" target="web_stack">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1330" y="549" />
+              <mxPoint x="1774" y="549" />
+              <mxPoint x="1774" y="531" />
+              <mxPoint x="1510" y="531" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="https_profiles" target="web_stack">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="754" y="485" />
+              <mxPoint x="754" y="1003" />
+              <mxPoint x="1266" y="1003" />
+              <mxPoint x="1266" y="595" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_docs" target="repo_config">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="870" y="319" />
+              <mxPoint x="-10" y="319" />
+              <mxPoint x="-10" y="301" />
+              <mxPoint x="1010" y="301" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_docs" target="repo_scripts">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1150" y="319" />
+              <mxPoint x="8" y="319" />
+              <mxPoint x="8" y="421" />
+              <mxPoint x="870" y="421" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_config" target="repo_scripts">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1010" y="439" />
+              <mxPoint x="26" y="439" />
+              <mxPoint x="26" y="421" />
+              <mxPoint x="1150" y="421" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_scripts" target="samba_service">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1010" y="421" />
+              <mxPoint x="1001" y="421" />
+              <mxPoint x="1001" y="309" />
+              <mxPoint x="1510" y="309" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_scripts" target="share_root">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1214" y="485" />
+              <mxPoint x="1214" y="492.5" />
+              <mxPoint x="1266" y="492.5" />
+              <mxPoint x="1266" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_scripts" target="private_access">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1214" y="492.5" />
+              <mxPoint x="1214" y="838" />
+              <mxPoint x="1266" y="838" />
+              <mxPoint x="1266" y="485" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_scripts" target="web_stack">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1214" y="500" />
+              <mxPoint x="1214" y="1021" />
+              <mxPoint x="1266" y="1021" />
+              <mxPoint x="1266" y="605" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="repo_scripts" target="staged_profiles">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1010" y="564" />
+              <mxPoint x="1792" y="564" />
+              <mxPoint x="1792" y="691" />
+              <mxPoint x="1510" y="691" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="samba_service" target="share_root">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1510" y="309" />
+              <mxPoint x="1810" y="309" />
+              <mxPoint x="1810" y="291" />
+              <mxPoint x="1510" y="291" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="share_root" target="shared_files">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1266" y="360" />
+              <mxPoint x="1266" y="351" />
+              <mxPoint x="784" y="351" />
+              <mxPoint x="784" y="665" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="private_access" target="host_state">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1690" y="549" />
+              <mxPoint x="368" y="549" />
+              <mxPoint x="368" y="596" />
+              <mxPoint x="1025" y="596" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="web_stack" target="share_root">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1510" y="531" />
+              <mxPoint x="1019" y="531" />
+              <mxPoint x="1019" y="429" />
+              <mxPoint x="1510" y="429" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="web_stack" target="host_state">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1266" y="600" />
+              <mxPoint x="1266" y="369" />
+              <mxPoint x="1244" y="369" />
+              <mxPoint x="1244" y="665" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=0;strokeColor=#1F2937;strokeWidth=2;endArrow=block;endFill=1;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="host_state" target="staged_profiles">
+          <mxGeometry relative="1" as="geometry" archilityManagedRoute="1">
+            <Array as="points">
+              <mxPoint x="1244" y="665" />
+              <mxPoint x="1244" y="712.5" />
+              <mxPoint x="1266" y="712.5" />
+              <mxPoint x="1266" y="760" />
             </Array>
           </mxGeometry>
         </mxCell>

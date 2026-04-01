@@ -5,30 +5,51 @@ skinparam shadowing false
 skinparam defaultFontName Monospace
 skinparam componentStyle rectangle
 skinparam linetype ortho
-rectangle ".github/workflows/ci.yml\\n4 detected tools" as source_github_workflows_ci_yml #E0F2FE
-rectangle "config/access/tailscale/tailscale-subnet-router.example.sh\\n1 detected tool" as source_config_access_tailscale_tailscale_subnet_router_example_sh #E0F2FE
-rectangle "config/access/tailscale/tailscale-subnet-router.local.sh\\n1 detected tool" as source_config_access_tailscale_tailscale_subnet_router_local_sh #E0F2FE
-rectangle "config/network/networkmanager-static-ip.example.sh\\n2 detected tools" as source_config_network_networkmanager_static_ip_example_sh #E0F2FE
-rectangle "config/network/networkmanager-static-ip.local.sh\\n2 detected tools" as source_config_network_networkmanager_static_ip_local_sh #E0F2FE
-rectangle "scripts/setup_caddy_filebrowser.sh\\n24 detected tools" as source_scripts_setup_caddy_filebrowser_sh #E0F2FE
-rectangle "scripts/setup_wireguard.sh\\n9 detected tools" as source_scripts_setup_wireguard_sh #E0F2FE
+rectangle ".github/workflows/ci.yml\n4 detected tools" as source_github_workflows_ci_yml #E0F2FE
+rectangle "config/access/tailscale/tailscale-subnet-router.example.sh\n1 detected tool" as source_config_access_tailscale_tailscale_subnet_router_example_sh #E0F2FE
+rectangle "config/access/tailscale/tailscale-subnet-router.local.sh\n1 detected tool" as source_config_access_tailscale_tailscale_subnet_router_local_sh #E0F2FE
+rectangle "config/network/networkmanager-static-ip.example.sh\n2 detected tools" as source_config_network_networkmanager_static_ip_example_sh #E0F2FE
+rectangle "config/network/networkmanager-static-ip.local.sh\n2 detected tools" as source_config_network_networkmanager_static_ip_local_sh #E0F2FE
+rectangle "scripts/debug_private_access.sh\n11 detected tools" as source_scripts_debug_private_access_sh #E0F2FE
+rectangle "scripts/remount_luks_share.sh\n3 detected tools" as source_scripts_remount_luks_share_sh #E0F2FE
+rectangle "scripts/setup_caddy_filebrowser.sh\n32 detected tools" as source_scripts_setup_caddy_filebrowser_sh #E0F2FE
+rectangle "scripts/setup_wireguard.sh\n27 detected tools" as source_scripts_setup_wireguard_sh #E0F2FE
+rectangle "scripts/start_snowbridge.sh\n4 detected tools" as source_scripts_start_snowbridge_sh #E0F2FE
 cloud "!in_global" as tool_in_global #FEF3C7
 cloud "(command_exists" as tool_command_exists #FEF3C7
+cloud "2[0-9]" as tool_tool_2_0_9 #FEF3C7
+cloud "3[0-1])." as tool_tool_3_0_1 #FEF3C7
+cloud "443" as tool_tool_443 #FEF3C7
+cloud "445" as tool_tool_445 #FEF3C7
+cloud "80" as tool_tool_80 #FEF3C7
+cloud "Endpoint" as tool_endpoint #FEF3C7
 cloud "^[[:space:]]*" as tool_space #FEF3C7
 cloud "^[[:space:]]+" as tool_space_2 #FEF3C7
 cloud "actions/checkout" as tool_actions_checkout #FEF3C7
 cloud "actions/setup-python" as tool_actions_setup_python #FEF3C7
 cloud "apt-get" as tool_apt_get #FEF3C7
+cloud "bash" as tool_bash #FEF3C7
 cloud "cat" as tool_cat #FEF3C7
+cloud "chmod" as tool_chmod #FEF3C7
+cloud "count" as tool_count #FEF3C7
+cloud "dig" as tool_dig #FEF3C7
 cloud "dnf" as tool_dnf #FEF3C7
 cloud "docker" as tool_docker #FEF3C7
 cloud "docker compose" as tool_docker_compose #FEF3C7
 cloud "docker-compose" as tool_docker_compose_2 #FEF3C7
+cloud "firewall-cmd" as tool_firewall_cmd #FEF3C7
 cloud "grep" as tool_grep #FEF3C7
 cloud "host" as tool_host #FEF3C7
+cloud "i" as tool_i #FEF3C7
+cloud "icanhazip.com" as tool_icanhazip_com #FEF3C7
+cloud "id" as tool_id #FEF3C7
 cloud "in_global" as tool_in_global_2 #FEF3C7
 cloud "install" as tool_install #FEF3C7
+cloud "iphone-private-key" as tool_iphone_private_key #FEF3C7
 cloud "ipv6.method" as tool_ipv6_method #FEF3C7
+cloud "mapfile" as tool_mapfile #FEF3C7
+cloud "mkdir" as tool_mkdir #FEF3C7
+cloud "mount" as tool_mount #FEF3C7
 cloud "mv" as tool_mv #FEF3C7
 cloud "next" as tool_next #FEF3C7
 cloud "nmcli" as tool_nmcli #FEF3C7
@@ -37,13 +58,23 @@ cloud "podman-compose" as tool_podman_compose #FEF3C7
 cloud "pre-commit" as tool_pre_commit #FEF3C7
 cloud "print" as tool_print #FEF3C7
 cloud "private-vpn" as tool_private_vpn #FEF3C7
+cloud "private-vpn-mtls" as tool_private_vpn_mtls #FEF3C7
+cloud "public" as tool_public #FEF3C7
 cloud "qrencode" as tool_qrencode #FEF3C7
+cloud "rm" as tool_rm #FEF3C7
+cloud "server-public-key" as tool_server_public_key #FEF3C7
 cloud "site" as tool_site #FEF3C7
 cloud "split(site," as tool_split_site #FEF3C7
 cloud "sysctl" as tool_sysctl #FEF3C7
 cloud "systemctl" as tool_systemctl #FEF3C7
+cloud "tr" as tool_tr #FEF3C7
+cloud "umount" as tool_umount #FEF3C7
+cloud "up" as tool_up #FEF3C7
 cloud "update-ca-certificates" as tool_update_ca_certificates #FEF3C7
 cloud "update-ca-trust" as tool_update_ca_trust #FEF3C7
+cloud "value" as tool_value #FEF3C7
+cloud "wg" as tool_wg #FEF3C7
+cloud "wireguard-public-vpn" as tool_wireguard_public_vpn #FEF3C7
 cloud "yum" as tool_yum #FEF3C7
 source_github_workflows_ci_yml --> tool_actions_checkout
 source_github_workflows_ci_yml --> tool_actions_setup_python
@@ -55,18 +86,36 @@ source_config_network_networkmanager_static_ip_example_sh --> tool_ipv6_method
 source_config_network_networkmanager_static_ip_example_sh --> tool_nmcli
 source_config_network_networkmanager_static_ip_local_sh --> tool_ipv6_method
 source_config_network_networkmanager_static_ip_local_sh --> tool_nmcli
+source_scripts_debug_private_access_sh --> tool_tool_443
+source_scripts_debug_private_access_sh --> tool_tool_445
+source_scripts_debug_private_access_sh --> tool_tool_80
+source_scripts_debug_private_access_sh --> tool_bash
+source_scripts_debug_private_access_sh --> tool_cat
+source_scripts_debug_private_access_sh --> tool_dig
+source_scripts_debug_private_access_sh --> tool_docker_compose
+source_scripts_debug_private_access_sh --> tool_grep
+source_scripts_debug_private_access_sh --> tool_host
+source_scripts_debug_private_access_sh --> tool_id
+source_scripts_debug_private_access_sh --> tool_mkdir
+source_scripts_remount_luks_share_sh --> tool_mapfile
+source_scripts_remount_luks_share_sh --> tool_mount
+source_scripts_remount_luks_share_sh --> tool_umount
 source_scripts_setup_caddy_filebrowser_sh --> tool_in_global
 source_scripts_setup_caddy_filebrowser_sh --> tool_command_exists
+source_scripts_setup_caddy_filebrowser_sh --> tool_tool_2_0_9
+source_scripts_setup_caddy_filebrowser_sh --> tool_tool_3_0_1
 source_scripts_setup_caddy_filebrowser_sh --> tool_space
 source_scripts_setup_caddy_filebrowser_sh --> tool_space_2
 source_scripts_setup_caddy_filebrowser_sh --> tool_apt_get
 source_scripts_setup_caddy_filebrowser_sh --> tool_cat
+source_scripts_setup_caddy_filebrowser_sh --> tool_chmod
 source_scripts_setup_caddy_filebrowser_sh --> tool_dnf
 source_scripts_setup_caddy_filebrowser_sh --> tool_docker
 source_scripts_setup_caddy_filebrowser_sh --> tool_docker_compose
 source_scripts_setup_caddy_filebrowser_sh --> tool_docker_compose_2
 source_scripts_setup_caddy_filebrowser_sh --> tool_grep
 source_scripts_setup_caddy_filebrowser_sh --> tool_host
+source_scripts_setup_caddy_filebrowser_sh --> tool_i
 source_scripts_setup_caddy_filebrowser_sh --> tool_in_global_2
 source_scripts_setup_caddy_filebrowser_sh --> tool_install
 source_scripts_setup_caddy_filebrowser_sh --> tool_mv
@@ -74,22 +123,48 @@ source_scripts_setup_caddy_filebrowser_sh --> tool_next
 source_scripts_setup_caddy_filebrowser_sh --> tool_podman_compose
 source_scripts_setup_caddy_filebrowser_sh --> tool_print
 source_scripts_setup_caddy_filebrowser_sh --> tool_private_vpn
+source_scripts_setup_caddy_filebrowser_sh --> tool_private_vpn_mtls
+source_scripts_setup_caddy_filebrowser_sh --> tool_public
+source_scripts_setup_caddy_filebrowser_sh --> tool_rm
 source_scripts_setup_caddy_filebrowser_sh --> tool_site
 source_scripts_setup_caddy_filebrowser_sh --> tool_split_site
+source_scripts_setup_caddy_filebrowser_sh --> tool_tr
 source_scripts_setup_caddy_filebrowser_sh --> tool_update_ca_certificates
 source_scripts_setup_caddy_filebrowser_sh --> tool_update_ca_trust
 source_scripts_setup_caddy_filebrowser_sh --> tool_yum
+source_scripts_setup_wireguard_sh --> tool_in_global
+source_scripts_setup_wireguard_sh --> tool_endpoint
+source_scripts_setup_wireguard_sh --> tool_space
+source_scripts_setup_wireguard_sh --> tool_space_2
 source_scripts_setup_wireguard_sh --> tool_apt_get
 source_scripts_setup_wireguard_sh --> tool_cat
+source_scripts_setup_wireguard_sh --> tool_count
 source_scripts_setup_wireguard_sh --> tool_dnf
+source_scripts_setup_wireguard_sh --> tool_firewall_cmd
 source_scripts_setup_wireguard_sh --> tool_grep
+source_scripts_setup_wireguard_sh --> tool_host
+source_scripts_setup_wireguard_sh --> tool_i
+source_scripts_setup_wireguard_sh --> tool_icanhazip_com
+source_scripts_setup_wireguard_sh --> tool_in_global_2
 source_scripts_setup_wireguard_sh --> tool_install
+source_scripts_setup_wireguard_sh --> tool_iphone_private_key
+source_scripts_setup_wireguard_sh --> tool_next
+source_scripts_setup_wireguard_sh --> tool_print
 source_scripts_setup_wireguard_sh --> tool_qrencode
+source_scripts_setup_wireguard_sh --> tool_server_public_key
+source_scripts_setup_wireguard_sh --> tool_site
 source_scripts_setup_wireguard_sh --> tool_sysctl
 source_scripts_setup_wireguard_sh --> tool_systemctl
+source_scripts_setup_wireguard_sh --> tool_value
+source_scripts_setup_wireguard_sh --> tool_wg
+source_scripts_setup_wireguard_sh --> tool_wireguard_public_vpn
 source_scripts_setup_wireguard_sh --> tool_yum
+source_scripts_start_snowbridge_sh --> tool_bash
+source_scripts_start_snowbridge_sh --> tool_docker_compose
+source_scripts_start_snowbridge_sh --> tool_systemctl
+source_scripts_start_snowbridge_sh --> tool_up
 note as toolingGraphSummary
-Scanned 7 tooling entrypoints.
-Detected 33 third-party tools.
+Scanned 10 tooling entrypoints.
+Detected 61 third-party tools.
 end note
 @enduml
