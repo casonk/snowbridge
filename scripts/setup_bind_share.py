@@ -367,20 +367,42 @@ def mounted_source_subpath(source: str) -> pathlib.Path | None:
     return pathlib.Path(subpath) if subpath else None
 
 
-def path_matches_source(candidate: pathlib.Path, expected: pathlib.Path) -> bool:
-    candidate_text = str(candidate)
-    expected_text = str(expected)
-    return candidate_text == expected_text or candidate_text.endswith(expected_text)
+def mounted_source_device_and_subpath(
+    source: str,
+) -> tuple[pathlib.Path, pathlib.Path] | None:
+    if "[" not in source or not source.endswith("]"):
+        return None
+    device_text, _, remainder = source.partition("[")
+    subpath_text = remainder[:-1].strip()
+    device = device_text.strip()
+    if not device or not subpath_text:
+        return None
+    return pathlib.Path(device), pathlib.Path(subpath_text)
+
+
+def same_mounted_source(a: str, b: str) -> bool:
+    if a == b:
+        return True
+
+    a_parts = mounted_source_device_and_subpath(a)
+    b_parts = mounted_source_device_and_subpath(b)
+    if a_parts is None or b_parts is None:
+        return False
+
+    a_device, a_subpath = a_parts
+    b_device, b_subpath = b_parts
+    return pathlib.Path(os.path.realpath(a_device)) == pathlib.Path(
+        os.path.realpath(b_device)
+    ) and a_subpath == b_subpath
 
 
 def mounted_source_matches(source: str, expected: pathlib.Path) -> bool:
-    subpath = mounted_source_subpath(source)
-    if subpath is not None and path_matches_source(subpath, expected):
-        return True
+    for expected_source in mounted_sources(expected):
+        if same_mounted_source(source, expected_source):
+            return True
 
-    plain_path = pathlib.Path(source)
     resolved_expected = pathlib.Path(os.path.realpath(expected))
-    resolved_plain = pathlib.Path(os.path.realpath(plain_path))
+    resolved_plain = pathlib.Path(os.path.realpath(source))
     return resolved_expected == resolved_plain
 
 

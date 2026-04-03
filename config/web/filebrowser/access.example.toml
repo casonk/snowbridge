@@ -5,6 +5,10 @@
 # script will normalize fixable password lines automatically. Ambiguous cases,
 # such as unmatched quotes plus inline comments, still fail with a targeted
 # error.
+#
+# Optional: override the auto-pass profile used for password_keepass_entry
+# lookups. Leave unset to use config/auto-pass.ini, then the infra default.
+# keepass_profile = "infra"
 
 [runtime]
 # Relative paths are resolved from this file's directory.
@@ -43,14 +47,16 @@ root = "/srv"
 [[users]]
 username = "admin"
 # Provide password as a plaintext value OR via a KeePassXC entry (preferred).
+# Leave password_keepass_entry unset to use config/auto-pass.ini.
 # password = 'CHOOSE_ADMIN_PASSWORD'
-password_keepass_entry = "CHOOSE_KEEPASS_ENTRY_PATH"
+password_keepass_entry = "filebrowser/example-admin"
 scope = "."
 admin = true
 
 [[users]]
 username = "snowbridge"
+# Leave password_keepass_entry unset to use config/auto-pass.ini.
 # password = 'CHOOSE_FILEBROWSER_PASSWORD'
-password_keepass_entry = "CHOOSE_KEEPASS_ENTRY_PATH"
+password_keepass_entry = "filebrowser/example-user"
 scope = "."
 admin = false

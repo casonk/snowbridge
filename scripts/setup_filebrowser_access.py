@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import configparser
 import grp
 import json
 import os
@@ -23,6 +24,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 AUTO_PASS_ROOT = REPO_ROOT.parent / "auto-pass"
 DEFAULT_CONFIG = REPO_ROOT / "config" / "web" / "filebrowser" / "access.local.toml"
 DEFAULT_EXAMPLE = REPO_ROOT / "config" / "web" / "filebrowser" / "access.example.toml"
+AUTO_PASS_CONFIG = REPO_ROOT / "config" / "auto-pass.ini"
 DEFAULT_WEB_ENV = REPO_ROOT / "config" / "web" / "filebrowser" / "filebrowser.env.local"
 DEFAULT_WEB_SETUP = REPO_ROOT / "scripts" / "setup_caddy_filebrowser.sh"
 
@@ -68,6 +70,14 @@ class AuthSpec:
     hide_login_button: bool
 
 
+ENTRY_NOT_FOUND_MARKERS = (
+    "not found",
+    "no entry",
+    "could not find",
+)
+DEFAULT_KEEPASS_PROFILE = "infra"
+
+
 def log(message: str) -> None:
     print(message)
 
@@ -76,7 +86,21 @@ def fail(message: str) -> NoReturn:
     raise SetupError(message)
 
 
-def _resolve_keepass_value(entry: str, field: str) -> str:
+def _candidate_keepass_entries(entry: str) -> tuple[str, ...]:
+    normalized = entry.strip()
+    if not normalized:
+        return ()
+    candidates = [normalized]
+    if "/" not in normalized:
+        candidates.append(f"snowbridge/{normalized}")
+    return tuple(dict.fromkeys(candidates))
+
+
+def _resolve_keepass_value(
+    entry: str,
+    field: str,
+    profile: str = DEFAULT_KEEPASS_PROFILE,
+) -> str:
     """Resolve a single field from a KeePassXC entry via the auto-pass sibling repo."""
     if not entry:
         return ""
@@ -85,16 +109,57 @@ def _resolve_keepass_value(entry: str, field: str) -> str:
         if _src not in sys.path:
             sys.path.insert(0, _src)
         from auto_pass.envfile import load_config_environment  # noqa: PLC0415
+        from auto_pass.keepassxc import KeepassCommandError  # noqa: PLC0415
         from auto_pass.keepassxc import resolve_keepassxc_entry  # noqa: PLC0415
         _ap_env = AUTO_PASS_ROOT / "config" / "auto-pass.env.local"
         if _ap_env.is_file():
-            load_config_environment(_ap_env)
-        result = resolve_keepassxc_entry(entry, attrs_map={"value": field})
-        return result.get("value", "")
+            load_config_environment(_ap_env, profile=profile or None)
+        last_error: KeepassCommandError | None = None
+        for candidate in _candidate_keepass_entries(entry):
+            try:
+                result = resolve_keepassxc_entry(candidate, attrs_map={"value": field})
+            except KeepassCommandError as exc:
+                last_error = exc
+                lowered = str(exc).lower()
+                if any(marker in lowered for marker in ENTRY_NOT_FOUND_MARKERS):
+                    continue
+                raise
+            return result.get("value", "")
+        if last_error is not None:
+            raise last_error
+        return ""
     except Exception as exc:
         raise SetupError(
             f"auto-pass lookup failed for entry {entry!r} field {field!r}: {exc}"
         ) from exc
+
+
+def _normalize_auto_pass_key(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9]+", "_", value.strip().lower()).strip("_")
+
+
+def load_repo_auto_pass_config() -> dict[str, str]:
+    if not AUTO_PASS_CONFIG.is_file():
+        return {}
+    try:
+        parser = configparser.ConfigParser(interpolation=None)
+        parser.optionxform = str
+        with AUTO_PASS_CONFIG.open(encoding="utf-8") as handle:
+            parser.read_file(handle)
+    except (OSError, configparser.Error) as exc:
+        fail(f"cannot read auto-pass config {AUTO_PASS_CONFIG}: {exc}")
+
+    defaults: dict[str, str] = {}
+    if parser.has_section("auto_pass"):
+        profile = parser.get("auto_pass", "profile", fallback="").strip()
+        if profile:
+            defaults["profile"] = profile
+    if parser.has_section("filebrowser"):
+        for key, value in parser.items("filebrowser"):
+            text = value.strip()
+            if text:
+                defaults[key] = text
+    return defaults
 
 
 def require_root() -> None:
@@ -306,7 +371,18 @@ def parse_auth_spec(data: dict, config_path: Path, runtime_spec: RuntimeSpec) ->
     )
 
 
-def parse_users(data: dict, config_path: Path) -> list[UserSpec]:
+def parse_keepass_profile(data: dict, repo_auto_pass: dict[str, str]) -> str:
+    value = str(data.get("keepass_profile", "")).strip()
+    return value or repo_auto_pass.get("profile", "") or DEFAULT_KEEPASS_PROFILE
+
+
+def parse_users(
+    data: dict,
+    config_path: Path,
+    *,
+    keepass_profile: str,
+    repo_auto_pass: dict[str, str],
+) -> list[UserSpec]:
     users = data.get("users", [])
     if not isinstance(users, list) or not users:
         fail(f"no [[users]] entries found in {config_path}")
@@ -317,12 +393,19 @@ def parse_users(data: dict, config_path: Path) -> list[UserSpec]:
         username = str(entry.get("username", "")).strip()
         password = str(entry.get("password", ""))
         password_entry = str(entry.get("password_keepass_entry", "")).strip()
+        if not password_entry:
+            fallback_key = f"{_normalize_auto_pass_key(username)}_password_keepass_entry"
+            password_entry = repo_auto_pass.get(fallback_key, "")
         scope = str(entry.get("scope", "."))
         admin = bool(entry.get("admin", False))
         if not username:
             fail(f"[[users]] entry missing username in {config_path}")
         if (not password or password.startswith("CHOOSE_") or password.startswith("REPLACE_")) and password_entry:
-            password = _resolve_keepass_value(password_entry, "password")
+            password = _resolve_keepass_value(
+                password_entry,
+                "password",
+                keepass_profile,
+            )
         if not password or password.startswith("CHOOSE_") or password.startswith("REPLACE_"):
             fail(f"user {username} still has a placeholder password in {config_path}")
         parsed.append(UserSpec(username=username, password=password, scope=scope, admin=admin))
@@ -680,10 +763,17 @@ def main() -> int:
     require_host_tools()
 
     config_data = load_toml_config(config_path, args.dry_run)
+    repo_auto_pass = load_repo_auto_pass_config()
     runtime_spec = parse_runtime_spec(config_data, config_path)
     app_spec = parse_app_spec(config_data, config_path)
     auth_spec = parse_auth_spec(config_data, config_path, runtime_spec)
-    users = parse_users(config_data, config_path)
+    keepass_profile = parse_keepass_profile(config_data, repo_auto_pass)
+    users = parse_users(
+        config_data,
+        config_path,
+        keepass_profile=keepass_profile,
+        repo_auto_pass=repo_auto_pass,
+    )
     validate_auth_users(auth_spec, users, config_path)
 
     runtime = detect_container_runtime(runtime_spec.container_runtime)

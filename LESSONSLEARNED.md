@@ -279,6 +279,19 @@
 - Folders whose sources are on btrfs (e.g. `keepass` at `/home/user/luks`) are
   unaffected because they are accessible at boot and the bind mount is correct.
 
+### 2026-04-03 — Bind-mount source validation should compare canonical `findmnt` identities, not path suffixes
+
+- `findmnt` can describe the same live source directory in multiple valid forms,
+  including a plain path, a device plus subpath such as
+  `/dev/mapper/setup[/bully/info/receipt]`, and boot-time stale btrfs-source
+  forms such as `nvme1n1p3[/root/mnt/4tb-m2/read]`.
+- Path-suffix matching is too loose: it can reject a valid live source that is
+  expressed relative to the filesystem root, and it can also falsely accept a
+  stale pre-unlock bind source that merely ends with the configured path.
+- For repo-managed bind mounts, compare the target's current source against the
+  configured source's own canonical `findmnt` source identity, with device
+  realpath normalization for `device[subpath]` forms.
+
 ### 2026-04-03 — iptables MARK cannot bypass NordVPN policy routing for locally-generated packets
 
 - NordVPN (when connected) installs ip rules (priority 32760+) that route all
