@@ -72,6 +72,6 @@ fi
 "${compose_cmd[@]}" \
     --env-file "${ENV_FILE}" \
     -f "${COMPOSE_FILE}" \
-    up -d
+    up -d --force-recreate
 
 echo "==> snowbridge is up."
