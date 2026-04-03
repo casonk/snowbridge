@@ -65,9 +65,9 @@ if [[ -f /etc/wireguard/wg0.conf ]] && command -v wg &>/dev/null; then
     # locally-generated packets).  Mark wg0's UDP socket and add an ip rule
     # at priority 100 so WireGuard responses use the main table (enp5s0 /
     # real internet gateway) instead of NordVPN's nordlynx (table 205).
-    WG_FWMARK=51820   # 0xca54
+    WG_FWMARK=51820   # 0xca6c
     wg set wg0 fwmark "${WG_FWMARK}"
-    ip rule show | grep -q "0xca54" || \
+    ip rule show | grep -q "0xca6c" || \
         ip rule add fwmark "${WG_FWMARK}" lookup main priority 100
     echo "    wg0 NordVPN bypass: applied"
 fi
