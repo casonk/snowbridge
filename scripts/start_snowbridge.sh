@@ -39,6 +39,11 @@ fi
 # ── 3. NordVPN ───────────────────────────────────────────────────────────────
 echo "==> Starting NordVPN…"
 if command -v nordvpn &>/dev/null; then
+    # Ensure snowbridge ports are reachable through NordVPN's firewall.
+    # These settings persist but are re-applied here to be explicit.
+    nordvpn allowlist add port 445 protocol TCP >/dev/null 2>&1 || true
+    nordvpn allowlist add port 443 protocol TCP >/dev/null 2>&1 || true
+    nordvpn allowlist add port 51820 protocol UDP >/dev/null 2>&1 || true
     nordvpn connect
 else
     echo "    warning: nordvpn CLI not found, skipping"
