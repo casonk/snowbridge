@@ -27,12 +27,21 @@ fi
 echo "==> Refreshing LUKS bind mounts…"
 bash "${REPO_ROOT}/scripts/remount_luks_share.sh"
 
-# ── 2. Samba ─────────────────────────────────────────────────────────────────
+# ── 2. WireGuard ─────────────────────────────────────────────────────────────
+echo "==> Starting WireGuard…"
+if [[ -f /etc/wireguard/wg0.conf ]]; then
+    systemctl start wg-quick@wg0
+    echo "    wg0: $(systemctl is-active wg-quick@wg0)"
+else
+    echo "    warning: /etc/wireguard/wg0.conf not found, skipping"
+fi
+
+# ── 3. Samba ─────────────────────────────────────────────────────────────────
 echo "==> Starting Samba…"
 systemctl start smb nmb
 echo "    smb/nmb: $(systemctl is-active smb) / $(systemctl is-active nmb)"
 
-# ── 3. File Browser + Caddy ──────────────────────────────────────────────────
+# ── 4. File Browser + Caddy ──────────────────────────────────────────────────
 echo "==> Starting File Browser + Caddy…"
 
 compose_cmd=()
