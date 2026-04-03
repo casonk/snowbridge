@@ -8,6 +8,7 @@ CHATHISTORY.md
 secrets/
 runtime/
 state/
+config/auto-pass.ini
 config/samba/smb.conf.local
 config/share-layout/folders.local.ini
 config/access/wireguard/*.local.conf
@@ -41,3 +42,5 @@ artifacts/wireguard/
 
 # Transient diagram export sidecars
 *.cmapx
+
+CLAUDE.md
