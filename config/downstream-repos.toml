@@ -1,0 +1,14 @@
+# Known downstream repositories for snowbridge.
+# Paths are relative to the portfolio root.
+# Track explicit code/config/operational integrations here, not generic
+# shared-utility mentions from AGENTS.md alone.
+
+[utility_repo]
+path = "./util-repos/snowbridge"
+
+[downstream_repos]
+tracking_basis = "explicit code/config/operational integrations"
+paths = [
+  "./util-repos/intake",   # README.md and architecture docs consume the snowbridge SMB share as the receipt source
+  "./util-repos/pit-box",  # LESSONSLEARNED.md uses the snowbridge SMB share for device key transfer
+]
