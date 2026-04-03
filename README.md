@@ -75,8 +75,21 @@ unlocking:
 sudo bash scripts/start_snowbridge.sh
 ```
 
-This refreshes the bind mounts, starts Samba, and brings up the File Browser +
-Caddy container stack in one step.
+This refreshes the bind mounts, starts WireGuard, NordVPN (with the socket
+fwmark and ip rule needed to keep WireGuard responses off nordlynx), Samba,
+and the File Browser + Caddy container stack in one step.
+
+### Rotating NordVPN while snowbridge is running
+
+NordVPN's disconnect phase flushes ip rules, which removes the WireGuard
+bypass rule. Use `nordility` to rotate so the rule is re-applied automatically:
+
+```bash
+sudo nordility change --restore-wireguard --wireguard-fwmark 51820
+```
+
+Plain `nordvpn connect` will work for NordVPN itself but will break the
+WireGuard tunnel to the phone until `start_snowbridge.sh` is re-run.
 
 See `docs/host-setup.md` for the detailed workflow, including hostname/IP
 discovery, stable-address guidance, the split between `wireguard-public-vpn`,

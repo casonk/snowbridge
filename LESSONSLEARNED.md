@@ -311,3 +311,16 @@
   proxy auth with an injected trusted username header so a valid device
   certificate lands directly in the app while the service remains unreachable
   without the client cert.
+
+### 2026-04-03 — NordVPN's nordlynx interface must be excluded from WireGuard routing restoration
+
+- `wg show interfaces` discovers ALL WireGuard interfaces, including NordVPN's
+  own `nordlynx` interface (NordLynx is WireGuard-based).
+- Running `wg set nordlynx fwmark <value>` overwrites the socket fwmark that
+  NordVPN manages internally (0xe1f1), which can interfere with NordVPN's own
+  anti-loop routing mechanism.
+- Filter routing restoration to interfaces that have a corresponding config file
+  in `/etc/wireguard/` (e.g. `/etc/wireguard/wg0.conf`). VPN-daemon-managed
+  interfaces like `nordlynx` have no such file and are safely excluded.
+- Peer handshake refresh (`wg set <iface> peer <pubkey> endpoint <ep>`) is safe
+  on all discovered interfaces and does not need the same filter.
