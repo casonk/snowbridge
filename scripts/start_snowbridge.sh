@@ -37,6 +37,12 @@ if [[ -f /etc/wireguard/wg0.conf ]]; then
         systemctl restart dnsmasq
         echo "    dnsmasq: $(systemctl is-active dnsmasq)"
     fi
+    # NordVPN routes all unmarked internet traffic through nordlynx (table 205).
+    # Mark outgoing WireGuard UDP packets with NordVPN's own fwmark (0xe1f1) so
+    # rule 32765 excludes them and they use the real internet gateway instead.
+    iptables -t mangle -C OUTPUT -p udp --sport 51820 -j MARK --set-mark 0xe1f1 2>/dev/null || \
+        iptables -t mangle -A OUTPUT -p udp --sport 51820 -j MARK --set-mark 0xe1f1
+    echo "    wg0 NordVPN bypass: applied"
 else
     echo "    warning: /etc/wireguard/wg0.conf not found, skipping"
 fi
