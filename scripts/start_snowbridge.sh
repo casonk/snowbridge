@@ -36,12 +36,20 @@ else
     echo "    warning: /etc/wireguard/wg0.conf not found, skipping"
 fi
 
-# ── 3. Samba ─────────────────────────────────────────────────────────────────
+# ── 3. NordVPN ───────────────────────────────────────────────────────────────
+echo "==> Starting NordVPN…"
+if command -v nordvpn &>/dev/null; then
+    nordvpn connect
+else
+    echo "    warning: nordvpn CLI not found, skipping"
+fi
+
+# ── 4. Samba ─────────────────────────────────────────────────────────────────
 echo "==> Starting Samba…"
 systemctl start smb nmb
 echo "    smb/nmb: $(systemctl is-active smb) / $(systemctl is-active nmb)"
 
-# ── 4. File Browser + Caddy ──────────────────────────────────────────────────
+# ── 5. File Browser + Caddy ──────────────────────────────────────────────────
 echo "==> Starting File Browser + Caddy…"
 
 compose_cmd=()
