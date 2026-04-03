@@ -37,22 +37,6 @@ if [[ -f /etc/wireguard/wg0.conf ]]; then
         systemctl restart dnsmasq
         echo "    dnsmasq: $(systemctl is-active dnsmasq)"
     fi
-    # NordVPN routes all internet traffic through nordlynx (table 205).
-    # iptables MARK does NOT help here: for locally-generated packets the
-    # routing decision is made before the mangle OUTPUT hook runs, so the
-    # mark is invisible to policy routing.
-    #
-    # The correct fix is WireGuard's socket-level SO_MARK, which IS present
-    # at routing-decision time.  We assign fwmark 51820 (0xca54) to the wg0
-    # socket and add an ip rule at priority 100 (before NordVPN's 32760+
-    # rules) that sends socket-marked packets to the main routing table so
-    # WireGuard handshake responses exit via enp5s0 (the real internet
-    # gateway) rather than nordlynx.
-    WG_FWMARK=51820   # 0xca54 — distinct from NordVPN's 0xe1f1 (0x57793)
-    wg set wg0 fwmark "${WG_FWMARK}"
-    ip rule show | grep -q "0xca54" || \
-        ip rule add fwmark "${WG_FWMARK}" lookup main priority 100
-    echo "    wg0 NordVPN bypass: applied"
 else
     echo "    warning: /etc/wireguard/wg0.conf not found, skipping"
 fi
@@ -68,6 +52,24 @@ if command -v nordvpn &>/dev/null; then
     nordvpn connect
 else
     echo "    warning: nordvpn CLI not found, skipping"
+fi
+
+# Apply WireGuard NordVPN bypass AFTER nordvpn connect.
+# NordVPN's disconnect phase (including during rotation) flushes ip rules,
+# removing any rule added before it connects.  The socket fwmark and ip rule
+# must therefore be set after the VPN is up.  Use scripts/nordvpn_rotate.sh
+# for subsequent server rotations — it re-applies these rules automatically.
+if [[ -f /etc/wireguard/wg0.conf ]] && command -v wg &>/dev/null; then
+    # WireGuard socket-level SO_MARK is present at routing-decision time
+    # (unlike iptables MARK which runs after the routing decision for
+    # locally-generated packets).  Mark wg0's UDP socket and add an ip rule
+    # at priority 100 so WireGuard responses use the main table (enp5s0 /
+    # real internet gateway) instead of NordVPN's nordlynx (table 205).
+    WG_FWMARK=51820   # 0xca54
+    wg set wg0 fwmark "${WG_FWMARK}"
+    ip rule show | grep -q "0xca54" || \
+        ip rule add fwmark "${WG_FWMARK}" lookup main priority 100
+    echo "    wg0 NordVPN bypass: applied"
 fi
 
 # ── 4. Samba ─────────────────────────────────────────────────────────────────
