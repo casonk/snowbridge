@@ -13,7 +13,7 @@ rectangle "config/network/networkmanager-static-ip.local.sh\n2 detected tools" a
 rectangle "scripts/debug_private_access.sh\n12 detected tools" as source_scripts_debug_private_access_sh #E0F2FE
 rectangle "scripts/remount_luks_share.sh\n3 detected tools" as source_scripts_remount_luks_share_sh #E0F2FE
 rectangle "scripts/setup_caddy_filebrowser.sh\n32 detected tools" as source_scripts_setup_caddy_filebrowser_sh #E0F2FE
-rectangle "scripts/start_snowbridge.sh\n4 detected tools" as source_scripts_start_snowbridge_sh #E0F2FE
+rectangle "scripts/start_snowbridge.sh\n8 detected tools" as source_scripts_start_snowbridge_sh #E0F2FE
 cloud "!in_global" as tool_in_global #FEF3C7
 cloud "(command_exists" as tool_command_exists #FEF3C7
 cloud "2[0-9]" as tool_tool_2_0_9 #FEF3C7
@@ -40,6 +40,7 @@ cloud "i" as tool_i #FEF3C7
 cloud "id" as tool_id #FEF3C7
 cloud "in_global" as tool_in_global_2 #FEF3C7
 cloud "install" as tool_install #FEF3C7
+cloud "ip" as tool_ip #FEF3C7
 cloud "ipv6.method" as tool_ipv6_method #FEF3C7
 cloud "mapfile" as tool_mapfile #FEF3C7
 cloud "mkdir" as tool_mkdir #FEF3C7
@@ -47,6 +48,7 @@ cloud "mount" as tool_mount #FEF3C7
 cloud "mv" as tool_mv #FEF3C7
 cloud "next" as tool_next #FEF3C7
 cloud "nmcli" as tool_nmcli #FEF3C7
+cloud "nordvpn" as tool_nordvpn #FEF3C7
 cloud "pip" as tool_pip #FEF3C7
 cloud "podman-compose" as tool_podman_compose #FEF3C7
 cloud "pre-commit" as tool_pre_commit #FEF3C7
@@ -64,6 +66,7 @@ cloud "umount" as tool_umount #FEF3C7
 cloud "up" as tool_up #FEF3C7
 cloud "update-ca-certificates" as tool_update_ca_certificates #FEF3C7
 cloud "update-ca-trust" as tool_update_ca_trust #FEF3C7
+cloud "wg" as tool_wg #FEF3C7
 cloud "yum" as tool_yum #FEF3C7
 source_github_workflows_ci_yml --> tool_actions_checkout
 source_github_workflows_ci_yml --> tool_actions_setup_python
@@ -124,10 +127,14 @@ source_scripts_setup_caddy_filebrowser_sh --> tool_update_ca_trust
 source_scripts_setup_caddy_filebrowser_sh --> tool_yum
 source_scripts_start_snowbridge_sh --> tool_bash
 source_scripts_start_snowbridge_sh --> tool_docker_compose
+source_scripts_start_snowbridge_sh --> tool_grep
+source_scripts_start_snowbridge_sh --> tool_ip
+source_scripts_start_snowbridge_sh --> tool_nordvpn
 source_scripts_start_snowbridge_sh --> tool_systemctl
 source_scripts_start_snowbridge_sh --> tool_up
+source_scripts_start_snowbridge_sh --> tool_wg
 note as toolingGraphSummary
 Scanned 9 tooling entrypoints.
-Detected 51 third-party tools.
+Detected 54 third-party tools.
 end note
 @enduml

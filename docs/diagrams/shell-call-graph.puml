@@ -12,7 +12,7 @@ rectangle "config/network/networkmanager-static-ip.local.sh\n0 local shell edges
 rectangle "scripts/debug_private_access.sh\n0 local shell edges\n11 external tools" as shell_scripts_debug_private_access_sh #DBEAFE
 rectangle "scripts/remount_luks_share.sh\n0 local shell edges\n3 external tools" as shell_scripts_remount_luks_share_sh #DBEAFE
 rectangle "scripts/setup_caddy_filebrowser.sh\n0 local shell edges\n32 external tools" as shell_scripts_setup_caddy_filebrowser_sh #DBEAFE
-rectangle "scripts/start_snowbridge.sh\n0 local shell edges\n3 external tools" as shell_scripts_start_snowbridge_sh #DBEAFE
+rectangle "scripts/start_snowbridge.sh\n0 local shell edges\n7 external tools" as shell_scripts_start_snowbridge_sh #DBEAFE
 cloud "!in_global" as tool_in_global #FEF3C7
 cloud "(command_exists" as tool_command_exists #FEF3C7
 cloud "2[0-9]" as tool_tool_2_0_9 #FEF3C7
@@ -36,6 +36,7 @@ cloud "i" as tool_i #FEF3C7
 cloud "id" as tool_id #FEF3C7
 cloud "in_global" as tool_in_global_2 #FEF3C7
 cloud "install" as tool_install #FEF3C7
+cloud "ip" as tool_ip #FEF3C7
 cloud "ipv6.method" as tool_ipv6_method #FEF3C7
 cloud "mapfile" as tool_mapfile #FEF3C7
 cloud "mkdir" as tool_mkdir #FEF3C7
@@ -43,6 +44,7 @@ cloud "mount" as tool_mount #FEF3C7
 cloud "mv" as tool_mv #FEF3C7
 cloud "next" as tool_next #FEF3C7
 cloud "nmcli" as tool_nmcli #FEF3C7
+cloud "nordvpn" as tool_nordvpn #FEF3C7
 cloud "podman-compose" as tool_podman_compose #FEF3C7
 cloud "print" as tool_print #FEF3C7
 cloud "private-vpn" as tool_private_vpn #FEF3C7
@@ -58,6 +60,7 @@ cloud "umount" as tool_umount #FEF3C7
 cloud "up" as tool_up #FEF3C7
 cloud "update-ca-certificates" as tool_update_ca_certificates #FEF3C7
 cloud "update-ca-trust" as tool_update_ca_trust #FEF3C7
+cloud "wg" as tool_wg #FEF3C7
 cloud "yum" as tool_yum #FEF3C7
 shell_config_access_tailscale_tailscale_subnet_router_example_sh --> tool_systemctl
 shell_config_access_tailscale_tailscale_subnet_router_local_sh --> tool_systemctl
@@ -112,11 +115,15 @@ shell_scripts_setup_caddy_filebrowser_sh --> tool_update_ca_certificates
 shell_scripts_setup_caddy_filebrowser_sh --> tool_update_ca_trust
 shell_scripts_setup_caddy_filebrowser_sh --> tool_yum
 shell_scripts_start_snowbridge_sh --> tool_docker_compose
+shell_scripts_start_snowbridge_sh --> tool_grep
+shell_scripts_start_snowbridge_sh --> tool_ip
+shell_scripts_start_snowbridge_sh --> tool_nordvpn
 shell_scripts_start_snowbridge_sh --> tool_systemctl
 shell_scripts_start_snowbridge_sh --> tool_up
+shell_scripts_start_snowbridge_sh --> tool_wg
 note as shellGraphSummary
 Scanned 8 shell scripts.
 Detected 0 local shell edges.
-Detected 46 external tools.
+Detected 49 external tools.
 end note
 @enduml
