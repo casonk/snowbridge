@@ -32,6 +32,11 @@ echo "==> Starting WireGuard…"
 if [[ -f /etc/wireguard/wg0.conf ]]; then
     systemctl start wg-quick@wg0
     echo "    wg0: $(systemctl is-active wg-quick@wg0)"
+    # dnsmasq binds 10.99.0.1 which only exists after wg0 is up; restart it now
+    if systemctl is-enabled dnsmasq &>/dev/null; then
+        systemctl restart dnsmasq
+        echo "    dnsmasq: $(systemctl is-active dnsmasq)"
+    fi
 else
     echo "    warning: /etc/wireguard/wg0.conf not found, skipping"
 fi
