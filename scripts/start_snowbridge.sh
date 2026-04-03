@@ -37,16 +37,21 @@ if [[ -f /etc/wireguard/wg0.conf ]]; then
         systemctl restart dnsmasq
         echo "    dnsmasq: $(systemctl is-active dnsmasq)"
     fi
-    # NordVPN routes all internet traffic through nordlynx (table 205).  When
-    # NordVPN firewall is disabled it does NOT add the ip rule that sends
-    # fwmark 0xe1f1 packets to the main table, so we add it ourselves at a
-    # higher priority (100 < 32760).  We also mark all outgoing WireGuard UDP
-    # packets (sport 51820) with 0xe1f1 so the rule above catches them and
-    # routes them via enp5s0 (the real internet gateway) instead of nordlynx.
-    ip rule show | grep -q "fwmark 0xe1f1 lookup main" || \
-        ip rule add fwmark 0xe1f1 lookup main priority 100
-    iptables -t mangle -C OUTPUT -p udp --sport 51820 -j MARK --set-mark 0xe1f1 2>/dev/null || \
-        iptables -t mangle -A OUTPUT -p udp --sport 51820 -j MARK --set-mark 0xe1f1
+    # NordVPN routes all internet traffic through nordlynx (table 205).
+    # iptables MARK does NOT help here: for locally-generated packets the
+    # routing decision is made before the mangle OUTPUT hook runs, so the
+    # mark is invisible to policy routing.
+    #
+    # The correct fix is WireGuard's socket-level SO_MARK, which IS present
+    # at routing-decision time.  We assign fwmark 51820 (0xca54) to the wg0
+    # socket and add an ip rule at priority 100 (before NordVPN's 32760+
+    # rules) that sends socket-marked packets to the main routing table so
+    # WireGuard handshake responses exit via enp5s0 (the real internet
+    # gateway) rather than nordlynx.
+    WG_FWMARK=51820   # 0xca54 — distinct from NordVPN's 0xe1f1 (0x57793)
+    wg set wg0 fwmark "${WG_FWMARK}"
+    ip rule show | grep -q "0xca54" || \
+        ip rule add fwmark "${WG_FWMARK}" lookup main priority 100
     echo "    wg0 NordVPN bypass: applied"
 else
     echo "    warning: /etc/wireguard/wg0.conf not found, skipping"
