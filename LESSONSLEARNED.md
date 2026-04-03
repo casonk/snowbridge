@@ -279,6 +279,29 @@
 - Folders whose sources are on btrfs (e.g. `keepass` at `/home/user/luks`) are
   unaffected because they are accessible at boot and the bind mount is correct.
 
+### 2026-04-03 — iptables MARK cannot bypass NordVPN policy routing for locally-generated packets
+
+- NordVPN (when connected) installs ip rules (priority 32760+) that route all
+  non-marked internet traffic through `nordlynx` (routing table 205). WireGuard
+  handshake responses to a phone's cellular IP are internet-bound and get
+  redirected through NordVPN, so the phone receives a response from the NordVPN
+  server IP rather than the desktop's public IP and rejects the handshake.
+- The obvious fix — marking outgoing UDP port 51820 packets with NordVPN's
+  fwmark `0xe1f1` in `iptables -t mangle OUTPUT` — does NOT work. For locally-
+  generated packets the kernel makes its routing decision before the mangle
+  OUTPUT hook runs, so the mark is invisible to policy routing.
+- When `nordvpn set firewall disabled` is active, NordVPN also does NOT add the
+  ip rule `fwmark 0xe1f1 lookup main` (priority 32760), so even if the mark
+  were set in time, there would be no rule to act on it.
+- The correct fix uses WireGuard's socket-level SO_MARK (`wg set wg0 fwmark
+  51820`), which IS present at routing-decision time. Pair it with an ip rule
+  at a priority higher than NordVPN's: `ip rule add fwmark 51820 lookup main
+  priority 100`. WireGuard's own UDP packets are then routed via the main table
+  (real internet gateway / enp5s0) instead of nordlynx.
+- `192.168.0.7` (LAN IP) is not reachable from the internet — cellular clients
+  must use the WireGuard tunnel IP `10.99.0.1` or a hostname that resolves
+  through dnsmasq on the tunnel.
+
 ### 2026-03-30 — Private mTLS browser mode should terminate auth at Caddy and proxy the trusted app user
 
 - If the private HTTPS layer already requires a verified client certificate, do
