@@ -44,6 +44,7 @@ class RunMonitorTests(unittest.TestCase):
                 shock_relay_root=root,
                 state_file=root / "state.json",
                 public_ip_lookup_urls=("https://example.test/ip",),
+                bind_interface=None,
                 profiles=(
                     check_wireguard_endpoint.ProfileConfig(
                         name="public",
@@ -79,7 +80,7 @@ class RunMonitorTests(unittest.TestCase):
             outcome = check_wireguard_endpoint.run_monitor(
                 config,
                 state,
-                public_ip_detector=lambda _urls: "68.41.12.47",
+                public_ip_detector=lambda _urls, _iface: "68.41.12.47",
                 qr_renderer=lambda profile: rendered.append(profile.qr_path),
                 email_sender=lambda _cfg, subject, body: emails.append((subject, body)),
                 signal_sender=lambda _cfg, message: signals.append(message),
@@ -115,6 +116,7 @@ class RunMonitorTests(unittest.TestCase):
                 shock_relay_root=root,
                 state_file=root / "state.json",
                 public_ip_lookup_urls=("https://example.test/ip",),
+                bind_interface=None,
                 profiles=(
                     check_wireguard_endpoint.ProfileConfig(
                         name="public",
@@ -152,7 +154,7 @@ class RunMonitorTests(unittest.TestCase):
             outcome = check_wireguard_endpoint.run_monitor(
                 config,
                 state,
-                public_ip_detector=lambda _urls: "68.41.12.47",
+                public_ip_detector=lambda _urls, _iface: "68.41.12.47",
                 qr_renderer=lambda profile: rendered.append(profile.qr_path),
                 email_sender=lambda _cfg, subject, body: emails.append((subject, body)),
                 signal_sender=lambda _cfg, message: signals.append(message),
@@ -178,6 +180,7 @@ class RunMonitorTests(unittest.TestCase):
                 shock_relay_root=root,
                 state_file=root / "state.json",
                 public_ip_lookup_urls=("https://example.test/ip",),
+                bind_interface=None,
                 profiles=(
                     check_wireguard_endpoint.ProfileConfig(
                         name="public",
@@ -212,7 +215,7 @@ class RunMonitorTests(unittest.TestCase):
             outcome = check_wireguard_endpoint.run_monitor(
                 config,
                 state,
-                public_ip_detector=lambda _urls: "68.41.12.47",
+                public_ip_detector=lambda _urls, _iface: "68.41.12.47",
                 qr_renderer=lambda profile: None,
                 email_sender=lambda _cfg, subject, body: emails.append((subject, body)),
                 signal_sender=lambda _cfg, message: None,
@@ -240,6 +243,7 @@ class RunMonitorTests(unittest.TestCase):
                 shock_relay_root=root,
                 state_file=root / "state.json",
                 public_ip_lookup_urls=("https://example.test/ip",),
+                bind_interface=None,
                 profiles=(
                     check_wireguard_endpoint.ProfileConfig(
                         name="public",
@@ -268,7 +272,7 @@ class RunMonitorTests(unittest.TestCase):
             outcome = check_wireguard_endpoint.run_monitor(
                 config,
                 state,
-                public_ip_detector=lambda _urls: "68.41.12.47",
+                public_ip_detector=lambda _urls, _iface: "68.41.12.47",
                 qr_renderer=lambda profile: None,
                 email_sender=lambda _cfg, subject, body: None,
                 signal_sender=lambda _cfg, message: signals.append(message),
