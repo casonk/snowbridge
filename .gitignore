@@ -45,3 +45,5 @@ artifacts/wireguard/
 *.cmapx
 
 CLAUDE.md
+
+.tachometer/
