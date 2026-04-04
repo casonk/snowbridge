@@ -91,6 +91,7 @@ class MonitorConfig:
     shock_relay_root: Path
     state_file: Path
     public_ip_lookup_urls: tuple[str, ...]
+    bind_interface: str | None
     profiles: tuple[ProfileConfig, ...]
     email: EmailConfig
     signal: SignalConfig
@@ -228,6 +229,9 @@ def load_config(path: Path) -> MonitorConfig:
         shock_relay_root=shock_relay_root,
         state_file=state_file,
         public_ip_lookup_urls=tuple(str(url).strip() for url in public_ip_lookup_urls),
+        bind_interface=str(monitor_section["bind_interface"]).strip() or None
+        if "bind_interface" in monitor_section
+        else None,
         profiles=tuple(profiles),
         email=email,
         signal=signal,
@@ -250,16 +254,31 @@ def save_state(path: Path, state: Mapping[str, Any], *, dry_run: bool) -> None:
     path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def detect_public_ip(urls: tuple[str, ...]) -> str:
+def _detect_public_ip_via_interface(url: str, interface: str) -> str:
+    """Fetch public IP from *url* bound to *interface* using curl, bypassing VPN routing."""
+    result = subprocess.run(
+        ["curl", "-s", "--interface", interface, "--max-time", "10", url],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise OSError(f"curl exited {result.returncode}: {result.stderr.strip()}")
+    return result.stdout.strip()
+
+
+def detect_public_ip(urls: tuple[str, ...], bind_interface: str | None = None) -> str:
     last_error: Exception | None = None
     for url in urls:
-        request = urllib.request.Request(
-            url,
-            headers={"User-Agent": "snowbridge-wireguard-endpoint-monitor/1.0"},
-        )
         try:
-            with urllib.request.urlopen(request, timeout=10) as response:
-                candidate = response.read().decode("utf-8").strip()
+            if bind_interface is not None:
+                candidate = _detect_public_ip_via_interface(url, bind_interface)
+            else:
+                request = urllib.request.Request(
+                    url,
+                    headers={"User-Agent": "snowbridge-wireguard-endpoint-monitor/1.0"},
+                )
+                with urllib.request.urlopen(request, timeout=10) as response:
+                    candidate = response.read().decode("utf-8").strip()
             ipaddress.ip_address(candidate)
             return candidate
         except Exception as exc:  # pragma: no cover - exercised via CLI/runtime
@@ -507,13 +526,13 @@ def run_monitor(
     config: MonitorConfig,
     state: dict[str, Any],
     *,
-    public_ip_detector: Callable[[tuple[str, ...]], str] = detect_public_ip,
+    public_ip_detector: Callable[..., str] = detect_public_ip,
     qr_renderer: Callable[[ProfileConfig], None] | None = None,
     email_sender: Callable[[EmailConfig, str, str], None] | None = None,
     signal_sender: Callable[[SignalConfig, str], None] | None = None,
     dry_run: bool = False,
 ) -> MonitorOutcome:
-    public_ip = public_ip_detector(config.public_ip_lookup_urls)
+    public_ip = public_ip_detector(config.public_ip_lookup_urls, config.bind_interface)
     profile_outcomes = [
         update_profile_endpoint(profile, public_ip, dry_run=dry_run)
         for profile in config.profiles

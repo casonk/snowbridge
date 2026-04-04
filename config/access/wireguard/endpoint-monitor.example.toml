@@ -2,6 +2,10 @@
 host_label = "snowbridge"
 shock_relay_root = "../shock-relay"
 state_file = "state/wireguard-endpoint-monitor.json"
+# Set to the physical NIC name (e.g. "enp5s0", "eth0") to bypass any active
+# VPN tunnel when detecting the public IP. Required when NordVPN or another
+# policy-routing VPN runs on the host.
+# bind_interface = "enp5s0"
 public_ip_lookup_urls = [
   "https://api.ipify.org",
   "https://ifconfig.me/ip",
