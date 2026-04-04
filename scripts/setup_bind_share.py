@@ -9,6 +9,7 @@ import os
 import pathlib
 import pwd
 import grp
+import shlex
 import shutil
 import subprocess
 import sys
@@ -359,6 +360,32 @@ def mounted_sources(path: pathlib.Path) -> list[str]:
     return sources
 
 
+def mounted_source_details(path: pathlib.Path) -> tuple[str, pathlib.Path] | None:
+    result = subprocess.run(
+        ["findmnt", "-P", "-n", "-o", "SOURCE,TARGET", "--target", str(path)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+
+    for line in result.stdout.splitlines():
+        value = line.strip()
+        if not value:
+            continue
+        fields: dict[str, str] = {}
+        for token in shlex.split(value):
+            key, _, field_value = token.partition("=")
+            if key and field_value:
+                fields[key] = field_value
+        source = fields.get("SOURCE")
+        target = fields.get("TARGET")
+        if source and target:
+            return source, pathlib.Path(target)
+    return None
+
+
 def mounted_source_subpath(source: str) -> pathlib.Path | None:
     if "[" not in source or not source.endswith("]"):
         return None
@@ -396,10 +423,38 @@ def same_mounted_source(a: str, b: str) -> bool:
     ) and a_subpath == b_subpath
 
 
+def mounted_source_identity(path: pathlib.Path) -> str | None:
+    details = mounted_source_details(path)
+    if details is None:
+        return None
+
+    source, target = details
+    try:
+        relative = path.relative_to(target)
+    except ValueError:
+        return source
+
+    source_parts = mounted_source_device_and_subpath(source)
+    if source_parts is not None:
+        device, base_subpath = source_parts
+    else:
+        source_path = pathlib.Path(source)
+        if not str(source_path).startswith("/dev/"):
+            return source
+        device = source_path
+        base_subpath = pathlib.Path("/")
+
+    subpath = base_subpath
+    if relative.parts:
+        subpath = base_subpath.joinpath(*relative.parts)
+
+    return f"{device}[{subpath}]"
+
+
 def mounted_source_matches(source: str, expected: pathlib.Path) -> bool:
-    for expected_source in mounted_sources(expected):
-        if same_mounted_source(source, expected_source):
-            return True
+    expected_source = mounted_source_identity(expected)
+    if expected_source is not None and same_mounted_source(source, expected_source):
+        return True
 
     resolved_expected = pathlib.Path(os.path.realpath(expected))
     resolved_plain = pathlib.Path(os.path.realpath(source))
