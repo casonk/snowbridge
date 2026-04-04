@@ -1,0 +1,35 @@
+[monitor]
+host_label = "snowbridge"
+shock_relay_root = "../shock-relay"
+state_file = "state/wireguard-endpoint-monitor.json"
+public_ip_lookup_urls = [
+  "https://api.ipify.org",
+  "https://ifconfig.me/ip",
+  "https://icanhazip.com",
+]
+
+[[profiles]]
+name = "iphone-public-vpn"
+config_path = "config/access/wireguard/iphone-peer.public-vpn.local.conf"
+qr_path = "artifacts/wireguard/iphone-peer.public-vpn.local.png"
+
+[[profiles]]
+name = "iphone-lan-vpn"
+config_path = "config/access/wireguard/iphone-peer.lan-vpn.local.conf"
+qr_path = "artifacts/wireguard/iphone-peer.lan-vpn.local.png"
+
+[[profiles]]
+name = "iphone-host-only"
+config_path = "config/access/wireguard/iphone-peer.local.conf"
+qr_path = "artifacts/wireguard/iphone-peer.local.png"
+
+[email]
+enabled = false
+to = "you@example.com"
+config_path = "services/gmail-imap/config.local.yaml"
+
+[signal]
+enabled = false
+recipient = "+15551234567"
+note_to_self = false
+config_path = "services/signal-cli/config.local.yaml"

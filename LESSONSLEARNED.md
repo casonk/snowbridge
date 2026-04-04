@@ -341,3 +341,16 @@
   interfaces like `nordlynx` have no such file and are safely excluded.
 - Peer handshake refresh (`wg set <iface> peer <pubkey> endpoint <ep>`) is safe
   on all discovered interfaces and does not need the same filter.
+
+### 2026-04-04 — Direct-IP WireGuard client profiles need endpoint-drift automation or a stable DNS name
+
+- A phone profile that embeds the home's current public IP in `Endpoint = ...`
+  will silently go stale after the ISP changes the WAN address, even though the
+  rest of the host-side WireGuard, Samba, and web stack may still be healthy.
+- Prefer a stable DNS or DDNS endpoint when possible. If the deployment keeps a
+  raw public IP instead, automate three steps together: detect the new public
+  IP, rewrite the ignored client profiles, and regenerate the exported QR
+  artifacts immediately.
+- Notification state should be tracked separately from endpoint-application
+  state so a failed email or Signal send is retried on the next run without
+  needing the endpoint drift to happen again.
