@@ -29,6 +29,7 @@ custom client app or a separate sync workflow.
 - `config/share-layout/folders.example.ini`: bind-mounted folder layout example
 - `config/network/`: stable-address examples for the host network
 - `config/access/wireguard/`: WireGuard config examples for the `wireguard-public-vpn` and `wireguard-lan-vpn` profiles; use `./util-repos/short-circuit/scripts/setup_wireguard.sh` to install them
+- `config/clockwork/`: scheduler templates rendered through the shared `clockwork` repo
 - `config/access/wireguard/endpoint-monitor.example.toml`: example local-only monitor config for direct-IP WireGuard endpoint drift detection and notification
 - `config/access/tailscale/`: Tailscale subnet router example
 - `config/web/`: optional Caddy and File Browser templates for web access, including private-VPN HTTPS, private-VPN HTTPS with mTLS client certificates, and public HTTPS modes that can bind on either all interfaces or a specific private host IP behind router/NAT forwarding
@@ -146,6 +147,8 @@ paths outside git. The installed timer runs the check every 15 minutes by
 default, rewrites any direct-IP client profiles whose `Endpoint` no longer
 matches the current WAN IP, regenerates all configured QR PNGs, and sends the
 latest endpoint through both email and Signal when enabled.
+The installer now renders the systemd service and timer through the sibling
+`clockwork` repo instead of writing the unit text inline here.
 If you later move the client profiles to a stable DNS name or DDNS endpoint,
 this monitor is no longer necessary.
 

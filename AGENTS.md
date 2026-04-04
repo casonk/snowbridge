@@ -24,6 +24,7 @@ The current baseline is:
 - `./util-repos/traction-control`: portfolio-wide standards and repo baseline
 - `./util-repos/archility`: standard architecture bootstrap and render tooling
 - `./util-repos/auto-pass`: standard password-management utility repo
+- `./util-repos/clockwork`: standard cron and systemd scheduler rendering repo
 - `./util-repos/nordility`: standard VPN-switching utility repo
 - `./util-repos/shock-relay`: standard external-messaging utility repo
 - `./util-repos/short-circuit`: standard WireGuard VPN setup and configuration
@@ -66,4 +67,4 @@ The current baseline is:
    access should go through a private VPN or equivalent tunnel.
 7. Use Conventional Commits for any git history you create.
 
-Last reviewed: `2026-03-28`
+Last reviewed: `2026-04-04`
