@@ -336,6 +336,26 @@ current public IP and warns you to move to a stable DNS name. For
 `wireguard-lan-vpn`, pass `--lan-subnet <cidr>` so it fills the route into the
 client peer profile before validation.
 
+If the client profiles keep a raw public IP instead of stable DNS, install the
+endpoint-drift monitor so a WAN-IP change rewrites the local peer configs,
+regenerates the QR PNGs, and sends the latest endpoint through both email and
+Signal:
+
+```bash
+./scripts/setup_wireguard_endpoint_monitor.sh --init-local-configs
+# edit config/access/wireguard/endpoint-monitor.local.toml
+python3 ./scripts/check_wireguard_endpoint.py --dry-run
+sudo ./scripts/setup_wireguard_endpoint_monitor.sh --install-systemd
+```
+
+The monitor config is local-only and should point at the sibling
+`shock-relay/services/gmail-imap/config.local.yaml` and
+`shock-relay/services/signal-cli/config.local.yaml` files when those channels
+are enabled. The installed timer runs every 15 minutes by default.
+If you later switch the WireGuard client profiles to a stable DNS or DDNS
+endpoint, remove or disable the timer because there is no longer any direct-IP
+drift to correct.
+
 See `./util-repos/short-circuit/docs/setup-guide.md` for the full walkthrough.
 
 ## 12. Optional Web Access
