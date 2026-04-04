@@ -14,6 +14,9 @@
 - Document the repository around its real execution, curation, or integration flow instead of only the top-level folder list.
 - Keep local-only, private, reference-only, or generated boundaries explicit so published or runtime behavior is not confused with offline material or non-committable inputs.
 - Re-run repo-appropriate validation after changing generated artifacts, diagrams, workflows, or other CI-facing files so formatting and compatibility issues are caught before push.
+- When a repo installer needs dynamic systemd units, render them through the
+  shared `./util-repos/clockwork` manifest flow instead of growing another
+  inline here-doc block for service and timer text.
 
 ### 2026-03-28 — iPhone read/write access should target authenticated SMB first
 

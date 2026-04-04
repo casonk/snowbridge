@@ -352,6 +352,8 @@ The monitor config is local-only and should point at the sibling
 `shock-relay/services/gmail-imap/config.local.yaml` and
 `shock-relay/services/signal-cli/config.local.yaml` files when those channels
 are enabled. The installed timer runs every 15 minutes by default.
+The installer renders the systemd unit files through the shared `clockwork`
+repo so the scheduler text stays aligned with the portfolio-wide pattern.
 If you later switch the WireGuard client profiles to a stable DNS or DDNS
 endpoint, remove or disable the timer because there is no longer any direct-IP
 drift to correct.
