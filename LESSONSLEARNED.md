@@ -291,6 +291,10 @@
 - For repo-managed bind mounts, compare the target's current source against the
   configured source's own canonical `findmnt` source identity, with device
   realpath normalization for `device[subpath]` forms.
+- Derive that canonical identity from both `findmnt SOURCE` and `findmnt TARGET`
+  for the configured source path. The `SOURCE` field alone only names the
+  containing mount, while the bind mount itself is recorded with the full
+  filesystem-root-relative subpath such as `/dev/nvme1n1p3[/home/user/luks]`.
 
 ### 2026-04-03 — iptables MARK cannot bypass NordVPN policy routing for locally-generated packets
 
