@@ -81,6 +81,10 @@ paired placeholders are still present in the local configs. If the iPhone peer
 `Endpoint` is still on the checked-in sample value, the script will replace it
 with the host's current public IP and warn that you should still move to a
 stable DNS name or other stable public endpoint.
+If you intentionally keep a raw public IP in the client profiles, add
+`endpoint-monitor.local.toml` plus `check_wireguard_endpoint.py` so WAN-IP
+changes rewrite those local profiles, regenerate the QR PNGs, and notify you
+through `shock-relay` automatically.
 
 ## 4. WireGuard LAN-VPN
 
@@ -107,6 +111,8 @@ route automatically with `--lan-subnet`; otherwise it leaves the checked-in
 
 Because this profile routes traffic beyond the host itself, it normally also
 needs IPv4 forwarding and matching firewall policy on the server.
+It can use the same endpoint monitor workflow as `wireguard-public-vpn` when
+the client `Endpoint` is a raw public IP instead of stable DNS.
 
 ## 5. Private HTTPS Web Access Behind a VPN
 
