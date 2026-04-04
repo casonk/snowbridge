@@ -12,6 +12,7 @@ config/auto-pass.ini
 config/samba/smb.conf.local
 config/share-layout/folders.local.ini
 config/access/wireguard/*.local.conf
+config/access/wireguard/endpoint-monitor.local.toml
 config/access/tailscale/tailscale-subnet-router.local.sh
 config/web/filebrowser/filebrowser.env.local
 config/web/filebrowser/access.local.toml
