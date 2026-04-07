@@ -68,3 +68,14 @@ The current baseline is:
 7. Use Conventional Commits for any git history you create.
 
 Last reviewed: `2026-04-04`
+
+## Local CI Verification
+
+Run before every push:
+
+```bash
+pre-commit run --all-files
+```
+
+Do not push changes that have not passed all checks locally.
+
