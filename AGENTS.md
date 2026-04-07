@@ -78,4 +78,3 @@ pre-commit run --all-files
 ```
 
 Do not push changes that have not passed all checks locally.
-
