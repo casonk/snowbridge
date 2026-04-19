@@ -27,6 +27,7 @@ DEFAULT_EXAMPLE = REPO_ROOT / "config" / "web" / "filebrowser" / "access.example
 AUTO_PASS_CONFIG = REPO_ROOT / "config" / "auto-pass.ini"
 DEFAULT_WEB_ENV = REPO_ROOT / "config" / "web" / "filebrowser" / "filebrowser.env.local"
 DEFAULT_WEB_SETUP = REPO_ROOT / "scripts" / "setup_caddy_filebrowser.sh"
+DEFAULT_FILEBROWSER_IMAGE = "docker.io/filebrowser/filebrowser:latest"
 
 
 class SetupError(RuntimeError):
@@ -47,7 +48,7 @@ class RuntimeSpec:
     web_setup_script: Path
     mode: str
     container_runtime: str
-    filebrowser_image: str
+    filebrowser_image: str | None
     container_name: str
     share_mount_path: str
     database_path: str
@@ -298,6 +299,12 @@ def parse_runtime_spec(data: dict, config_path: Path) -> RuntimeSpec:
     if not isinstance(runtime, dict):
         fail(f"invalid [runtime] section in {config_path}")
     runtime_base = config_path.parent
+    raw_filebrowser_image = runtime.get("filebrowser_image")
+    filebrowser_image = (
+        str(raw_filebrowser_image).strip()
+        if raw_filebrowser_image not in (None, "")
+        else None
+    )
     return RuntimeSpec(
         web_env_file=resolve_repo_path(
             runtime.get("web_env_file", str(DEFAULT_WEB_ENV.relative_to(REPO_ROOT))),
@@ -309,7 +316,7 @@ def parse_runtime_spec(data: dict, config_path: Path) -> RuntimeSpec:
         ),
         mode=str(runtime.get("mode", "private-vpn")),
         container_runtime=str(runtime.get("container_runtime", "auto")),
-        filebrowser_image=str(runtime.get("filebrowser_image", "docker.io/filebrowser/filebrowser:latest")),
+        filebrowser_image=filebrowser_image,
         container_name=str(runtime.get("container_name", "snowbridge-filebrowser")),
         share_mount_path=str(runtime.get("share_mount_path", "/srv")),
         database_path=str(runtime.get("database_path", "/database/filebrowser.db")),
@@ -446,6 +453,14 @@ def load_env_file(env_path: Path) -> dict[str, str]:
         key, value = raw_line.split("=", 1)
         values[key.strip()] = value.strip()
     return values
+
+
+def resolve_filebrowser_image(runtime_spec: RuntimeSpec, env_values: dict[str, str]) -> str:
+    if runtime_spec.filebrowser_image:
+        return runtime_spec.filebrowser_image
+
+    env_image = env_values.get("FILEBROWSER_IMAGE", "").strip()
+    return env_image or DEFAULT_FILEBROWSER_IMAGE
 
 
 def replace_env_setting(env_path: Path, key: str, value: str, dry_run: bool) -> None:
@@ -778,6 +793,7 @@ def main() -> int:
 
     runtime = detect_container_runtime(runtime_spec.container_runtime)
     env_values = load_env_file(runtime_spec.web_env_file)
+    runtime_spec.filebrowser_image = resolve_filebrowser_image(runtime_spec, env_values)
 
     required_env_keys = ("SNOWBRIDGE_SHARE_ROOT", "FILEBROWSER_DB_DIR", "FILEBROWSER_CONFIG_DIR")
     for key in required_env_keys:

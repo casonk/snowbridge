@@ -1,6 +1,6 @@
 services:
   filebrowser:
-    image: docker.io/filebrowser/filebrowser:latest
+    image: "${FILEBROWSER_IMAGE:-docker.io/filebrowser/filebrowser:latest}"
     container_name: snowbridge-filebrowser
     restart: unless-stopped
     user: "${SNOWBRIDGE_UID}:${SNOWBRIDGE_GID}"

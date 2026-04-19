@@ -17,7 +17,10 @@ web_setup_script = "../../../scripts/setup_caddy_filebrowser.sh"
 # Supported modes: "private-vpn", "private-vpn-mtls", "public", "public-private-ip"
 mode = "private-vpn"
 container_runtime = "auto"
-filebrowser_image = "docker.io/filebrowser/filebrowser:latest"
+# Optional: leave unset to reuse FILEBROWSER_IMAGE from filebrowser.env.local.
+# Set it here only when the one-shot access-management container should use a
+# different image from the main compose stack.
+# filebrowser_image = "ghcr.io/example/filebrowser:dirsize"
 container_name = "snowbridge-filebrowser"
 share_mount_path = "/srv"
 database_path = "/database/filebrowser.db"
