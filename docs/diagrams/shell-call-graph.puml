@@ -9,12 +9,23 @@ rectangle "config/access/tailscale/tailscale-subnet-router.example.sh\n0 local s
 rectangle "config/access/tailscale/tailscale-subnet-router.local.sh\n0 local shell edges\n1 external tool" as shell_config_access_tailscale_tailscale_subnet_router_local_sh #DBEAFE
 rectangle "config/network/networkmanager-static-ip.example.sh\n0 local shell edges\n2 external tools" as shell_config_network_networkmanager_static_ip_example_sh #DBEAFE
 rectangle "config/network/networkmanager-static-ip.local.sh\n0 local shell edges\n2 external tools" as shell_config_network_networkmanager_static_ip_local_sh #DBEAFE
+rectangle "scripts/build_filebrowser_fork_image.sh\n0 local shell edges\n4 external tools" as shell_scripts_build_filebrowser_fork_image_sh #DBEAFE
 rectangle "scripts/debug_private_access.sh\n0 local shell edges\n11 external tools" as shell_scripts_debug_private_access_sh #DBEAFE
+rectangle "scripts/deploy_filebrowser_fork_image.sh\n0 local shell edges\n10 external tools" as shell_scripts_deploy_filebrowser_fork_image_sh #DBEAFE
 rectangle "scripts/remount_luks_share.sh\n0 local shell edges\n3 external tools" as shell_scripts_remount_luks_share_sh #DBEAFE
+rectangle "scripts/run_tachometer_profile.sh\n0 local shell edges\n3 external tools" as shell_scripts_run_tachometer_profile_sh #DBEAFE
 rectangle "scripts/setup_caddy_filebrowser.sh\n0 local shell edges\n32 external tools" as shell_scripts_setup_caddy_filebrowser_sh #DBEAFE
+rectangle "scripts/setup_filebrowser_fork_workspace.sh\n0 local shell edges\n7 external tools" as shell_scripts_setup_filebrowser_fork_workspace_sh #DBEAFE
+rectangle "scripts/setup_wireguard_endpoint_monitor.sh\n0 local shell edges\n3 external tools" as shell_scripts_setup_wireguard_endpoint_monitor_sh #DBEAFE
 rectangle "scripts/start_snowbridge.sh\n0 local shell edges\n7 external tools" as shell_scripts_start_snowbridge_sh #DBEAFE
+rectangle "vendor/filebrowser-upstream/docker/alpine/healthcheck.sh\n0 local shell edges\n5 external tools" as shell_vendor_filebrowser_upstream_docker_alpine_healthcheck_sh #DBEAFE
+rectangle "vendor/filebrowser-upstream/docker/alpine/init.sh\n0 local shell edges\n1 external tool" as shell_vendor_filebrowser_upstream_docker_alpine_init_sh #DBEAFE
+rectangle "vendor/filebrowser-upstream/docker/common/healthcheck.sh\n0 local shell edges\n1 external tool" as shell_vendor_filebrowser_upstream_docker_common_healthcheck_sh #DBEAFE
+rectangle "vendor/filebrowser-upstream/docker/s6/custom-cont-init.d/20-config\n0 local shell edges\n2 external tools" as shell_vendor_filebrowser_upstream_docker_s6_custom_cont_init_d_20_config #DBEAFE
+rectangle "vendor/filebrowser-upstream/docker/s6/etc/services.d/filebrowser/run\n0 local shell edges\n0 external tools" as shell_vendor_filebrowser_upstream_docker_s6_etc_services_d_filebrowser_run #DBEAFE
 cloud "!in_global" as tool_in_global #FEF3C7
 cloud "(command_exists" as tool_command_exists #FEF3C7
+cloud "(major" as tool_major #FEF3C7
 cloud "2[0-9]" as tool_tool_2_0_9 #FEF3C7
 cloud "3[0-1])." as tool_tool_3_0_1 #FEF3C7
 cloud "443" as tool_tool_443 #FEF3C7
@@ -23,13 +34,18 @@ cloud "80" as tool_tool_80 #FEF3C7
 cloud "^[[:space:]]*" as tool_space #FEF3C7
 cloud "^[[:space:]]+" as tool_space_2 #FEF3C7
 cloud "apt-get" as tool_apt_get #FEF3C7
+cloud "args+=(" as tool_args #FEF3C7
+cloud "args+=(--container-tool" as tool_args_container_tool #FEF3C7
+cloud "awk" as tool_awk #FEF3C7
 cloud "cat" as tool_cat #FEF3C7
 cloud "chmod" as tool_chmod #FEF3C7
+cloud "cp" as tool_cp #FEF3C7
 cloud "dig" as tool_dig #FEF3C7
 cloud "dnf" as tool_dnf #FEF3C7
 cloud "docker" as tool_docker #FEF3C7
 cloud "docker compose" as tool_docker_compose #FEF3C7
 cloud "docker-compose" as tool_docker_compose_2 #FEF3C7
+cloud "golang-go" as tool_golang_go #FEF3C7
 cloud "grep" as tool_grep #FEF3C7
 cloud "host" as tool_host #FEF3C7
 cloud "i" as tool_i #FEF3C7
@@ -38,29 +54,40 @@ cloud "in_global" as tool_in_global_2 #FEF3C7
 cloud "install" as tool_install #FEF3C7
 cloud "ip" as tool_ip #FEF3C7
 cloud "ipv6.method" as tool_ipv6_method #FEF3C7
+cloud "ln" as tool_ln #FEF3C7
 cloud "mapfile" as tool_mapfile #FEF3C7
+cloud "minor" as tool_minor #FEF3C7
 cloud "mkdir" as tool_mkdir #FEF3C7
 cloud "mount" as tool_mount #FEF3C7
 cloud "mv" as tool_mv #FEF3C7
 cloud "next" as tool_next #FEF3C7
 cloud "nmcli" as tool_nmcli #FEF3C7
+cloud "node" as tool_node #FEF3C7
 cloud "nordvpn" as tool_nordvpn #FEF3C7
+cloud "podman" as tool_podman #FEF3C7
 cloud "podman-compose" as tool_podman_compose #FEF3C7
 cloud "print" as tool_print #FEF3C7
 cloud "private-vpn" as tool_private_vpn #FEF3C7
 cloud "private-vpn-mtls" as tool_private_vpn_mtls #FEF3C7
 cloud "public" as tool_public #FEF3C7
 cloud "rm" as tool_rm #FEF3C7
+cloud "run" as tool_run #FEF3C7
 cloud "sed" as tool_sed #FEF3C7
+cloud "settings.json" as tool_settings_json #FEF3C7
 cloud "site" as tool_site #FEF3C7
 cloud "split(site," as tool_split_site #FEF3C7
+cloud "srv" as tool_srv #FEF3C7
+cloud "summarize" as tool_summarize #FEF3C7
 cloud "systemctl" as tool_systemctl #FEF3C7
+cloud "tachometer" as tool_tachometer #FEF3C7
 cloud "tr" as tool_tr #FEF3C7
 cloud "umount" as tool_umount #FEF3C7
 cloud "up" as tool_up #FEF3C7
 cloud "update-ca-certificates" as tool_update_ca_certificates #FEF3C7
 cloud "update-ca-trust" as tool_update_ca_trust #FEF3C7
+cloud "updated" as tool_updated #FEF3C7
 cloud "wg" as tool_wg #FEF3C7
+cloud "wget" as tool_wget #FEF3C7
 cloud "yum" as tool_yum #FEF3C7
 shell_config_access_tailscale_tailscale_subnet_router_example_sh --> tool_systemctl
 shell_config_access_tailscale_tailscale_subnet_router_local_sh --> tool_systemctl
@@ -68,6 +95,10 @@ shell_config_network_networkmanager_static_ip_example_sh --> tool_ipv6_method
 shell_config_network_networkmanager_static_ip_example_sh --> tool_nmcli
 shell_config_network_networkmanager_static_ip_local_sh --> tool_ipv6_method
 shell_config_network_networkmanager_static_ip_local_sh --> tool_nmcli
+shell_scripts_build_filebrowser_fork_image_sh --> tool_args
+shell_scripts_build_filebrowser_fork_image_sh --> tool_cat
+shell_scripts_build_filebrowser_fork_image_sh --> tool_podman
+shell_scripts_build_filebrowser_fork_image_sh --> tool_rm
 shell_scripts_debug_private_access_sh --> tool_tool_443
 shell_scripts_debug_private_access_sh --> tool_tool_445
 shell_scripts_debug_private_access_sh --> tool_tool_80
@@ -79,9 +110,22 @@ shell_scripts_debug_private_access_sh --> tool_host
 shell_scripts_debug_private_access_sh --> tool_id
 shell_scripts_debug_private_access_sh --> tool_mkdir
 shell_scripts_debug_private_access_sh --> tool_sed
+shell_scripts_deploy_filebrowser_fork_image_sh --> tool_args_container_tool
+shell_scripts_deploy_filebrowser_fork_image_sh --> tool_cat
+shell_scripts_deploy_filebrowser_fork_image_sh --> tool_install
+shell_scripts_deploy_filebrowser_fork_image_sh --> tool_next
+shell_scripts_deploy_filebrowser_fork_image_sh --> tool_print
+shell_scripts_deploy_filebrowser_fork_image_sh --> tool_private_vpn
+shell_scripts_deploy_filebrowser_fork_image_sh --> tool_private_vpn_mtls
+shell_scripts_deploy_filebrowser_fork_image_sh --> tool_public
+shell_scripts_deploy_filebrowser_fork_image_sh --> tool_rm
+shell_scripts_deploy_filebrowser_fork_image_sh --> tool_updated
 shell_scripts_remount_luks_share_sh --> tool_mapfile
 shell_scripts_remount_luks_share_sh --> tool_mount
 shell_scripts_remount_luks_share_sh --> tool_umount
+shell_scripts_run_tachometer_profile_sh --> tool_run
+shell_scripts_run_tachometer_profile_sh --> tool_summarize
+shell_scripts_run_tachometer_profile_sh --> tool_tachometer
 shell_scripts_setup_caddy_filebrowser_sh --> tool_in_global
 shell_scripts_setup_caddy_filebrowser_sh --> tool_command_exists
 shell_scripts_setup_caddy_filebrowser_sh --> tool_tool_2_0_9
@@ -114,6 +158,16 @@ shell_scripts_setup_caddy_filebrowser_sh --> tool_tr
 shell_scripts_setup_caddy_filebrowser_sh --> tool_update_ca_certificates
 shell_scripts_setup_caddy_filebrowser_sh --> tool_update_ca_trust
 shell_scripts_setup_caddy_filebrowser_sh --> tool_yum
+shell_scripts_setup_filebrowser_fork_workspace_sh --> tool_major
+shell_scripts_setup_filebrowser_fork_workspace_sh --> tool_cat
+shell_scripts_setup_filebrowser_fork_workspace_sh --> tool_golang_go
+shell_scripts_setup_filebrowser_fork_workspace_sh --> tool_ln
+shell_scripts_setup_filebrowser_fork_workspace_sh --> tool_minor
+shell_scripts_setup_filebrowser_fork_workspace_sh --> tool_node
+shell_scripts_setup_filebrowser_fork_workspace_sh --> tool_rm
+shell_scripts_setup_wireguard_endpoint_monitor_sh --> tool_cat
+shell_scripts_setup_wireguard_endpoint_monitor_sh --> tool_install
+shell_scripts_setup_wireguard_endpoint_monitor_sh --> tool_systemctl
 shell_scripts_start_snowbridge_sh --> tool_docker_compose
 shell_scripts_start_snowbridge_sh --> tool_grep
 shell_scripts_start_snowbridge_sh --> tool_ip
@@ -121,9 +175,18 @@ shell_scripts_start_snowbridge_sh --> tool_nordvpn
 shell_scripts_start_snowbridge_sh --> tool_systemctl
 shell_scripts_start_snowbridge_sh --> tool_up
 shell_scripts_start_snowbridge_sh --> tool_wg
+shell_vendor_filebrowser_upstream_docker_alpine_healthcheck_sh --> tool_awk
+shell_vendor_filebrowser_upstream_docker_alpine_healthcheck_sh --> tool_grep
+shell_vendor_filebrowser_upstream_docker_alpine_healthcheck_sh --> tool_sed
+shell_vendor_filebrowser_upstream_docker_alpine_healthcheck_sh --> tool_settings_json
+shell_vendor_filebrowser_upstream_docker_alpine_healthcheck_sh --> tool_wget
+shell_vendor_filebrowser_upstream_docker_alpine_init_sh --> tool_cp
+shell_vendor_filebrowser_upstream_docker_common_healthcheck_sh --> tool_wget
+shell_vendor_filebrowser_upstream_docker_s6_custom_cont_init_d_20_config --> tool_cp
+shell_vendor_filebrowser_upstream_docker_s6_custom_cont_init_d_20_config --> tool_srv
 note as shellGraphSummary
-Scanned 8 shell scripts.
+Scanned 18 shell scripts.
 Detected 0 local shell edges.
-Detected 49 external tools.
+Detected 66 external tools.
 end note
 @enduml

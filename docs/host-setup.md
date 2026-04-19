@@ -531,6 +531,14 @@ The File Browser access script applies the app root and user database from a
 local TOML config, and it can sync the runtime UID/GID in
 `filebrowser.env.local` to the configured host account before recreating the
 stack.
+If you need a custom File Browser fork, set `FILEBROWSER_IMAGE=` in
+`filebrowser.env.local` and leave `runtime.filebrowser_image` unset in
+`access.local.toml` so both the compose service and the one-shot access
+container use the same image tag. The simplest local helper flow is
+`./scripts/setup_filebrowser_fork_workspace.sh` followed by
+`./scripts/deploy_filebrowser_fork_image.sh`; use
+`./scripts/build_filebrowser_fork_image.sh` only when you want to build/tag the
+image without recreating the stack yet.
 If a password line in `access.local.toml` is pasted in a shell-friendly form
 that is not TOML-safe yet, the script will normalize fixable cases
 automatically.
@@ -566,5 +574,8 @@ choose each option.
   a stable private address.
 - If you add browser-based access later, keep it as a separate HTTPS surface
   instead of broadening the Samba exposure boundary.
+- The current upstream File Browser UI does not show recursive folder sizes;
+  directories display `-` in the size column. Use `du -sh` on the host if you
+  need actual folder totals.
 - If per-user attribution becomes important later, remove `force user` and
   redesign the share permissions accordingly.

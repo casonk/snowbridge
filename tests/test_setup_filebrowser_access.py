@@ -45,5 +45,50 @@ class SetupFilebrowserAccessAutoPassTests(unittest.TestCase):
         self.assertEqual(recorder.resolve_calls[0].attrs_map, {"value": "password"})
 
 
+class SetupFilebrowserAccessRuntimeTests(unittest.TestCase):
+    def build_runtime_spec(self, filebrowser_image: str | None) -> setup_filebrowser_access.RuntimeSpec:
+        return setup_filebrowser_access.RuntimeSpec(
+            web_env_file=Path("/tmp/filebrowser.env"),
+            web_setup_script=Path("/tmp/setup_caddy_filebrowser.sh"),
+            mode="private-vpn",
+            container_runtime="podman",
+            filebrowser_image=filebrowser_image,
+            container_name="snowbridge-filebrowser",
+            share_mount_path="/srv",
+            database_path="/database/filebrowser.db",
+            run_as_account="snowbridge",
+            run_as_group="snowbridge",
+            sync_web_env_uid_gid=True,
+            restart_strategy="recreate",
+        )
+
+    def test_resolve_filebrowser_image_prefers_runtime_override(self) -> None:
+        runtime_spec = self.build_runtime_spec("ghcr.io/example/filebrowser:dirsize")
+
+        resolved = setup_filebrowser_access.resolve_filebrowser_image(
+            runtime_spec,
+            {"FILEBROWSER_IMAGE": "docker.io/filebrowser/filebrowser:latest"},
+        )
+
+        self.assertEqual(resolved, "ghcr.io/example/filebrowser:dirsize")
+
+    def test_resolve_filebrowser_image_falls_back_to_env(self) -> None:
+        runtime_spec = self.build_runtime_spec(None)
+
+        resolved = setup_filebrowser_access.resolve_filebrowser_image(
+            runtime_spec,
+            {"FILEBROWSER_IMAGE": "ghcr.io/example/filebrowser:dirsize"},
+        )
+
+        self.assertEqual(resolved, "ghcr.io/example/filebrowser:dirsize")
+
+    def test_resolve_filebrowser_image_uses_repo_default_when_unset(self) -> None:
+        runtime_spec = self.build_runtime_spec(None)
+
+        resolved = setup_filebrowser_access.resolve_filebrowser_image(runtime_spec, {})
+
+        self.assertEqual(resolved, setup_filebrowser_access.DEFAULT_FILEBROWSER_IMAGE)
+
+
 if __name__ == "__main__":
     unittest.main()

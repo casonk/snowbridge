@@ -20,6 +20,13 @@ MANAGED_BLOCK_START = "# --- snowbridge bind mounts: managed block start ---"
 MANAGED_BLOCK_END = "# --- snowbridge bind mounts: managed block end ---"
 DEFAULT_CONFIG = pathlib.Path("../config/share-layout/folders.local.ini")
 FOLDER_SECTION_PREFIX = "folder "
+PROTECTED_SOURCE_PREFIXES: tuple[pathlib.Path, ...] = (
+    pathlib.Path("/tmp"),
+    pathlib.Path("/proc"),
+    pathlib.Path("/sys"),
+    pathlib.Path("/dev"),
+    pathlib.Path("/run"),
+)
 
 
 class ConfigError(RuntimeError):
@@ -158,6 +165,14 @@ def validate_target(value: str, label: str) -> pathlib.PurePosixPath:
     return target
 
 
+def validate_source(source: pathlib.Path, label: str) -> None:
+    for protected in PROTECTED_SOURCE_PREFIXES:
+        if source == protected or source.is_relative_to(protected):
+            raise ConfigError(
+                f"{label} source is a system-protected path: {source}"
+            )
+
+
 def load_config(config_path: pathlib.Path) -> tuple[GlobalSettings, list[FolderMount]]:
     parser = get_parser(config_path)
 
@@ -211,6 +226,7 @@ def load_config(config_path: pathlib.Path) -> tuple[GlobalSettings, list[FolderM
         source = pathlib.Path(source_value)
         if not source.is_absolute():
             raise ConfigError(f"[{section}] source must be an absolute path")
+        validate_source(source, f"[{section}]")
 
         target_value = get_optional(parser, section, "target", name) or name
         target_relative = validate_target(target_value, f"[{section}] target")
