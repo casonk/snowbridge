@@ -31,6 +31,12 @@
   validation when the Samba template changes.
 - Run `python3 scripts/setup_bind_share.py --config config/share-layout/folders.example.ini --dry-run`
   when the bind-mounted share workflow changes.
+- Run `./scripts/setup_filebrowser_fork_workspace.sh` when you need to install
+  prerequisites or re-run the local checks for `vendor/filebrowser-upstream`.
+- Run `./scripts/build_filebrowser_fork_image.sh` when you need a fresh local
+  File Browser image tag from the fork workspace for `FILEBROWSER_IMAGE`.
+- Run `./scripts/deploy_filebrowser_fork_image.sh` when you want that local
+  image tag written into `filebrowser.env.local` and the web stack recreated.
 
 ## Pull Requests
 

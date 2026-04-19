@@ -14,6 +14,7 @@ This repo lives under:
 - Keep authenticated iPhone read/write access as a first-class requirement.
 - Keep share data, credentials, and host-local state outside the git repo.
 - Prefer access over the home LAN or a private VPN overlay.
+- Consent reference: [`../../doc-repos/my-consent/remote-access-and-private-files.md`](../../doc-repos/my-consent/remote-access-and-private-files.md) documents the explicit consent covering personal file-sharing, device-profile, certificate, and remote-access processing handled by this repo.
 
 ## Why SMB
 
@@ -40,12 +41,16 @@ custom client app or a separate sync workflow.
 - `scripts/setup_wireguard_endpoint_monitor.sh`: initializes the local endpoint-monitor config and installs a periodic systemd timer for `check_wireguard_endpoint.py`
 - `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack in `private-vpn`, `private-vpn-mtls`, `public`, or `public-private-ip` mode, installing a supported container runtime and Compose frontend when needed, with optional local-browser bootstrap for hostname mapping and Caddy CA trust
 - `scripts/setup_filebrowser_access.py`: applies File Browser root, users, auth mode, and runtime UID/GID sync from a local TOML config
+- `scripts/setup_filebrowser_fork_workspace.sh`: installs the local File Browser fork prerequisites and runs the upstream-style frontend/backend checks against `vendor/filebrowser-upstream`
+- `scripts/build_filebrowser_fork_image.sh`: builds the patched File Browser binary from `vendor/filebrowser-upstream`, stages a minimal container context, and tags a local custom image for `FILEBROWSER_IMAGE`
+- `scripts/deploy_filebrowser_fork_image.sh`: builds the local fork image, writes its tag into `config/web/filebrowser/filebrowser.env.local`, and recreates the File Browser + Caddy stack
 - `scripts/export_caddy_root_profile.py`: generates an iPhone-installable `.mobileconfig` for Caddy's local CA and stages it into the SMB share
 - `scripts/export_caddy_mtls_profile.py`: issues a per-device mTLS client identity, packages it with the private Caddy root CA into an iPhone-installable `.mobileconfig`, and stages the results into the SMB share
 - `scripts/debug_private_access.sh`: collects a single report covering WireGuard, dnsmasq, firewalld, Samba, Caddy, and File Browser state for private-access debugging
 - `docs/host-setup.md`: host-side setup and client connection notes
 - `docs/iphone-shortcut.md`: iPhone shortcut and import/export guidance
 - `docs/access-patterns.md`: optional access templates and risk tradeoffs
+- `docs/filebrowser-directory-size-plan.md`: minimal custom-fork and upstream-PR plan for adding real File Browser folder sizes
 - `docs/contributor-architecture-blueprint.md`: contributor-facing architecture
 - `docs/diagrams/repo-architecture.puml`: PlantUML architecture source
 - `docs/diagrams/repo-architecture.drawio`: draw.io architecture source
@@ -82,6 +87,9 @@ sudo bash scripts/start_snowbridge.sh
 This refreshes the bind mounts, starts WireGuard, NordVPN (with the socket
 fwmark and ip rule needed to keep WireGuard responses off nordlynx), Samba,
 and the File Browser + Caddy container stack in one step.
+The current upstream File Browser UI does not display recursive folder sizes,
+so directory rows show `-` in the size column. Use host-side tools such as
+`du -sh` if you need actual folder totals.
 
 ### Rotating NordVPN while snowbridge is running
 

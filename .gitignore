@@ -37,6 +37,7 @@ artifacts/
 reports/
 scan-cache/
 artifacts/wireguard/
+vendor/filebrowser-upstream/
 
 # Validation leftovers
 *.log

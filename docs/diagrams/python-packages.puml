@@ -2,6 +2,7 @@
 set namespaceSeparator none
 top to bottom direction
 skinparam componentStyle rectangle
+rectangle "check_wireguard_endpoint\n1 python file" as check_wireguard_endpoint
 rectangle "export_caddy_mtls_profile\n1 python file" as export_caddy_mtls_profile
 rectangle "export_caddy_root_profile\n1 python file" as export_caddy_root_profile
 rectangle "setup_bind_share\n1 python file" as setup_bind_share
