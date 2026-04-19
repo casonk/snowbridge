@@ -11,6 +11,17 @@ class "AuthSpec" as setup_filebrowser_access.AuthSpec {
 }
 class "<color:red>ConfigError</color>" as setup_bind_share.ConfigError {
 }
+class "EmailConfig" as check_wireguard_endpoint.EmailConfig {
+  config_path : Path
+  enabled : bool
+  sender_script : Path
+  to_address : str
+}
+class "EndpointValue" as check_wireguard_endpoint.EndpointValue {
+  host : str
+  port : int | None
+  render() -> str
+}
 class "FolderMount" as setup_bind_share.FolderMount {
   acl_mode : str
   create_missing_source : bool
@@ -42,6 +53,30 @@ class "IdentityPaths" as export_caddy_mtls_profile.IdentityPaths {
   staged_p12_path : Path
   staged_profile_path : Path
 }
+class "MonitorConfig" as check_wireguard_endpoint.MonitorConfig {
+  bind_interface : str | None
+  config_path : Path
+  email
+  host_label : str
+  profiles : tuple[ProfileConfig, ...]
+  public_ip_lookup_urls : tuple[str, ...]
+  shock_relay_root : Path
+  signal
+  state_file : Path
+}
+class "<color:red>MonitorError</color>" as check_wireguard_endpoint.MonitorError {
+}
+class "MonitorOutcome" as check_wireguard_endpoint.MonitorOutcome {
+  current_endpoint : str
+  email_retry_needed : bool
+  email_sent : bool
+  endpoint_changed : bool
+  profile_outcomes : list[ProfileOutcome]
+  public_ip : str
+  regenerated_qrs : list[Path]
+  signal_retry_needed : bool
+  signal_sent : bool
+}
 class "Ownership" as export_caddy_mtls_profile.Ownership {
   gid : int
   group_name : str
@@ -54,11 +89,24 @@ class "Ownership" as export_caddy_root_profile.Ownership {
   owner_name : str
   uid : int
 }
+class "ProfileConfig" as check_wireguard_endpoint.ProfileConfig {
+  config_path : Path
+  name : str
+  qr_path : Path
+}
+class "ProfileOutcome" as check_wireguard_endpoint.ProfileOutcome {
+  changed : bool
+  config_path : Path
+  name : str
+  new_endpoint : str
+  old_endpoint : str
+  qr_path : Path
+}
 class "RuntimeSpec" as setup_filebrowser_access.RuntimeSpec {
   container_name : str
   container_runtime : str
   database_path : str
-  filebrowser_image : str
+  filebrowser_image : str | None
   mode : str
   restart_strategy : str
   run_as_account : str
@@ -74,10 +122,19 @@ class "<color:red>SetupError</color>" as export_caddy_root_profile.SetupError {
 }
 class "<color:red>SetupError</color>" as setup_filebrowser_access.SetupError {
 }
+class "SignalConfig" as check_wireguard_endpoint.SignalConfig {
+  config_path : Path
+  enabled : bool
+  note_to_self : bool
+  recipient : str
+  sender_script : Path
+}
 class "UserSpec" as setup_filebrowser_access.UserSpec {
   admin : bool
   password : str
   scope : str
   username : str
 }
+check_wireguard_endpoint.MonitorConfig --> check_wireguard_endpoint.EmailConfig : email
+check_wireguard_endpoint.MonitorConfig --> check_wireguard_endpoint.SignalConfig : signal
 @enduml

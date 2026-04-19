@@ -357,3 +357,36 @@
 - Notification state should be tracked separately from endpoint-application
   state so a failed email or Signal send is retried on the next run without
   needing the endpoint drift to happen again.
+
+### 2026-04-09 — Classic File Browser does not provide real folder sizes in its UI
+
+- The upstream `filebrowser/filebrowser` frontend hardcodes directory rows to
+  show `-` for size, and the backend listing path only carries the directory
+  entry's own filesystem size rather than a recursive tree total.
+- Treat this as an upstream product limitation, not a `snowbridge` setup bug.
+- If operators need actual folder totals, point them at host-side `du -sh` or
+  plan a different web UI / custom fork instead of chasing hidden config.
+
+### 2026-04-09 — A custom File Browser fork should have one image override path
+
+- If both the long-running web stack and the one-shot access-management
+  container need the same forked File Browser build, drive both from one
+  `FILEBROWSER_IMAGE` value in the web env file.
+- Keep `runtime.filebrowser_image` as an optional escape hatch, not the default
+  source of truth, so operators do not have to remember two image tags.
+
+### 2026-04-09 — The local File Browser fork image needs a static Go binary
+
+- The custom File Browser image uses a BusyBox/musl runtime, so staging a host
+  glibc-linked binary can fail at startup with
+  `/init.sh: exec: line 35: filebrowser: not found`.
+- Build the staged binary with `CGO_ENABLED=0` in
+  `scripts/build_filebrowser_fork_image.sh` so the runtime image can execute it.
+
+### 2026-04-09 — Directory-size loading should degrade gracefully on nested permission errors
+
+- On-demand folder-size calculation walks each visible child directory
+  recursively.
+- A nested filesystem permission error should not turn the whole listing into a
+  403 page. Skip unreadable descendants and return the size of the accessible
+  contents instead.

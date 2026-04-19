@@ -10,6 +10,40 @@ from unittest import mock
 from scripts import setup_bind_share
 
 
+class ValidateSourceTests(unittest.TestCase):
+    def _ok(self, path: str) -> None:
+        setup_bind_share.validate_source(pathlib.Path(path), "[folder x]")
+
+    def _bad(self, path: str) -> None:
+        with self.assertRaises(setup_bind_share.ConfigError):
+            setup_bind_share.validate_source(pathlib.Path(path), "[folder x]")
+
+    def test_rejects_tmp(self) -> None:
+        self._bad("/tmp")
+
+    def test_rejects_path_under_tmp(self) -> None:
+        self._bad("/tmp/snowbridge")
+
+    def test_rejects_proc(self) -> None:
+        self._bad("/proc")
+
+    def test_rejects_sys(self) -> None:
+        self._bad("/sys")
+
+    def test_rejects_dev(self) -> None:
+        self._bad("/dev")
+
+    def test_rejects_run(self) -> None:
+        self._bad("/run")
+
+    def test_accepts_normal_path(self) -> None:
+        self._ok("/home/user/docs")
+
+    def test_accepts_path_sharing_string_prefix_but_not_ancestry(self) -> None:
+        # /tmpfs is not a child of /tmp
+        self._ok("/tmpfs/data")
+
+
 class MountedSourceMatchesTests(unittest.TestCase):
     def test_accepts_live_findmnt_device_subpath_for_expected_source(self) -> None:
         expected = pathlib.Path("/mnt/setup/bully/info/receipt")

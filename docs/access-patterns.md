@@ -118,6 +118,19 @@ the client `Endpoint` is a raw public IP instead of stable DNS.
 
 Use this when you want browser access in addition to SMB, but still want to
 keep the service inside a private VPN boundary.
+Current File Browser limitation, which also applies to the other File Browser
+web modes below: the upstream UI renders directory sizes as `-` and does not
+calculate recursive folder totals. If you need real folder sizes, check them on
+the host with `du -sh` or plan on a different web UI / custom fork.
+For a minimal custom fork path, set `FILEBROWSER_IMAGE=` in
+`filebrowser.env.local` and leave `runtime.filebrowser_image` unset in
+`access.local.toml`; the compose stack and `setup_filebrowser_access.py` will
+then use the same custom image tag. Use
+`./scripts/setup_filebrowser_fork_workspace.sh` and
+`./scripts/deploy_filebrowser_fork_image.sh` for the local build-and-recreate
+path, or `./scripts/build_filebrowser_fork_image.sh` if you only want the
+image tag without deploying it yet. See `docs/filebrowser-directory-size-plan.md`
+for the fork and upstream-PR shape.
 
 Templates:
 
