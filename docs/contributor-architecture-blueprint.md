@@ -32,6 +32,15 @@ front end.
      `scripts/setup_caddy_filebrowser.sh`, and
      `scripts/setup_filebrowser_access.py` convert those templates into host
      runtime state.
+   - `scripts/setup_filebrowser_fork_workspace.sh` bootstraps the local
+     `vendor/filebrowser-upstream` workspace so the fork can be built and
+     validated without hand-assembling the Go/Node toolchain steps.
+   - `scripts/build_filebrowser_fork_image.sh` turns that validated fork
+     workspace into a tagged local container image that the Snowbridge web
+     stack can consume through `FILEBROWSER_IMAGE`.
+   - `scripts/deploy_filebrowser_fork_image.sh` is the higher-level wrapper
+     that updates the local env file to the chosen fork image tag and recreates
+     the File Browser + Caddy stack.
    - `scripts/export_caddy_root_profile.py`,
      `scripts/export_caddy_mtls_profile.py`, and
      `scripts/debug_private_access.sh` support phone trust bootstrap and
@@ -57,6 +66,7 @@ front end.
 - `README.md`
 - `docs/host-setup.md`
 - `docs/access-patterns.md`
+- `docs/filebrowser-directory-size-plan.md`
 - `config/share-layout/folders.example.ini`
 - `config/samba/smb.conf.example`
 - `config/access/wireguard/wg0-server.example.conf`
@@ -70,6 +80,9 @@ front end.
 - `scripts/setup_wireguard.sh`
 - `scripts/setup_caddy_filebrowser.sh`
 - `scripts/setup_filebrowser_access.py`
+- `scripts/setup_filebrowser_fork_workspace.sh`
+- `scripts/build_filebrowser_fork_image.sh`
+- `scripts/deploy_filebrowser_fork_image.sh`
 - `scripts/export_caddy_root_profile.py`
 - `scripts/export_caddy_mtls_profile.py`
 - `scripts/debug_private_access.sh`
