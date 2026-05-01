@@ -1,0 +1,26 @@
+[
+ {
+  "RuleID": "portfolio-git-workspace-path",
+  "Description": "Hardcoded absolute path to local git workspace in config/code/scripts",
+  "StartLine": 51,
+  "EndLine": 51,
+  "StartColumn": 35,
+  "EndColumn": 50,
+  "Match": "/mnt/4tb-m2/git/",
+  "Secret": "/mnt/4tb-m2/git/",
+  "File": "tests/test_setup_bind_share.py",
+  "SymlinkFile": "",
+  "Commit": "a734b495be0fe5d7ffab68c1736a7b7555b96cff",
+  "Link": "https://github.com/casonk/snowbridge/blob/a734b495be0fe5d7ffab68c1736a7b7555b96cff/tests/test_setup_bind_share.py#L51",
+  "Entropy": 3.0778196,
+  "Author": "casonk",
+  "Email": "72440835+casonk@users.noreply.github.com",
+  "Date": "2026-04-04T09:48:52Z",
+  "Message": "fix: normalize bind mount source matching",
+  "Tags": [
+   "local-path",
+   "machine-specific"
+  ],
+  "Fingerprint": "a734b495be0fe5d7ffab68c1736a7b7555b96cff:tests/test_setup_bind_share.py:portfolio-git-workspace-path:51"
+ }
+]
