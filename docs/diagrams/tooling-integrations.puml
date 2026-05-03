@@ -6,6 +6,7 @@ skinparam defaultFontName Monospace
 skinparam componentStyle rectangle
 skinparam linetype ortho
 rectangle ".github/workflows/ci.yml\n4 detected tools" as source_github_workflows_ci_yml #E0F2FE
+rectangle ".github/workflows/secret-scan.yml\n2 detected tools" as source_github_workflows_secret_scan_yml #E0F2FE
 rectangle "config/access/tailscale/tailscale-subnet-router.example.sh\n1 detected tool" as source_config_access_tailscale_tailscale_subnet_router_example_sh #E0F2FE
 rectangle "config/access/tailscale/tailscale-subnet-router.local.sh\n1 detected tool" as source_config_access_tailscale_tailscale_subnet_router_local_sh #E0F2FE
 rectangle "config/network/networkmanager-static-ip.example.sh\n2 detected tools" as source_config_network_networkmanager_static_ip_example_sh #E0F2FE
@@ -60,6 +61,7 @@ cloud "docker" as tool_docker #FEF3C7
 cloud "docker compose" as tool_docker_compose #FEF3C7
 cloud "docker-compose" as tool_docker_compose_2 #FEF3C7
 cloud "git" as tool_git #FEF3C7
+cloud "gitleaks/gitleaks-action" as tool_gitleaks_gitleaks_action #FEF3C7
 cloud "go" as tool_go #FEF3C7
 cloud "golang-go" as tool_golang_go #FEF3C7
 cloud "grep" as tool_grep #FEF3C7
@@ -114,6 +116,8 @@ source_github_workflows_ci_yml --> tool_actions_checkout
 source_github_workflows_ci_yml --> tool_actions_setup_python
 source_github_workflows_ci_yml --> tool_pip
 source_github_workflows_ci_yml --> tool_pre_commit
+source_github_workflows_secret_scan_yml --> tool_actions_checkout
+source_github_workflows_secret_scan_yml --> tool_gitleaks_gitleaks_action
 source_config_access_tailscale_tailscale_subnet_router_example_sh --> tool_systemctl
 source_config_access_tailscale_tailscale_subnet_router_local_sh --> tool_systemctl
 source_config_network_networkmanager_static_ip_example_sh --> tool_ipv6_method
@@ -236,7 +240,7 @@ source_vendor_filebrowser_upstream_docker_s6_custom_cont_init_d_20_config --> to
 source_vendor_filebrowser_upstream_www_dockerfile --> tool_docker
 source_vendor_filebrowser_upstream_www_dockerfile --> tool_pip
 note as toolingGraphSummary
-Scanned 24 tooling entrypoints.
-Detected 81 third-party tools.
+Scanned 25 tooling entrypoints.
+Detected 82 third-party tools.
 end note
 @enduml
