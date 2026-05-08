@@ -12,6 +12,7 @@ rectangle "config/network/networkmanager-static-ip.local.sh\n0 local shell edges
 rectangle "scripts/build_filebrowser_fork_image.sh\n0 local shell edges\n4 external tools" as shell_scripts_build_filebrowser_fork_image_sh #DBEAFE
 rectangle "scripts/debug_private_access.sh\n0 local shell edges\n11 external tools" as shell_scripts_debug_private_access_sh #DBEAFE
 rectangle "scripts/deploy_filebrowser_fork_image.sh\n0 local shell edges\n10 external tools" as shell_scripts_deploy_filebrowser_fork_image_sh #DBEAFE
+rectangle "scripts/recover_setup_share.sh\n0 local shell edges\n4 external tools" as shell_scripts_recover_setup_share_sh #DBEAFE
 rectangle "scripts/remount_luks_share.sh\n0 local shell edges\n3 external tools" as shell_scripts_remount_luks_share_sh #DBEAFE
 rectangle "scripts/run_tachometer_profile.sh\n0 local shell edges\n3 external tools" as shell_scripts_run_tachometer_profile_sh #DBEAFE
 rectangle "scripts/setup_caddy_filebrowser.sh\n0 local shell edges\n32 external tools" as shell_scripts_setup_caddy_filebrowser_sh #DBEAFE
@@ -40,11 +41,13 @@ cloud "awk" as tool_awk #FEF3C7
 cloud "cat" as tool_cat #FEF3C7
 cloud "chmod" as tool_chmod #FEF3C7
 cloud "cp" as tool_cp #FEF3C7
+cloud "cryptsetup" as tool_cryptsetup #FEF3C7
 cloud "dig" as tool_dig #FEF3C7
 cloud "dnf" as tool_dnf #FEF3C7
 cloud "docker" as tool_docker #FEF3C7
 cloud "docker compose" as tool_docker_compose #FEF3C7
 cloud "docker-compose" as tool_docker_compose_2 #FEF3C7
+cloud "e2fsck" as tool_e2fsck #FEF3C7
 cloud "golang-go" as tool_golang_go #FEF3C7
 cloud "grep" as tool_grep #FEF3C7
 cloud "host" as tool_host #FEF3C7
@@ -75,6 +78,7 @@ cloud "run" as tool_run #FEF3C7
 cloud "sed" as tool_sed #FEF3C7
 cloud "settings.json" as tool_settings_json #FEF3C7
 cloud "site" as tool_site #FEF3C7
+cloud "sleep" as tool_sleep #FEF3C7
 cloud "split(site," as tool_split_site #FEF3C7
 cloud "srv" as tool_srv #FEF3C7
 cloud "summarize" as tool_summarize #FEF3C7
@@ -120,6 +124,10 @@ shell_scripts_deploy_filebrowser_fork_image_sh --> tool_private_vpn_mtls
 shell_scripts_deploy_filebrowser_fork_image_sh --> tool_public
 shell_scripts_deploy_filebrowser_fork_image_sh --> tool_rm
 shell_scripts_deploy_filebrowser_fork_image_sh --> tool_updated
+shell_scripts_recover_setup_share_sh --> tool_cryptsetup
+shell_scripts_recover_setup_share_sh --> tool_e2fsck
+shell_scripts_recover_setup_share_sh --> tool_mount
+shell_scripts_recover_setup_share_sh --> tool_sleep
 shell_scripts_remount_luks_share_sh --> tool_mapfile
 shell_scripts_remount_luks_share_sh --> tool_mount
 shell_scripts_remount_luks_share_sh --> tool_umount
@@ -185,8 +193,8 @@ shell_vendor_filebrowser_upstream_docker_common_healthcheck_sh --> tool_wget
 shell_vendor_filebrowser_upstream_docker_s6_custom_cont_init_d_20_config --> tool_cp
 shell_vendor_filebrowser_upstream_docker_s6_custom_cont_init_d_20_config --> tool_srv
 note as shellGraphSummary
-Scanned 18 shell scripts.
+Scanned 19 shell scripts.
 Detected 0 local shell edges.
-Detected 66 external tools.
+Detected 69 external tools.
 end note
 @enduml
