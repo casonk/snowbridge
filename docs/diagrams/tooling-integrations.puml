@@ -14,6 +14,7 @@ rectangle "config/network/networkmanager-static-ip.local.sh\n2 detected tools" a
 rectangle "scripts/build_filebrowser_fork_image.sh\n4 detected tools" as source_scripts_build_filebrowser_fork_image_sh #E0F2FE
 rectangle "scripts/debug_private_access.sh\n12 detected tools" as source_scripts_debug_private_access_sh #E0F2FE
 rectangle "scripts/deploy_filebrowser_fork_image.sh\n10 detected tools" as source_scripts_deploy_filebrowser_fork_image_sh #E0F2FE
+rectangle "scripts/recover_setup_share.sh\n4 detected tools" as source_scripts_recover_setup_share_sh #E0F2FE
 rectangle "scripts/remount_luks_share.sh\n3 detected tools" as source_scripts_remount_luks_share_sh #E0F2FE
 rectangle "scripts/run_tachometer_profile.sh\n3 detected tools" as source_scripts_run_tachometer_profile_sh #E0F2FE
 rectangle "scripts/setup_caddy_filebrowser.sh\n32 detected tools" as source_scripts_setup_caddy_filebrowser_sh #E0F2FE
@@ -55,11 +56,13 @@ cloud "chmod" as tool_chmod #FEF3C7
 cloud "chown" as tool_chown #FEF3C7
 cloud "cli" as tool_cli #FEF3C7
 cloud "cp" as tool_cp #FEF3C7
+cloud "cryptsetup" as tool_cryptsetup #FEF3C7
 cloud "dig" as tool_dig #FEF3C7
 cloud "dnf" as tool_dnf #FEF3C7
 cloud "docker" as tool_docker #FEF3C7
 cloud "docker compose" as tool_docker_compose #FEF3C7
 cloud "docker-compose" as tool_docker_compose_2 #FEF3C7
+cloud "e2fsck" as tool_e2fsck #FEF3C7
 cloud "git" as tool_git #FEF3C7
 cloud "gitleaks/gitleaks-action" as tool_gitleaks_gitleaks_action #FEF3C7
 cloud "go" as tool_go #FEF3C7
@@ -98,6 +101,7 @@ cloud "setcap" as tool_setcap #FEF3C7
 cloud "settings.json" as tool_settings_json #FEF3C7
 cloud "sh" as tool_sh #FEF3C7
 cloud "site" as tool_site #FEF3C7
+cloud "sleep" as tool_sleep #FEF3C7
 cloud "split(site," as tool_split_site #FEF3C7
 cloud "srv" as tool_srv #FEF3C7
 cloud "summarize" as tool_summarize #FEF3C7
@@ -150,6 +154,10 @@ source_scripts_deploy_filebrowser_fork_image_sh --> tool_private_vpn_mtls
 source_scripts_deploy_filebrowser_fork_image_sh --> tool_public
 source_scripts_deploy_filebrowser_fork_image_sh --> tool_rm
 source_scripts_deploy_filebrowser_fork_image_sh --> tool_updated
+source_scripts_recover_setup_share_sh --> tool_cryptsetup
+source_scripts_recover_setup_share_sh --> tool_e2fsck
+source_scripts_recover_setup_share_sh --> tool_mount
+source_scripts_recover_setup_share_sh --> tool_sleep
 source_scripts_remount_luks_share_sh --> tool_mapfile
 source_scripts_remount_luks_share_sh --> tool_mount
 source_scripts_remount_luks_share_sh --> tool_umount
@@ -240,7 +248,7 @@ source_vendor_filebrowser_upstream_docker_s6_custom_cont_init_d_20_config --> to
 source_vendor_filebrowser_upstream_www_dockerfile --> tool_docker
 source_vendor_filebrowser_upstream_www_dockerfile --> tool_pip
 note as toolingGraphSummary
-Scanned 25 tooling entrypoints.
-Detected 82 third-party tools.
+Scanned 26 tooling entrypoints.
+Detected 85 third-party tools.
 end note
 @enduml
