@@ -97,4 +97,9 @@ fi
     -f "${COMPOSE_FILE}" \
     up -d --force-recreate
 
+bash "${REPO_ROOT}/scripts/check_filebrowser_backend.sh" \
+    --env-file "${ENV_FILE}" \
+    --compose-file "${COMPOSE_FILE}" \
+    --wait-attempts 15
+
 echo "==> snowbridge is up."

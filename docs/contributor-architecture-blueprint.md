@@ -32,6 +32,9 @@ front end.
      `scripts/setup_caddy_filebrowser.sh`, and
      `scripts/setup_filebrowser_access.py` convert those templates into host
      runtime state.
+   - `scripts/check_filebrowser_backend.sh` and
+     `scripts/setup_filebrowser_backend_watch.sh` keep the optional web backend
+     from staying down while the HTTPS edge remains reachable.
    - `scripts/setup_filebrowser_fork_workspace.sh` bootstraps the local
      `vendor/filebrowser-upstream` workspace so the fork can be built and
      validated without hand-assembling the Go/Node toolchain steps.
@@ -79,6 +82,8 @@ front end.
 - `scripts/setup_bind_share.py`
 - `scripts/setup_wireguard.sh`
 - `scripts/setup_caddy_filebrowser.sh`
+- `scripts/check_filebrowser_backend.sh`
+- `scripts/setup_filebrowser_backend_watch.sh`
 - `scripts/setup_filebrowser_access.py`
 - `scripts/setup_filebrowser_fork_workspace.sh`
 - `scripts/build_filebrowser_fork_image.sh`
