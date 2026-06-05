@@ -6,18 +6,20 @@ skinparam defaultFontName Monospace
 skinparam componentStyle rectangle
 skinparam linetype ortho
 rectangle ".github/workflows/ci.yml\n4 detected tools" as source_github_workflows_ci_yml #E0F2FE
-rectangle ".github/workflows/secret-scan.yml\n2 detected tools" as source_github_workflows_secret_scan_yml #E0F2FE
+rectangle ".github/workflows/secret-scan.yml\n5 detected tools" as source_github_workflows_secret_scan_yml #E0F2FE
 rectangle "config/access/tailscale/tailscale-subnet-router.example.sh\n1 detected tool" as source_config_access_tailscale_tailscale_subnet_router_example_sh #E0F2FE
 rectangle "config/access/tailscale/tailscale-subnet-router.local.sh\n1 detected tool" as source_config_access_tailscale_tailscale_subnet_router_local_sh #E0F2FE
 rectangle "config/network/networkmanager-static-ip.example.sh\n2 detected tools" as source_config_network_networkmanager_static_ip_example_sh #E0F2FE
 rectangle "config/network/networkmanager-static-ip.local.sh\n2 detected tools" as source_config_network_networkmanager_static_ip_local_sh #E0F2FE
 rectangle "scripts/build_filebrowser_fork_image.sh\n4 detected tools" as source_scripts_build_filebrowser_fork_image_sh #E0F2FE
+rectangle "scripts/check_filebrowser_backend.sh\n7 detected tools" as source_scripts_check_filebrowser_backend_sh #E0F2FE
 rectangle "scripts/debug_private_access.sh\n12 detected tools" as source_scripts_debug_private_access_sh #E0F2FE
 rectangle "scripts/deploy_filebrowser_fork_image.sh\n10 detected tools" as source_scripts_deploy_filebrowser_fork_image_sh #E0F2FE
 rectangle "scripts/recover_setup_share.sh\n4 detected tools" as source_scripts_recover_setup_share_sh #E0F2FE
 rectangle "scripts/remount_luks_share.sh\n3 detected tools" as source_scripts_remount_luks_share_sh #E0F2FE
 rectangle "scripts/run_tachometer_profile.sh\n3 detected tools" as source_scripts_run_tachometer_profile_sh #E0F2FE
 rectangle "scripts/setup_caddy_filebrowser.sh\n32 detected tools" as source_scripts_setup_caddy_filebrowser_sh #E0F2FE
+rectangle "scripts/setup_filebrowser_backend_watch.sh\n2 detected tools" as source_scripts_setup_filebrowser_backend_watch_sh #E0F2FE
 rectangle "scripts/setup_filebrowser_fork_workspace.sh\n7 detected tools" as source_scripts_setup_filebrowser_fork_workspace_sh #E0F2FE
 rectangle "scripts/setup_wireguard_endpoint_monitor.sh\n3 detected tools" as source_scripts_setup_wireguard_endpoint_monitor_sh #E0F2FE
 rectangle "scripts/start_snowbridge.sh\n8 detected tools" as source_scripts_start_snowbridge_sh #E0F2FE
@@ -43,12 +45,15 @@ cloud "^[[:space:]]*" as tool_space #FEF3C7
 cloud "^[[:space:]]+" as tool_space_2 #FEF3C7
 cloud "actions/checkout" as tool_actions_checkout #FEF3C7
 cloud "actions/setup-python" as tool_actions_setup_python #FEF3C7
+cloud "actions/upload-artifact" as tool_actions_upload_artifact #FEF3C7
 cloud "addgroup" as tool_addgroup #FEF3C7
 cloud "adduser" as tool_adduser #FEF3C7
 cloud "apk" as tool_apk #FEF3C7
 cloud "apt-get" as tool_apt_get #FEF3C7
 cloud "args+=(" as tool_args #FEF3C7
 cloud "args+=(--container-tool" as tool_args_container_tool #FEF3C7
+cloud "attempt" as tool_attempt #FEF3C7
+cloud "attempt++" as tool_attempt_2 #FEF3C7
 cloud "awk" as tool_awk #FEF3C7
 cloud "bash" as tool_bash #FEF3C7
 cloud "cat" as tool_cat #FEF3C7
@@ -57,6 +62,7 @@ cloud "chown" as tool_chown #FEF3C7
 cloud "cli" as tool_cli #FEF3C7
 cloud "cp" as tool_cp #FEF3C7
 cloud "cryptsetup" as tool_cryptsetup #FEF3C7
+cloud "curl" as tool_curl #FEF3C7
 cloud "dig" as tool_dig #FEF3C7
 cloud "dnf" as tool_dnf #FEF3C7
 cloud "docker" as tool_docker #FEF3C7
@@ -107,6 +113,7 @@ cloud "srv" as tool_srv #FEF3C7
 cloud "summarize" as tool_summarize #FEF3C7
 cloud "systemctl" as tool_systemctl #FEF3C7
 cloud "tachometer" as tool_tachometer #FEF3C7
+cloud "tar" as tool_tar #FEF3C7
 cloud "tr" as tool_tr #FEF3C7
 cloud "umount" as tool_umount #FEF3C7
 cloud "up" as tool_up #FEF3C7
@@ -121,7 +128,10 @@ source_github_workflows_ci_yml --> tool_actions_setup_python
 source_github_workflows_ci_yml --> tool_pip
 source_github_workflows_ci_yml --> tool_pre_commit
 source_github_workflows_secret_scan_yml --> tool_actions_checkout
+source_github_workflows_secret_scan_yml --> tool_actions_upload_artifact
+source_github_workflows_secret_scan_yml --> tool_curl
 source_github_workflows_secret_scan_yml --> tool_gitleaks_gitleaks_action
+source_github_workflows_secret_scan_yml --> tool_tar
 source_config_access_tailscale_tailscale_subnet_router_example_sh --> tool_systemctl
 source_config_access_tailscale_tailscale_subnet_router_local_sh --> tool_systemctl
 source_config_network_networkmanager_static_ip_example_sh --> tool_ipv6_method
@@ -132,6 +142,13 @@ source_scripts_build_filebrowser_fork_image_sh --> tool_args
 source_scripts_build_filebrowser_fork_image_sh --> tool_cat
 source_scripts_build_filebrowser_fork_image_sh --> tool_podman
 source_scripts_build_filebrowser_fork_image_sh --> tool_rm
+source_scripts_check_filebrowser_backend_sh --> tool_attempt
+source_scripts_check_filebrowser_backend_sh --> tool_attempt_2
+source_scripts_check_filebrowser_backend_sh --> tool_cat
+source_scripts_check_filebrowser_backend_sh --> tool_docker_compose
+source_scripts_check_filebrowser_backend_sh --> tool_rm
+source_scripts_check_filebrowser_backend_sh --> tool_sleep
+source_scripts_check_filebrowser_backend_sh --> tool_up
 source_scripts_debug_private_access_sh --> tool_tool_443
 source_scripts_debug_private_access_sh --> tool_tool_445
 source_scripts_debug_private_access_sh --> tool_tool_80
@@ -196,6 +213,8 @@ source_scripts_setup_caddy_filebrowser_sh --> tool_tr
 source_scripts_setup_caddy_filebrowser_sh --> tool_update_ca_certificates
 source_scripts_setup_caddy_filebrowser_sh --> tool_update_ca_trust
 source_scripts_setup_caddy_filebrowser_sh --> tool_yum
+source_scripts_setup_filebrowser_backend_watch_sh --> tool_cat
+source_scripts_setup_filebrowser_backend_watch_sh --> tool_systemctl
 source_scripts_setup_filebrowser_fork_workspace_sh --> tool_major
 source_scripts_setup_filebrowser_fork_workspace_sh --> tool_cat
 source_scripts_setup_filebrowser_fork_workspace_sh --> tool_golang_go
@@ -248,7 +267,7 @@ source_vendor_filebrowser_upstream_docker_s6_custom_cont_init_d_20_config --> to
 source_vendor_filebrowser_upstream_www_dockerfile --> tool_docker
 source_vendor_filebrowser_upstream_www_dockerfile --> tool_pip
 note as toolingGraphSummary
-Scanned 26 tooling entrypoints.
-Detected 85 third-party tools.
+Scanned 28 tooling entrypoints.
+Detected 90 third-party tools.
 end note
 @enduml
