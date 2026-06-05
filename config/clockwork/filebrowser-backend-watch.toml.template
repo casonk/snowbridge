@@ -1,0 +1,16 @@
+[[jobs]]
+name = "snowbridge-filebrowser-backend-watch"
+description = "Ensure the snowbridge File Browser backend is reachable"
+scope = "system"
+service_type = "oneshot"
+working_directory = "__REPO_ROOT__"
+exec_start = "/bin/bash __REPO_ROOT__/scripts/check_filebrowser_backend.sh --restart --env-file __ENV_FILE__ --compose-file __COMPOSE_FILE__ --wait-attempts 2"
+after = ["network-online.target"]
+wants = ["network-online.target"]
+timer_description = "Periodically check and restart the snowbridge File Browser backend"
+
+[jobs.timer]
+kind = "interval"
+on_boot_sec = "__ON_BOOT_SEC__"
+on_unit_active_sec = "__ON_UNIT_ACTIVE_SEC__"
+persistent = true
