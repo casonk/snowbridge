@@ -139,6 +139,8 @@ Templates:
 - [access.example.toml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/access.example.toml)
 - [Caddyfile.private-vpn.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/caddy/Caddyfile.private-vpn.example)
 - [setup_caddy_filebrowser.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_caddy_filebrowser.sh)
+- [check_filebrowser_backend.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/check_filebrowser_backend.sh)
+- [setup_filebrowser_backend_watch.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_backend_watch.sh)
 - [setup_filebrowser_access.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_access.py)
 - [export_caddy_root_profile.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/export_caddy_root_profile.py)
 
@@ -168,6 +170,9 @@ Suggested flow:
 11. If the iPhone will not install the raw root certificate cleanly, run
     `sudo ./scripts/export_caddy_root_profile.py` and install the generated
     `snowbridge-caddy-local-root.mobileconfig` from the SMB share instead.
+12. To keep the backend from silently staying down while Caddy is still
+    reachable, run
+    `sudo ./scripts/setup_filebrowser_backend_watch.sh --install-systemd`.
 
 The setup script installs a supported local container runtime and Compose
 frontend automatically when they are missing. On Fedora-class systems it
@@ -183,6 +188,9 @@ local Caddy CA through Files plus `Certificate Trust Settings`.
 If the private browser path still fails after reconnecting WireGuard and
 recreating the web stack, run `sudo ./scripts/debug_private_access.sh` to write
 a timestamped troubleshooting report under `reports/`.
+For the specific case where Caddy answers but File Browser does not load, check
+the backend directly with
+`./scripts/check_filebrowser_backend.sh --url http://127.0.0.1:8080/`.
 
 On SELinux-enforcing Fedora-class hosts, the compose template also uses SELinux
 relabeling for the mounted host paths.
@@ -212,6 +220,8 @@ Templates:
 - [access.example.toml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/access.example.toml)
 - [Caddyfile.private-vpn-mtls.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/caddy/Caddyfile.private-vpn-mtls.example)
 - [setup_caddy_filebrowser.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_caddy_filebrowser.sh)
+- [check_filebrowser_backend.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/check_filebrowser_backend.sh)
+- [setup_filebrowser_backend_watch.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_backend_watch.sh)
 - [setup_filebrowser_access.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_access.py)
 - [export_caddy_mtls_profile.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/export_caddy_mtls_profile.py)
 
@@ -227,6 +237,9 @@ Suggested flow:
 8. Run `sudo ./scripts/export_caddy_mtls_profile.py --device-name iphone`.
 9. Install the generated `.mobileconfig` from the SMB share on the iPhone and enter the printed identity password during import.
 10. Enable trust for the bundled Snowbridge Caddy root CA in `Certificate Trust Settings`.
+11. Run `sudo ./scripts/setup_filebrowser_backend_watch.sh --install-systemd`
+    so the File Browser backend is restarted if it is down while Caddy remains
+    reachable.
 
 This mode keeps the same private-VPN-only bind and hostname pattern as
 `private-vpn`, but adds Caddy `client_auth` backed by a host-local client CA at
