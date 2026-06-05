@@ -400,6 +400,8 @@ Templates:
 - `config/web/caddy/Caddyfile.public.example`
 - `config/web/caddy/Caddyfile.public-private-ip.example`
 - `scripts/setup_caddy_filebrowser.sh`
+- `scripts/check_filebrowser_backend.sh`
+- `scripts/setup_filebrowser_backend_watch.sh`
 - `scripts/setup_filebrowser_access.py`
 - `scripts/export_caddy_root_profile.py`
 - `scripts/export_caddy_mtls_profile.py`
@@ -419,6 +421,25 @@ with `--recreate` so the containers are rebuilt from the updated definition:
 ```bash
 sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn --recreate
 ```
+
+If Caddy is reachable but Safari cannot load File Browser, verify the local
+backend first. A healthy backend returns the File Browser HTML UI on a `GET`
+request:
+
+```bash
+./scripts/check_filebrowser_backend.sh --url http://127.0.0.1:8080/
+```
+
+To prevent the backend from staying down after boot, container restarts, or
+Podman state changes, install the root-owned watchdog timer:
+
+```bash
+sudo ./scripts/setup_filebrowser_backend_watch.sh --install-systemd
+```
+
+The timer checks the local backend every 5 minutes by default and runs the
+configured compose service when the probe fails. It does not refresh LUKS bind
+mounts, so keep `scripts/start_snowbridge.sh` in the post-unlock flow.
 
 If you want to browse the private HTTPS endpoint from the desktop host itself,
 bootstrap the local hostname mapping and install Caddy's local root CA into the
