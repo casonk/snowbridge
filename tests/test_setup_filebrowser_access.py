@@ -3,17 +3,11 @@
 
 from __future__ import annotations
 
-import sys
 import unittest
 from pathlib import Path
 
-from scripts import setup_filebrowser_access
-
-DYNO_LAB_SRC = Path(__file__).resolve().parents[2] / "dyno-lab" / "src"
-if str(DYNO_LAB_SRC) not in sys.path:
-    sys.path.insert(0, str(DYNO_LAB_SRC))
-
 from dyno_lab.auto_pass import AutoPassPatch, AutoPassRecorder
+from scripts import setup_filebrowser_access
 
 
 class SetupFilebrowserAccessAutoPassTests(unittest.TestCase):

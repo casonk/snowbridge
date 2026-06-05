@@ -211,6 +211,16 @@
   repo debug script that writes one timestamped report under an ignored
   directory such as `reports/`.
 
+### 2026-05-31 — Browser reachability needs a backend check, not only Caddy checks
+
+- The shared HTTPS edge can stay up and continue requiring mTLS while the local
+  File Browser backend on `127.0.0.1:8080` is down.
+- For Safari/File Browser reports, probe the backend directly with a real
+  `GET`, because File Browser may not answer `HEAD` the same way.
+- Keep a lightweight systemd timer around the backend probe so compose can
+  restart File Browser when the HTTPS edge is healthy but the app backend is
+  not listening.
+
 ### 2026-03-28 — Regenerated SVG diagrams should be normalized before pushing
 
 - Architecture renderers can produce checked-in SVG files without a trailing

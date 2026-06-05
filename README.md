@@ -40,6 +40,8 @@ custom client app or a separate sync workflow.
 - `scripts/check_wireguard_endpoint.py`: detects public-WAN endpoint drift for direct-IP WireGuard client profiles, rewrites the local client configs, regenerates QR PNGs, and notifies through `shock-relay`
 - `scripts/setup_wireguard_endpoint_monitor.sh`: initializes the local endpoint-monitor config and installs a periodic systemd timer for `check_wireguard_endpoint.py`
 - `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack in `private-vpn`, `private-vpn-mtls`, `public`, or `public-private-ip` mode, installing a supported container runtime and Compose frontend when needed, with optional local-browser bootstrap for hostname mapping and Caddy CA trust
+- `scripts/check_filebrowser_backend.sh`: probes the local File Browser backend and can restart the compose service when the HTTPS edge is up but File Browser is down
+- `scripts/setup_filebrowser_backend_watch.sh`: installs the clockwork-rendered systemd timer that runs the File Browser backend watchdog
 - `scripts/setup_filebrowser_access.py`: applies File Browser root, users, auth mode, and runtime UID/GID sync from a local TOML config
 - `scripts/setup_filebrowser_fork_workspace.sh`: installs the local File Browser fork prerequisites and runs the upstream-style frontend/backend checks against `vendor/filebrowser-upstream`
 - `scripts/build_filebrowser_fork_image.sh`: builds the patched File Browser binary from `vendor/filebrowser-upstream`, stages a minimal container context, and tags a local custom image for `FILEBROWSER_IMAGE`
@@ -87,6 +89,21 @@ sudo bash scripts/start_snowbridge.sh
 This refreshes the bind mounts, starts WireGuard, NordVPN (with the socket
 fwmark and ip rule needed to keep WireGuard responses off nordlynx), Samba,
 and the File Browser + Caddy container stack in one step.
+It also verifies that File Browser is serving the local web UI on
+`127.0.0.1:8080`; if that check fails, the script exits with an error instead
+of leaving Caddy reachable while the web backend is down.
+
+To keep the optional browser path self-healing after boot, container restarts,
+or Podman state changes, install the File Browser backend watchdog:
+
+```bash
+sudo ./scripts/setup_filebrowser_backend_watch.sh --install-systemd
+```
+
+The timer checks every 5 minutes by default and runs `compose up -d` for the
+File Browser service when the local backend probe fails. This complements the
+post-LUKS startup script; it does not replace the bind-mount refresh after the
+encrypted drives are unlocked.
 The current upstream File Browser UI does not display recursive folder sizes,
 so directory rows show `-` in the size column. Use host-side tools such as
 `du -sh` if you need actual folder totals.
