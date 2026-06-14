@@ -45,6 +45,10 @@ class FolderMount:
     grant_parent_traverse: bool
     create_missing_source: bool
     recursive_acl: bool
+    # When set, emits x-systemd.requires-mounts-for= in the fstab entry so the
+    # generated .mount unit waits for this path before activating.  Use for
+    # sources that live on LUKS-backed ext4 volumes that unlock after boot.
+    requires_mounts_for: str | None = None
 
 
 @dataclass(frozen=True)
@@ -281,6 +285,9 @@ def load_config(config_path: pathlib.Path) -> tuple[GlobalSettings, list[FolderM
                     ),
                     f"[{section}] recursive_acl",
                 ),
+                requires_mounts_for=get_optional(
+                    parser, section, "requires_mounts_for", None
+                ),
             )
         )
 
@@ -434,9 +441,23 @@ def same_mounted_source(a: str, b: str) -> bool:
 
     a_device, a_subpath = a_parts
     b_device, b_subpath = b_parts
-    return pathlib.Path(os.path.realpath(a_device)) == pathlib.Path(
-        os.path.realpath(b_device)
-    ) and a_subpath == b_subpath
+    if pathlib.Path(os.path.realpath(a_device)) != pathlib.Path(os.path.realpath(b_device)):
+        return False
+
+    if a_subpath == b_subpath:
+        return True
+
+    resolved_a_subpath = pathlib.Path(os.path.realpath(a_subpath))
+    resolved_b_subpath = pathlib.Path(os.path.realpath(b_subpath))
+    if resolved_a_subpath == resolved_b_subpath:
+        return True
+
+    try:
+        a_stat = resolved_a_subpath.stat()
+        b_stat = resolved_b_subpath.stat()
+    except OSError:
+        return False
+    return (a_stat.st_dev, a_stat.st_ino) == (b_stat.st_dev, b_stat.st_ino)
 
 
 def mounted_source_identity(path: pathlib.Path) -> str | None:
@@ -600,10 +621,22 @@ def ensure_bind_mount(folder: FolderMount, dry_run: bool, skip_mount: bool) -> N
             mounted_source_matches(current_source, folder.source)
             for current_source in current_sources
         ):
-            raise ConfigError(
-                f"{folder.target_path} is already mounted from {', '.join(current_sources)}, "
-                f"expected {folder.source}"
+            if skip_mount:
+                log(
+                    f"skip remount for {folder.target_path}: current source "
+                    f"{', '.join(current_sources)}, expected {folder.source}"
+                )
+                return
+            log(
+                f"remount bind target {folder.target_path}: current source "
+                f"{', '.join(current_sources)}, expected {folder.source}"
             )
+            run_command(["umount", str(folder.target_path)], dry_run)
+            run_command(
+                ["mount", "--bind", str(folder.source), str(folder.target_path)],
+                dry_run,
+            )
+            return
         log(f"bind mount already active: {folder.source} -> {folder.target_path}")
         return
 
@@ -637,13 +670,16 @@ def build_fstab_block(
     for folder in folders:
         if not folder.persist:
             continue
+        opts = "bind"
+        if folder.requires_mounts_for:
+            opts += f",x-systemd.requires-mounts-for={folder.requires_mounts_for}"
         lines.append(
             " ".join(
                 [
                     escape_fstab_field(str(folder.source)),
                     escape_fstab_field(str(folder.target_path)),
                     "none",
-                    "bind",
+                    opts,
                     "0",
                     "0",
                 ]
