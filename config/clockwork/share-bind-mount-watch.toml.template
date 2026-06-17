@@ -1,0 +1,16 @@
+[[jobs]]
+name = "snowbridge-share-bind-mount-watch"
+description = "Ensure snowbridge share bind mounts are current"
+scope = "system"
+service_type = "oneshot"
+working_directory = "__REPO_ROOT__"
+exec_start = "/bin/bash __REPO_ROOT__/scripts/check_share_bind_mounts.sh --repair --quiet"
+after = ["local-fs.target"]
+wants = ["local-fs.target"]
+timer_description = "Periodically check and repair snowbridge share bind mounts"
+
+[jobs.timer]
+kind = "interval"
+on_boot_sec = "__ON_BOOT_SEC__"
+on_unit_active_sec = "__ON_UNIT_ACTIVE_SEC__"
+persistent = true
