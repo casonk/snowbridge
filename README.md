@@ -37,6 +37,8 @@ custom client app or a separate sync workflow.
 - `scripts/setup_bind_share.py`: creates mountpoints, ACLs, and bind mounts
 - `scripts/remount_luks_share.sh`: refreshes fstab bind mounts whose sources are on LUKS ext4 drives, for running after LUKS volumes are unlocked
 - `scripts/start_snowbridge.sh`: single post-LUKS startup script — refreshes bind mounts, starts Samba, and brings up the File Browser + Caddy stack; append to your LUKS bootstrap
+- `scripts/check_share_bind_mounts.sh`: verifies and optionally repairs managed share bind mounts after source volumes are unlocked
+- `scripts/setup_share_bind_mount_watch.sh`: installs a systemd timer that keeps managed share bind mounts current
 - `scripts/check_wireguard_endpoint.py`: detects public-WAN endpoint drift for direct-IP WireGuard client profiles, rewrites the local client configs, regenerates QR PNGs, and notifies through `shock-relay`
 - `scripts/setup_wireguard_endpoint_monitor.sh`: initializes the local endpoint-monitor config and installs a periodic systemd timer for `check_wireguard_endpoint.py`
 - `scripts/setup_caddy_filebrowser.sh`: prepares and launches the optional web stack in `private-vpn`, `private-vpn-mtls`, `public`, or `public-private-ip` mode, installing a supported container runtime and Compose frontend when needed, with optional local-browser bootstrap for hostname mapping and Caddy CA trust
@@ -104,6 +106,17 @@ The timer checks every 5 minutes by default and runs `compose up -d` for the
 File Browser service when the local backend probe fails. This complements the
 post-LUKS startup script; it does not replace the bind-mount refresh after the
 encrypted drives are unlocked.
+
+To keep the SMB share folders from staying empty or stale after source volumes
+are unlocked, install the bind-mount watchdog:
+
+```bash
+sudo ./scripts/setup_share_bind_mount_watch.sh --install-systemd
+```
+
+The timer checks the repo-managed `/etc/fstab` bind targets every 5 minutes by
+default and remounts targets whose source directory is available but whose
+share target is missing or still points at the pre-unlock directory.
 The current upstream File Browser UI does not display recursive folder sizes,
 so directory rows show `-` in the size column. Use host-side tools such as
 `du -sh` if you need actual folder totals.

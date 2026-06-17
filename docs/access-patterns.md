@@ -18,7 +18,7 @@ Preferred default:
 
 If you want the host itself to hold a static private IPv4 address, use:
 
-- [networkmanager-static-ip.example.sh](/mnt/4tb-m2/git/util-repos/snowbridge/config/network/networkmanager-static-ip.example.sh)
+- [networkmanager-static-ip.example.sh](../config/network/networkmanager-static-ip.example.sh)
 
 Notes:
 
@@ -35,7 +35,7 @@ to manage WireGuard peer distribution by hand.
 
 Template:
 
-- [tailscale-subnet-router.example.sh](/mnt/4tb-m2/git/util-repos/snowbridge/config/access/tailscale/tailscale-subnet-router.example.sh)
+- [tailscale-subnet-router.example.sh](../config/access/tailscale/tailscale-subnet-router.example.sh)
 
 Patterns covered by the template:
 
@@ -54,9 +54,9 @@ while SMB and the optional private web UI remain reachable only after VPN auth.
 
 Templates:
 
-- [wg0-server.example.conf](/mnt/4tb-m2/git/util-repos/snowbridge/config/access/wireguard/wg0-server.example.conf)
-- [iphone-peer.example.conf](/mnt/4tb-m2/git/util-repos/snowbridge/config/access/wireguard/iphone-peer.example.conf)
-- [setup_wireguard.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_wireguard.sh)
+- [wg0-server.example.conf](../config/access/wireguard/wg0-server.example.conf)
+- [iphone-peer.example.conf](../config/access/wireguard/iphone-peer.example.conf)
+- [setup_wireguard.sh](../scripts/setup_wireguard.sh)
 
 Recommended first step:
 
@@ -93,9 +93,9 @@ through the tunnel, not just the Snowbridge host itself.
 
 Templates:
 
-- [wg0-server.lan-vpn.example.conf](/mnt/4tb-m2/git/util-repos/snowbridge/config/access/wireguard/wg0-server.lan-vpn.example.conf)
-- [iphone-peer.lan-vpn.example.conf](/mnt/4tb-m2/git/util-repos/snowbridge/config/access/wireguard/iphone-peer.lan-vpn.example.conf)
-- [setup_wireguard.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_wireguard.sh)
+- [wg0-server.lan-vpn.example.conf](../config/access/wireguard/wg0-server.lan-vpn.example.conf)
+- [iphone-peer.lan-vpn.example.conf](../config/access/wireguard/iphone-peer.lan-vpn.example.conf)
+- [setup_wireguard.sh](../scripts/setup_wireguard.sh)
 
 Suggested flow:
 
@@ -134,15 +134,17 @@ for the fork and upstream-PR shape.
 
 Templates:
 
-- [docker-compose.example.yml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/docker-compose.example.yml)
-- [filebrowser.env.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/filebrowser.env.example)
-- [access.example.toml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/access.example.toml)
-- [Caddyfile.private-vpn.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/caddy/Caddyfile.private-vpn.example)
-- [setup_caddy_filebrowser.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_caddy_filebrowser.sh)
-- [check_filebrowser_backend.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/check_filebrowser_backend.sh)
-- [setup_filebrowser_backend_watch.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_backend_watch.sh)
-- [setup_filebrowser_access.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_access.py)
-- [export_caddy_root_profile.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/export_caddy_root_profile.py)
+- [docker-compose.example.yml](../config/web/filebrowser/docker-compose.example.yml)
+- [filebrowser.env.example](../config/web/filebrowser/filebrowser.env.example)
+- [access.example.toml](../config/web/filebrowser/access.example.toml)
+- [Caddyfile.private-vpn.example](../config/web/caddy/Caddyfile.private-vpn.example)
+- [setup_caddy_filebrowser.sh](../scripts/setup_caddy_filebrowser.sh)
+- [check_filebrowser_backend.sh](../scripts/check_filebrowser_backend.sh)
+- [setup_filebrowser_backend_watch.sh](../scripts/setup_filebrowser_backend_watch.sh)
+- [check_share_bind_mounts.sh](../scripts/check_share_bind_mounts.sh)
+- [setup_share_bind_mount_watch.sh](../scripts/setup_share_bind_mount_watch.sh)
+- [setup_filebrowser_access.py](../scripts/setup_filebrowser_access.py)
+- [export_caddy_root_profile.py](../scripts/export_caddy_root_profile.py)
 
 Suggested pattern:
 
@@ -173,6 +175,9 @@ Suggested flow:
 12. To keep the backend from silently staying down while Caddy is still
     reachable, run
     `sudo ./scripts/setup_filebrowser_backend_watch.sh --install-systemd`.
+13. To keep SMB/File Browser folder binds from staying missing or stale after
+    source volumes are unlocked, run
+    `sudo ./scripts/setup_share_bind_mount_watch.sh --install-systemd`.
 
 The setup script installs a supported local container runtime and Compose
 frontend automatically when they are missing. On Fedora-class systems it
@@ -215,15 +220,15 @@ before File Browser is reachable.
 
 Templates:
 
-- [docker-compose.example.yml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/docker-compose.example.yml)
-- [filebrowser.env.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/filebrowser.env.example)
-- [access.example.toml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/access.example.toml)
-- [Caddyfile.private-vpn-mtls.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/caddy/Caddyfile.private-vpn-mtls.example)
-- [setup_caddy_filebrowser.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_caddy_filebrowser.sh)
-- [check_filebrowser_backend.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/check_filebrowser_backend.sh)
-- [setup_filebrowser_backend_watch.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_backend_watch.sh)
-- [setup_filebrowser_access.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_access.py)
-- [export_caddy_mtls_profile.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/export_caddy_mtls_profile.py)
+- [docker-compose.example.yml](../config/web/filebrowser/docker-compose.example.yml)
+- [filebrowser.env.example](../config/web/filebrowser/filebrowser.env.example)
+- [access.example.toml](../config/web/filebrowser/access.example.toml)
+- [Caddyfile.private-vpn-mtls.example](../config/web/caddy/Caddyfile.private-vpn-mtls.example)
+- [setup_caddy_filebrowser.sh](../scripts/setup_caddy_filebrowser.sh)
+- [check_filebrowser_backend.sh](../scripts/check_filebrowser_backend.sh)
+- [setup_filebrowser_backend_watch.sh](../scripts/setup_filebrowser_backend_watch.sh)
+- [setup_filebrowser_access.py](../scripts/setup_filebrowser_access.py)
+- [export_caddy_mtls_profile.py](../scripts/export_caddy_mtls_profile.py)
 
 Suggested flow:
 
@@ -260,13 +265,13 @@ accept the extra operational risk.
 
 Templates:
 
-- [docker-compose.example.yml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/docker-compose.example.yml)
-- [filebrowser.env.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/filebrowser.env.example)
-- [access.example.toml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/access.example.toml)
-- [Caddyfile.public.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/caddy/Caddyfile.public.example)
-- [Caddyfile.public-private-ip.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/caddy/Caddyfile.public-private-ip.example)
-- [setup_caddy_filebrowser.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_caddy_filebrowser.sh)
-- [setup_filebrowser_access.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_access.py)
+- [docker-compose.example.yml](../config/web/filebrowser/docker-compose.example.yml)
+- [filebrowser.env.example](../config/web/filebrowser/filebrowser.env.example)
+- [access.example.toml](../config/web/filebrowser/access.example.toml)
+- [Caddyfile.public.example](../config/web/caddy/Caddyfile.public.example)
+- [Caddyfile.public-private-ip.example](../config/web/caddy/Caddyfile.public-private-ip.example)
+- [setup_caddy_filebrowser.sh](../scripts/setup_caddy_filebrowser.sh)
+- [setup_filebrowser_access.py](../scripts/setup_filebrowser_access.py)
 
 Minimum hardening expectations:
 
@@ -311,12 +316,12 @@ publishing the HTTPS service externally.
 
 Templates:
 
-- [docker-compose.example.yml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/docker-compose.example.yml)
-- [filebrowser.env.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/filebrowser.env.example)
-- [access.example.toml](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/filebrowser/access.example.toml)
-- [Caddyfile.public-private-ip.example](/mnt/4tb-m2/git/util-repos/snowbridge/config/web/caddy/Caddyfile.public-private-ip.example)
-- [setup_caddy_filebrowser.sh](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_caddy_filebrowser.sh)
-- [setup_filebrowser_access.py](/mnt/4tb-m2/git/util-repos/snowbridge/scripts/setup_filebrowser_access.py)
+- [docker-compose.example.yml](../config/web/filebrowser/docker-compose.example.yml)
+- [filebrowser.env.example](../config/web/filebrowser/filebrowser.env.example)
+- [access.example.toml](../config/web/filebrowser/access.example.toml)
+- [Caddyfile.public-private-ip.example](../config/web/caddy/Caddyfile.public-private-ip.example)
+- [setup_caddy_filebrowser.sh](../scripts/setup_caddy_filebrowser.sh)
+- [setup_filebrowser_access.py](../scripts/setup_filebrowser_access.py)
 
 Minimum hardening expectations:
 
