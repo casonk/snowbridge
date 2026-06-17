@@ -129,6 +129,24 @@ now-live ext4 paths.  You need to run this **once per session** after unlocking
 your drives.  File Browser will reflect the correct folder contents on the next
 directory listing.
 
+To verify the full managed bind layout, including folders that are missing or
+still bound to the pre-unlock directory, run:
+
+```bash
+sudo ./scripts/check_share_bind_mounts.sh --repair
+```
+
+To keep the share from staying stale after a boot or delayed unlock, install
+the root-owned bind-mount watchdog timer:
+
+```bash
+sudo ./scripts/setup_share_bind_mount_watch.sh --install-systemd
+```
+
+The timer checks every 5 minutes by default. It remounts managed `/etc/fstab`
+targets only when the configured source directory exists and the share target
+is missing or points at a different directory identity.
+
 Folders whose sources are on btrfs (e.g. a path under `/home/`) are unaffected
 and do not need a post-LUKS remount.
 
@@ -439,7 +457,8 @@ sudo ./scripts/setup_filebrowser_backend_watch.sh --install-systemd
 
 The timer checks the local backend every 5 minutes by default and runs the
 configured compose service when the probe fails. It does not refresh LUKS bind
-mounts, so keep `scripts/start_snowbridge.sh` in the post-unlock flow.
+mounts, so keep `scripts/start_snowbridge.sh` in the post-unlock flow or
+install `scripts/setup_share_bind_mount_watch.sh` as the bind-mount watchdog.
 
 If you want to browse the private HTTPS endpoint from the desktop host itself,
 bootstrap the local hostname mapping and install Caddy's local root CA into the

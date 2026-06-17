@@ -211,6 +211,15 @@
   repo debug script that writes one timestamped report under an ignored
   directory such as `reports/`.
 
+### 2026-06-13 — User-run recovery should be distilled to one command
+
+- When a live host fix requires user-run privileged commands, collapse the
+  sequence into one copy/button-friendly shell command whenever execution order
+  is fixed and failure should stop later steps.
+- Prefer a single repo script for repeated workflows; otherwise use one
+  `bash -lc` command with `&&` so it can be run from a web terminal button
+  without manual command-by-command transcription.
+
 ### 2026-05-31 — Browser reachability needs a backend check, not only Caddy checks
 
 - The shared HTTPS edge can stay up and continue requiring mTLS while the local
@@ -220,6 +229,20 @@
 - Keep a lightweight systemd timer around the backend probe so compose can
   restart File Browser when the HTTPS edge is healthy but the app backend is
   not listening.
+
+### 2026-06-13 — Share reachability needs a bind-mount check, not only Samba checks
+
+- Samba can stay active and advertise the `snowbridge` share while the visible
+  folders underneath `/srv/snowbridge/share` are missing or still bound to
+  pre-unlock source directories.
+- Detect stale bind mounts by comparing the source and target directory
+  identities, not only by checking whether the target is a mountpoint.
+- When validating an existing bind mount against the configured source, compare
+  normalized real paths or directory identity, not only the literal path
+  string reported by `findmnt`; equivalent aliases such as `/root/mnt/...` and
+  `/mnt/...` can refer to the same mounted directory.
+- Keep a root-owned timer around the bind-mount probe so managed `/etc/fstab`
+  targets are remounted after encrypted/source volumes become available.
 
 ### 2026-03-28 — Regenerated SVG diagrams should be normalized before pushing
 
