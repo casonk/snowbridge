@@ -26,6 +26,7 @@ fi
 # ── 1. Refresh LUKS bind mounts ─────────────────────────────────────────────
 echo "==> Refreshing LUKS bind mounts…"
 bash "${REPO_ROOT}/scripts/remount_luks_share.sh"
+bash "${REPO_ROOT}/scripts/check_share_bind_mounts.sh" --repair
 
 # ── 2. WireGuard ─────────────────────────────────────────────────────────────
 echo "==> Starting WireGuard…"
