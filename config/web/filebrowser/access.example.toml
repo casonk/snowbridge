@@ -7,8 +7,8 @@
 # error.
 #
 # Optional: override the auto-pass profile used for password_keepass_entry
-# lookups. Leave unset to use config/auto-pass.ini, then the infra default.
-# keepass_profile = "infra"
+# lookups. Leave unset to use config/auto-pass.ini.
+# keepass_profile = "your-profile"
 
 [runtime]
 # Relative paths are resolved from this file's directory.
