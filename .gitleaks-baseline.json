@@ -1,5 +1,53 @@
 [
  {
+  "RuleID": "keepass-real-profile-name",
+  "Description": "Real KeePass profile name committed to a config or example file",
+  "StartLine": 5,
+  "EndLine": 5,
+  "StartColumn": 2,
+  "EndColumn": 16,
+  "Match": "profile = infra",
+  "Secret": "infra",
+  "File": "config/auto-pass.example.ini",
+  "SymlinkFile": "",
+  "Commit": "8d49e746fd151e802948464c8d41917de93fe546",
+  "Link": "https://github.com/casonk/snowbridge/blob/8d49e746fd151e802948464c8d41917de93fe546/config/auto-pass.example.ini#L5",
+  "Entropy": 2.321928,
+  "Author": "casonk",
+  "Email": "72440835+casonk@users.noreply.github.com",
+  "Date": "2026-04-03T23:52:26Z",
+  "Message": "feat: add auto-pass filebrowser config",
+  "Tags": [
+   "keepass",
+   "sensitive-config"
+  ],
+  "Fingerprint": "8d49e746fd151e802948464c8d41917de93fe546:config/auto-pass.example.ini:keepass-real-profile-name:5"
+ },
+ {
+  "RuleID": "keepass-real-profile-name",
+  "Description": "Real KeePass profile name committed to a config or example file",
+  "StartLine": 11,
+  "EndLine": 11,
+  "StartColumn": 12,
+  "EndColumn": 28,
+  "Match": "profile = \"infra\"",
+  "Secret": "infra",
+  "File": "config/web/filebrowser/access.example.toml",
+  "SymlinkFile": "",
+  "Commit": "8d49e746fd151e802948464c8d41917de93fe546",
+  "Link": "https://github.com/casonk/snowbridge/blob/8d49e746fd151e802948464c8d41917de93fe546/config/web/filebrowser/access.example.toml#L11",
+  "Entropy": 2.321928,
+  "Author": "casonk",
+  "Email": "72440835+casonk@users.noreply.github.com",
+  "Date": "2026-04-03T23:52:26Z",
+  "Message": "feat: add auto-pass filebrowser config",
+  "Tags": [
+   "keepass",
+   "sensitive-config"
+  ],
+  "Fingerprint": "8d49e746fd151e802948464c8d41917de93fe546:config/web/filebrowser/access.example.toml:keepass-real-profile-name:11"
+ },
+ {
   "RuleID": "portfolio-git-workspace-path",
   "Description": "Hardcoded absolute path to local git workspace in config/code/scripts",
   "StartLine": 51,
