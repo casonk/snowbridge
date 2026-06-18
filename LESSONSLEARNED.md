@@ -301,13 +301,13 @@
   LUKS-encrypted drives are unlocked and their ext4 filesystems are mounted.
 - Bind mounts created at that point capture the empty btrfs stub directories
   that sit under the ext4 mount points (e.g. the root btrfs subvolume's
-  `/mnt/4tb-m2/read`), not the actual ext4 content.
+  `/mnt/<data-volume>`), not the actual ext4 content.
 - After the user unlocks LUKS (via KeePassXC), the bind mounts remain stale —
   `findmnt` reports the source as the btrfs device even though the ext4 content
   is now accessible at the same path.
 - `setup_bind_share.py` currently treats the btrfs-subpath form
-  `nvme1n1p3[/root/mnt/4tb-m2/read]` as matching the expected source
-  `/mnt/4tb-m2/read` via an `endswith` check, so it silently skips the stale
+  `<device>[/root/mnt/<data-volume>]` as matching the expected source
+  `/mnt/<data-volume>` via an `endswith` check, so it silently skips the stale
   bind mount without re-creating it.
 - Fix: run `sudo bash scripts/remount_luks_share.sh` once per session after
   unlocking LUKS.  The script unmounts the stale binds and re-mounts them from
@@ -319,8 +319,8 @@
 
 - `findmnt` can describe the same live source directory in multiple valid forms,
   including a plain path, a device plus subpath such as
-  `/dev/mapper/setup[/bully/info/receipt]`, and boot-time stale btrfs-source
-  forms such as `nvme1n1p3[/root/mnt/4tb-m2/read]`.
+  `/dev/mapper/<luks-device>[/<share-path>]`, and boot-time stale btrfs-source
+  forms such as `<device>[/root/mnt/<data-volume>]`.
 - Path-suffix matching is too loose: it can reject a valid live source that is
   expressed relative to the filesystem root, and it can also falsely accept a
   stale pre-unlock bind source that merely ends with the configured path.
