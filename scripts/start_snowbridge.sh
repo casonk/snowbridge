@@ -8,27 +8,41 @@
 #   sudo bash scripts/start_snowbridge.sh
 #
 # What it does:
-#   1. Refreshes fstab bind mounts whose sources are on LUKS ext4 drives.
-#   2. Starts (or ensures) the Samba daemons for iOS Files app access.
-#   3. Brings up the File Browser + Caddy container stack.
+#   1. Reconciles the bind layout from config/share-layout/folders.local.ini.
+#   2. Refreshes fstab bind mounts whose sources are on LUKS ext4 drives.
+#   3. Installs the bind-mount watchdog so stale mounts self-heal.
+#   4. Starts (or ensures) the Samba daemons for iOS Files app access.
+#   5. Brings up the File Browser + Caddy container stack.
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="${REPO_ROOT}/config/web/filebrowser/docker-compose.local.yml"
 ENV_FILE="${REPO_ROOT}/config/web/filebrowser/filebrowser.env.local"
+SHARE_LAYOUT_CONFIG="${REPO_ROOT}/config/share-layout/folders.local.ini"
 
 if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
     echo "error: run as root (sudo)" >&2
     exit 1
 fi
 
-# ── 1. Refresh LUKS bind mounts ─────────────────────────────────────────────
+# ── 1. Reconcile bind layout ────────────────────────────────────────────────
+echo "==> Reconciling Snowbridge bind layout…"
+python3 "${REPO_ROOT}/scripts/setup_bind_share.py" \
+    --config "${SHARE_LAYOUT_CONFIG}" \
+    --write-fstab
+
+# ── 2. Refresh LUKS bind mounts ─────────────────────────────────────────────
 echo "==> Refreshing LUKS bind mounts…"
 bash "${REPO_ROOT}/scripts/remount_luks_share.sh"
 bash "${REPO_ROOT}/scripts/check_share_bind_mounts.sh" --repair
 
-# ── 2. WireGuard ─────────────────────────────────────────────────────────────
+# ── 3. Bind-mount watchdog ──────────────────────────────────────────────────
+echo "==> Ensuring bind-mount watchdog…"
+bash "${REPO_ROOT}/scripts/setup_share_bind_mount_watch.sh" --install-systemd
+echo "    snowbridge-share-bind-mount-watch.timer: $(systemctl is-active snowbridge-share-bind-mount-watch.timer)"
+
+# ── 4. WireGuard ─────────────────────────────────────────────────────────────
 echo "==> Starting WireGuard…"
 if [[ -f /etc/wireguard/wg0.conf ]]; then
     systemctl start wg-quick@wg0
@@ -42,7 +56,7 @@ else
     echo "    warning: /etc/wireguard/wg0.conf not found, skipping"
 fi
 
-# ── 3. NordVPN ───────────────────────────────────────────────────────────────
+# ── 5. NordVPN ───────────────────────────────────────────────────────────────
 echo "==> Starting NordVPN…"
 if command -v nordvpn &>/dev/null; then
     # Ensure snowbridge ports are reachable through NordVPN's firewall.
@@ -73,12 +87,12 @@ if [[ -f /etc/wireguard/wg0.conf ]] && command -v wg &>/dev/null; then
     echo "    wg0 NordVPN bypass: applied"
 fi
 
-# ── 4. Samba ─────────────────────────────────────────────────────────────────
+# ── 6. Samba ─────────────────────────────────────────────────────────────────
 echo "==> Starting Samba…"
 systemctl start smb nmb
 echo "    smb/nmb: $(systemctl is-active smb) / $(systemctl is-active nmb)"
 
-# ── 5. File Browser + Caddy ──────────────────────────────────────────────────
+# ── 7. File Browser + Caddy ──────────────────────────────────────────────────
 echo "==> Starting File Browser + Caddy…"
 
 compose_cmd=()

@@ -36,7 +36,8 @@ custom client app or a separate sync workflow.
 - `config/web/`: optional Caddy and File Browser templates for web access, including private-VPN HTTPS, private-VPN HTTPS with mTLS client certificates, and public HTTPS modes that can bind on either all interfaces or a specific private host IP behind router/NAT forwarding
 - `scripts/setup_bind_share.py`: creates mountpoints, ACLs, and bind mounts
 - `scripts/remount_luks_share.sh`: refreshes fstab bind mounts whose sources are on LUKS ext4 drives, for running after LUKS volumes are unlocked
-- `scripts/start_snowbridge.sh`: single post-LUKS startup script — refreshes bind mounts, starts Samba, and brings up the File Browser + Caddy stack; append to your LUKS bootstrap
+- `scripts/start_snowbridge.sh`: single post-LUKS startup script — refreshes bind mounts, installs the bind-mount watchdog, starts Samba, and brings up the File Browser + Caddy stack; append to your LUKS bootstrap
+- `scripts/repair_share_access.sh`: one-command Snowbridge repair wrapper; runs the standard startup flow and writes a debug report under `reports/` if recovery fails
 - `scripts/check_share_bind_mounts.sh`: verifies and optionally repairs managed share bind mounts after source volumes are unlocked
 - `scripts/setup_share_bind_mount_watch.sh`: installs a systemd timer that keeps managed share bind mounts current
 - `scripts/check_wireguard_endpoint.py`: detects public-WAN endpoint drift for direct-IP WireGuard client profiles, rewrites the local client configs, regenerates QR PNGs, and notifies through `shock-relay`
@@ -88,12 +89,24 @@ unlocking:
 sudo bash scripts/start_snowbridge.sh
 ```
 
-This refreshes the bind mounts, starts WireGuard, NordVPN (with the socket
-fwmark and ip rule needed to keep WireGuard responses off nordlynx), Samba,
-and the File Browser + Caddy container stack in one step.
+This refreshes the bind mounts, installs/enables the bind-mount watchdog,
+starts WireGuard, NordVPN (with the socket fwmark and ip rule needed to keep
+WireGuard responses off nordlynx), Samba, and the File Browser + Caddy
+container stack in one step.
 It also verifies that File Browser is serving the local web UI on
 `127.0.0.1:8080`; if that check fails, the script exits with an error instead
 of leaving Caddy reachable while the web backend is down.
+
+If the share is still inaccessible and you want the same repair flow plus an
+automatic debug capture on failure, run:
+
+```bash
+sudo bash scripts/repair_share_access.sh
+```
+
+If recovery fails, the script writes a timestamped report under `reports/` so
+the next debugging pass has the full system evidence instead of only a partial
+terminal transcript.
 
 To keep the optional browser path self-healing after boot, container restarts,
 or Podman state changes, install the File Browser backend watchdog:
@@ -107,8 +120,9 @@ File Browser service when the local backend probe fails. This complements the
 post-LUKS startup script; it does not replace the bind-mount refresh after the
 encrypted drives are unlocked.
 
-To keep the SMB share folders from staying empty or stale after source volumes
-are unlocked, install the bind-mount watchdog:
+If you are not using `start_snowbridge.sh`, install the bind-mount watchdog
+directly so the SMB share folders do not stay empty or stale after source
+volumes are unlocked:
 
 ```bash
 sudo ./scripts/setup_share_bind_mount_watch.sh --install-systemd

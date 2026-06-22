@@ -241,8 +241,16 @@
   normalized real paths or directory identity, not only the literal path
   string reported by `findmnt`; equivalent aliases such as `/root/mnt/...` and
   `/mnt/...` can refer to the same mounted directory.
+- The standard post-unlock startup path should reconcile the repo-managed bind
+  layout before trying to remount or verify share targets. If `start_snowbridge.sh`
+  assumes mountpoints, ACLs, or the managed `/etc/fstab` block are already in
+  sync, the recovery path can leave Samba up while the share is still empty.
 - Keep a root-owned timer around the bind-mount probe so managed `/etc/fstab`
   targets are remounted after encrypted/source volumes become available.
+- Install that timer from the main privileged startup/recovery script, not only
+  from a separate optional follow-up command. If users repeatedly run the
+  recovery script but the timer remains absent, the share will keep working only
+  until the next boot or delayed unlock.
 
 ### 2026-03-28 — Regenerated SVG diagrams should be normalized before pushing
 
