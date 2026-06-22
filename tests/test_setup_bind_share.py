@@ -92,5 +92,77 @@ class MountedSourceMatchesTests(unittest.TestCase):
             )
 
 
+class EnsureBindMountTests(unittest.TestCase):
+    def test_repairs_existing_mount_from_wrong_source(self) -> None:
+        folder = setup_bind_share.FolderMount(
+            name="receipt",
+            source=pathlib.Path("/mnt/setup/bully/info/receipt"),
+            target_relative=pathlib.PurePosixPath("receipt"),
+            target_path=pathlib.Path("/srv/snowbridge/share/receipt"),
+            persist=True,
+            acl_mode="rwx",
+            default_acl_mode="rwx",
+            grant_parent_traverse=True,
+            create_missing_source=False,
+            recursive_acl=True,
+        )
+
+        with (
+            mock.patch.object(setup_bind_share, "is_mountpoint", return_value=True),
+            mock.patch.object(
+                setup_bind_share,
+                "mounted_sources",
+                return_value=["/dev/nvme1n1p3[/root/mnt/setup/bully/info/receipt]"],
+            ),
+            mock.patch.object(setup_bind_share, "mounted_source_matches", return_value=False),
+            mock.patch.object(setup_bind_share, "run_command") as run_command,
+        ):
+            setup_bind_share.ensure_bind_mount(folder, dry_run=False, skip_mount=False)
+
+        self.assertEqual(
+            run_command.call_args_list,
+            [
+                mock.call(["umount", "/srv/snowbridge/share/receipt"], False),
+                mock.call(
+                    [
+                        "mount",
+                        "--bind",
+                        "/mnt/setup/bully/info/receipt",
+                        "/srv/snowbridge/share/receipt",
+                    ],
+                    False,
+                ),
+            ],
+        )
+
+    def test_skips_remount_when_skip_mount_requested(self) -> None:
+        folder = setup_bind_share.FolderMount(
+            name="receipt",
+            source=pathlib.Path("/mnt/setup/bully/info/receipt"),
+            target_relative=pathlib.PurePosixPath("receipt"),
+            target_path=pathlib.Path("/srv/snowbridge/share/receipt"),
+            persist=True,
+            acl_mode="rwx",
+            default_acl_mode="rwx",
+            grant_parent_traverse=True,
+            create_missing_source=False,
+            recursive_acl=True,
+        )
+
+        with (
+            mock.patch.object(setup_bind_share, "is_mountpoint", return_value=True),
+            mock.patch.object(
+                setup_bind_share,
+                "mounted_sources",
+                return_value=["/dev/nvme1n1p3[/root/mnt/setup/bully/info/receipt]"],
+            ),
+            mock.patch.object(setup_bind_share, "mounted_source_matches", return_value=False),
+            mock.patch.object(setup_bind_share, "run_command") as run_command,
+        ):
+            setup_bind_share.ensure_bind_mount(folder, dry_run=False, skip_mount=True)
+
+        run_command.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()
