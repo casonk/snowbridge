@@ -118,16 +118,28 @@ drives (mounted under `/mnt/`), the fstab bind mounts created above will have
 run at boot **before** those drives were unlocked.  That means they captured
 empty btrfs stub directories rather than the actual drive content.
 
-After you unlock your LUKS volumes (e.g. via KeePassXC), run:
+After you unlock your LUKS volumes (e.g. via KeePassXC), run the full startup
+script:
 
 ```bash
-sudo bash scripts/remount_luks_share.sh
+sudo bash scripts/start_snowbridge.sh
 ```
 
-This unmounts the stale fstab bind mounts and re-mounts them through the
-now-live ext4 paths.  You need to run this **once per session** after unlocking
-your drives.  File Browser will reflect the correct folder contents on the next
-directory listing.
+This unmounts stale fstab bind mounts, re-mounts them through the now-live ext4
+paths, installs/enables the root-owned bind-mount watchdog timer, starts the
+network-facing services, and verifies the File Browser backend. You need to run
+this **once per session** after unlocking your drives unless your LUKS bootstrap
+already runs it.
+
+If the share is still inaccessible and you want the same recovery path plus a
+debug report when something fails, run:
+
+```bash
+sudo bash scripts/repair_share_access.sh
+```
+
+On failure it writes a timestamped debug report under `reports/` using
+`scripts/debug_private_access.sh`.
 
 To verify the full managed bind layout, including folders that are missing or
 still bound to the pre-unlock directory, run:
@@ -136,8 +148,8 @@ still bound to the pre-unlock directory, run:
 sudo ./scripts/check_share_bind_mounts.sh --repair
 ```
 
-To keep the share from staying stale after a boot or delayed unlock, install
-the root-owned bind-mount watchdog timer:
+If you are not using `scripts/start_snowbridge.sh`, install the root-owned
+bind-mount watchdog timer directly:
 
 ```bash
 sudo ./scripts/setup_share_bind_mount_watch.sh --install-systemd
@@ -457,8 +469,9 @@ sudo ./scripts/setup_filebrowser_backend_watch.sh --install-systemd
 
 The timer checks the local backend every 5 minutes by default and runs the
 configured compose service when the probe fails. It does not refresh LUKS bind
-mounts, so keep `scripts/start_snowbridge.sh` in the post-unlock flow or
-install `scripts/setup_share_bind_mount_watch.sh` as the bind-mount watchdog.
+mounts, so keep `scripts/start_snowbridge.sh` in the post-unlock flow. The
+startup script repairs the bind mounts and installs/enables the bind-mount
+watchdog.
 
 If you want to browse the private HTTPS endpoint from the desktop host itself,
 bootstrap the local hostname mapping and install Caddy's local root CA into the
