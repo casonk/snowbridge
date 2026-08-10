@@ -14,6 +14,22 @@
 - Document the repository around its real execution, curation, or integration flow instead of only the top-level folder list.
 - Keep local-only, private, reference-only, or generated boundaries explicit so published or runtime behavior is not confused with offline material or non-committable inputs.
 - Re-run repo-appropriate validation after changing generated artifacts, diagrams, workflows, or other CI-facing files so formatting and compatibility issues are caught before push.
+
+### 2026-08-09 — Cloud account discovery is not synchronization authority
+
+- Bind non-identifying account aliases and exact backend types to an encrypted,
+  owner-only provider config before reading remote metadata or publishing
+  folders to the share.
+- Keep the first phase offline and inventory-only. A valid OAuth session or
+  rclone alias does not define conflict ownership, deletion policy, recovery,
+  offline-node behavior, or an ACID transaction boundary.
+- Treat provider enrollment as a separate online permission gate; an offline
+  alias/backend check cannot prove the granted OAuth scope or remote root.
+- Exercise external configuration semantics with a checksum-pinned real binary
+  in CI; fake command tests alone cannot catch option or output-shape drift.
+- On macOS, retrieve the rclone-config password from Keychain with a fixed
+  password command. Do not put it in an environment variable, command
+  argument, tracked file, chat, or terminal log.
 - When a repo installer needs dynamic systemd units, render them through the
   shared `./util-repos/clockwork` manifest flow instead of growing another
   inline here-doc block for service and timer text.

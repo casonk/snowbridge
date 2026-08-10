@@ -612,6 +612,27 @@ Do not port-forward TCP 445 as part of any web-access design.
 See `docs/access-patterns.md` for the concrete template inventory and when to
 choose each option.
 
+## 13. Inventory Cloud Accounts Before Publishing Data
+
+Use [cloud-storage.md](cloud-storage.md) to create the ignored owner-only
+account registry and a separately encrypted rclone config. The doctor's rclone
+operations are storage-backend-offline: they check config encryption and
+alias/backend binding only. A custom password helper has its own reviewed I/O
+boundary. Provider enrollment is a separate online permission gate.
+
+```bash
+python3 scripts/cloud_accounts.py init
+python3 scripts/cloud_accounts.py validate
+# Run only after separately approved online provider enrollment:
+python3 scripts/cloud_accounts.py doctor
+```
+
+Do not add an rclone path to the share layout yet. A configured account does
+not decide whether the safe behavior is native-provider access, read-only mesh
+browsing, one-way copy, or client-encrypted backup. In particular, do not use
+`sync`, `bisync`, or a mount until deletion quarantine, conflict ownership,
+offline-node behavior, and recovery have been reviewed.
+
 ## Operational Notes
 
 - A single dedicated SMB account is the simplest starting point for a personal
