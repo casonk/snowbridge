@@ -21,8 +21,8 @@ jobs:
     permissions:
       contents: read
     env:
-      RCLONE_VERSION: 1.75.0
-      RCLONE_LINUX_AMD64_SHA256: aa2804e08f48250e71009c727124b6341cd0288465804a9a09d14663cabafbaa
+      RCLONE_RELEASE_VERSION: 1.75.0
+      RCLONE_RELEASE_SHA256: aa2804e08f48250e71009c727124b6341cd0288465804a9a09d14663cabafbaa
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -32,16 +32,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          archive="${RUNNER_TEMP}/rclone-v${RCLONE_VERSION}-linux-amd64.zip"
-          release="https://github.com/rclone/rclone/releases/download/v${RCLONE_VERSION}"
+          archive="${RUNNER_TEMP}/rclone-v${RCLONE_RELEASE_VERSION}-linux-amd64.zip"
+          release="https://github.com/rclone/rclone/releases/download/v${RCLONE_RELEASE_VERSION}"
           curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error \
             --output "${archive}" \
-            "${release}/rclone-v${RCLONE_VERSION}-linux-amd64.zip"
-          printf '%s  %s\n' "${RCLONE_LINUX_AMD64_SHA256}" "${archive}" | sha256sum --check -
+            "${release}/rclone-v${RCLONE_RELEASE_VERSION}-linux-amd64.zip"
+          printf '%s  %s\n' "${RCLONE_RELEASE_SHA256}" "${archive}" | sha256sum --check -
           unzip -q "${archive}" -d "${RUNNER_TEMP}/rclone-release"
           install -d -m 0755 "${RUNNER_TEMP}/bin"
           install -m 0755 \
-            "${RUNNER_TEMP}/rclone-release/rclone-v${RCLONE_VERSION}-linux-amd64/rclone" \
+            "${RUNNER_TEMP}/rclone-release/rclone-v${RCLONE_RELEASE_VERSION}-linux-amd64/rclone" \
             "${RUNNER_TEMP}/bin/rclone"
           echo "${RUNNER_TEMP}/bin" >> "${GITHUB_PATH}"
       - name: Run cloud account unit and real-rclone regression tests
