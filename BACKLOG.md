@@ -10,6 +10,11 @@ Mark items `[x]` when complete and move them to Done.
 
 ## Pending
 
+- [ ] [manual:2026-08-09] Design cloud publication modes after inventory-only
+  onboarding: provider permission scope, read-only mesh browsing, one-way copy,
+  deletion quarantine, version recovery, conflict ownership, offline-node
+  behavior, and restore tests. Do not enable `bisync` or mounts by default.
+
 ## In Progress
 
 ## Done
