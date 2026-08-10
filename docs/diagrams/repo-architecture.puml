@@ -16,9 +16,9 @@ package "Access Profiles" #F8FAFC {
 }
 
 package "snowbridge Repo" #F8FAFC {
-  rectangle "README.md\ndocs/host-setup.md\ndocs/access-patterns.md\narchitecture blueprint" as repo_docs #E2E8F0
-  rectangle "config/share-layout\nconfig/samba\nconfig/access\nconfig/web" as repo_config #DBEAFE
-  rectangle "setup_bind_share.py\nsetup_wireguard.sh\nsetup_caddy_filebrowser.sh\nsetup_filebrowser_access.py\nexport_caddy_*_profile.py\ndebug_private_access.sh" as repo_scripts #E0F2FE
+  rectangle "README.md\ndocs/host-setup.md\ndocs/access-patterns.md\ndocs/cloud-storage.md\narchitecture blueprint" as repo_docs #E2E8F0
+  rectangle "config/share-layout\nconfig/samba\nconfig/access\nconfig/web\nconfig/cloud" as repo_config #DBEAFE
+  rectangle "setup_bind_share.py\nsetup_wireguard.sh\nsetup_caddy_filebrowser.sh\nsetup_filebrowser_access.py\ncloud_accounts.py\nexport_caddy_*_profile.py\ndebug_private_access.sh" as repo_scripts #E0F2FE
 }
 
 package "Host Runtime" #F8FAFC {
@@ -31,7 +31,7 @@ package "Host Runtime" #F8FAFC {
 
 package "Host-Only State" #F8FAFC {
   rectangle "External source folders\n/home/... /mnt/..." as shared_files #FEF3C7
-  rectangle "Local configs / passdb / Caddy PKI\nruntime metadata / debug reports" as host_state #FDE68A
+  rectangle "Local configs / passdb / Caddy PKI\nencrypted rclone config + Keychain\nruntime metadata / debug reports" as host_state #FDE68A
 }
 
 smb_clients --> lan_smb
@@ -73,6 +73,9 @@ end note
 
 note right of host_state
   Keep local configs, secrets, passdb exports, cert material,
-  and debug reports out of commits.
+  OAuth material, and debug reports out of commits.
+  Cloud onboarding checks local encryption + alias/backend only;
+  provider enrollment is a separate online permission gate;
+  rclone performs no backend access, sync, mount, or deletion.
 end note
 @enduml

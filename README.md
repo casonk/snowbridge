@@ -14,6 +14,8 @@ This repo lives under:
 - Keep authenticated iPhone read/write access as a first-class requirement.
 - Keep share data, credentials, and host-local state outside the git repo.
 - Prefer access over the home LAN or a private VPN overlay.
+- Onboard cloud accounts through an encrypted, local-only rclone config before
+  any selected folder is exposed through Snowbridge.
 - Consent reference: [`../../doc-repos/my-consent/remote-access-and-private-files.md`](../../doc-repos/my-consent/remote-access-and-private-files.md) documents the explicit consent covering personal file-sharing, device-profile, certificate, and remote-access processing handled by this repo.
 
 ## Why SMB
@@ -31,6 +33,8 @@ custom client app or a separate sync workflow.
 - `config/network/`: stable-address examples for the host network
 - `config/access/wireguard/`: WireGuard config examples for the `wireguard-public-vpn` and `wireguard-lan-vpn` profiles; use `./util-repos/short-circuit/scripts/setup_wireguard.sh` to install them
 - `config/clockwork/`: scheduler templates rendered through the shared `clockwork` repo
+- `config/cloud/accounts.example.toml`: synthetic, inactive account registry;
+  live aliases and paths belong in the ignored owner-only local registry
 - `config/access/wireguard/endpoint-monitor.example.toml`: example local-only monitor config for direct-IP WireGuard endpoint drift detection and notification
 - `config/access/tailscale/`: Tailscale subnet router example
 - `config/web/`: optional Caddy and File Browser templates for web access, including private-VPN HTTPS, private-VPN HTTPS with mTLS client certificates, and public HTTPS modes that can bind on either all interfaces or a specific private host IP behind router/NAT forwarding
@@ -52,6 +56,11 @@ custom client app or a separate sync workflow.
 - `scripts/export_caddy_root_profile.py`: generates an iPhone-installable `.mobileconfig` for Caddy's local CA and stages it into the SMB share
 - `scripts/export_caddy_mtls_profile.py`: issues a per-device mTLS client identity, packages it with the private Caddy root CA into an iPhone-installable `.mobileconfig`, and stages the results into the SMB share
 - `scripts/debug_private_access.sh`: collects a single report covering WireGuard, dnsmasq, firewalld, Samba, Caddy, and File Browser state for private-access debugging
+- `scripts/cloud_accounts.py`: creates and validates the ignored cloud account
+  registry and checks encrypted rclone aliases plus backend types without
+  contacting configured storage backends
+- `docs/cloud-storage.md`: inventory-only cloud onboarding and macOS Keychain
+  workflow
 - `docs/host-setup.md`: host-side setup and client connection notes
 - `docs/iphone-shortcut.md`: iPhone shortcut and import/export guidance
 - `docs/access-patterns.md`: optional access templates and risk tradeoffs
@@ -153,6 +162,28 @@ discovery, stable-address guidance, the split between `wireguard-public-vpn`,
 web access notes.
 See `docs/access-patterns.md` for the concrete template files backing the
 optional static-IP, VPN, and HTTPS access patterns.
+
+## Cloud Storage Accounts
+
+Cloud onboarding starts with local configuration proof, not synchronization.
+The first phase accepts only `mode = "inventory"`: it verifies that an
+owner-only registry maps to aliases and backend types in an encrypted rclone
+config, but it never lists cloud objects, contacts a provider, mounts storage,
+copies files, or deletes data. Provider OAuth is a separate, explicitly online
+permission gate documented in the guide.
+
+```bash
+python3 scripts/cloud_accounts.py init
+python3 scripts/cloud_accounts.py validate
+# After separately approved provider enrollment:
+python3 scripts/cloud_accounts.py doctor
+```
+
+See [docs/cloud-storage.md](docs/cloud-storage.md) before configuring a remote.
+Two-way sync remains intentionally unsupported until conflict ownership,
+deletion quarantine, recovery, and offline-node behavior are explicit. Use
+client-encrypted Restic backups through `traction-control` when the goal is
+off-site backup rather than phone-visible browsing.
 
 ## WireGuard Setup
 
