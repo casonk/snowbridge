@@ -2,8 +2,8 @@
 
 This document maps the current `snowbridge` operating model: repo-managed
 templates and setup scripts drive a host-local Samba share, optional VPN-backed
-private access, and optional browser-based access through a separate HTTPS
-front end.
+private access, optional browser-based access through a separate HTTPS front
+end, and an inventory-only cloud-account onboarding boundary.
 
 ## High-Level Layers
 
@@ -22,12 +22,15 @@ front end.
      explicit.
    - `private-vpn-mtls` now keeps device-certificate validation at Caddy while
      File Browser can stay on proxy-auth mode behind the reverse proxy.
+   - Cloud onboarding is a separate inactive profile. Its offline path validates
+     only an encrypted rclone config and declared aliases; its rclone commands
+     do not contact storage backends or publish provider data into the share.
 3. Repo control layer
    - `README.md`, `docs/host-setup.md`, `docs/access-patterns.md`, and this
      blueprint explain the supported deployment modes.
-   - `config/share-layout/`, `config/samba/`, `config/access/`, and
-     `config/web/` hold the checked-in templates for share layout, network
-     access, and optional web access.
+   - `config/share-layout/`, `config/samba/`, `config/access/`, `config/web/`,
+     and `config/cloud/` hold checked-in templates for share layout, network
+     access, optional web access, and synthetic cloud declarations.
    - `scripts/setup_bind_share.py`, `scripts/setup_wireguard.sh`,
      `scripts/setup_caddy_filebrowser.sh`, and
      `scripts/setup_filebrowser_access.py` convert those templates into host
@@ -51,6 +54,10 @@ front end.
      `scripts/export_caddy_mtls_profile.py`, and
      `scripts/debug_private_access.sh` support phone trust bootstrap and
      multi-service troubleshooting.
+   - `scripts/cloud_accounts.py` creates and validates the ignored owner-only
+     registry, then uses only rclone's local encryption and alias/backend
+     inventory commands for a storage-backend-offline doctor. Interactive
+     provider enrollment remains a separate online permission gate.
 4. Host runtime layer
    - Samba and the dedicated SMB account serve the share root.
    - The share root is a staging tree under `/srv/snowbridge/share` whose
@@ -65,7 +72,8 @@ front end.
    - Canonical files remain outside git in the real host folders that are
      bind-mounted into the share root.
    - Local configs, Samba passdb state, Caddy PKI material, generated client
-     identities, and debug reports stay on the host and out of commits.
+     identities, encrypted rclone config, OAuth material, Keychain secret, and
+     debug reports stay on the host and out of commits.
 
 ## Key Entry Points
 
@@ -82,6 +90,7 @@ front end.
 - `config/web/caddy/Caddyfile.public.example`
 - `config/web/caddy/Caddyfile.public-private-ip.example`
 - `config/web/filebrowser/access.example.toml`
+- `config/cloud/accounts.example.toml`
 - `scripts/setup_bind_share.py`
 - `scripts/setup_wireguard.sh`
 - `scripts/setup_caddy_filebrowser.sh`
@@ -96,6 +105,8 @@ front end.
 - `scripts/export_caddy_root_profile.py`
 - `scripts/export_caddy_mtls_profile.py`
 - `scripts/debug_private_access.sh`
+- `scripts/cloud_accounts.py`
+- `docs/cloud-storage.md`
 - `docs/diagrams/repo-architecture.puml`
 - `docs/diagrams/repo-architecture.drawio`
 
@@ -116,5 +127,8 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m archility render ../snowbrid
   gate and the File Browser auth mode so the identity handoff stays clear.
 - Treat generated CA bundles, client identities, Samba credentials, and debug
   reports as host-only artifacts.
+- Treat a configured cloud alias/backend pair as inventory evidence only.
+  Copy, sync, mount, deletion, or phone-visible publication needs a separate
+  recovery and conflict-policy change.
 - Update `README.md`, `docs/host-setup.md`, `docs/access-patterns.md`, and the
   diagram sources together when the access model changes.
