@@ -1,0 +1,14 @@
+# Synthetic, inactive example. Use `scripts/cloud_accounts.py init`, then
+# replace its `accounts = []` line with reviewed tables like this one. Never
+# copy live aliases, paths, or account metadata into this tracked example.
+schema_version = 1
+rclone_config = "/path/to/private/encrypted-rclone.conf"
+
+[[accounts]]
+id = "example-cloud"
+backend = "drive"
+remote = "example-cloud"
+root = "selected-folder"
+share_target = "/srv/snowbridge/share/example-cloud"
+mode = "inventory"
+enabled = false

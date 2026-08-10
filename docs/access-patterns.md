@@ -349,3 +349,36 @@ Suggested flow:
 The setup script will try to auto-detect a private bind IP during
 `--init-local-configs`. If it cannot, or if the detected IP is wrong for the
 intended LAN interface, edit the env file manually before the first `sudo` run.
+
+## 9. Inventory-Only Cloud Account Onboarding
+
+Use this before selecting any cloud folder for SMB or File Browser. It keeps
+OAuth material in an encrypted rclone config outside Git and binds only
+non-identifying aliases, backend types, and selected roots in an ignored
+owner-only Snowbridge registry.
+
+Files:
+
+- [accounts.example.toml](../config/cloud/accounts.example.toml)
+- [cloud_accounts.py](../scripts/cloud_accounts.py)
+- [cloud-storage.md](cloud-storage.md)
+
+The supported mode is `inventory`. Validation and the doctor's rclone commands
+do not contact the provider, list filenames, mount storage, copy data, or delete
+data. A custom password helper has its own reviewed I/O boundary. Interactive
+provider enrollment is a separate online permission gate. The offline doctor
+cannot prove OAuth scope or selected-root existence; this remains configuration
+proof rather than a user-facing access path.
+
+Choose a later data path explicitly:
+
+- use the provider's native phone app when Snowbridge access is unnecessary;
+- design a separate read-only mesh view when the Files app or browser should
+  see selected content;
+- use a versioned one-way copy only after retention and recovery are defined;
+- use client-encrypted Restic through `traction-control` for backup rather
+  than treating a bidirectional sync as a backup.
+
+`sync`, `bisync`, and mounts remain unsupported by default because they add
+deletion, conflict, cache-consistency, and offline-node semantics that the
+inventory declaration cannot make ACID.
