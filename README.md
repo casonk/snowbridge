@@ -35,6 +35,11 @@ custom client app or a separate sync workflow.
 - `config/clockwork/`: scheduler templates rendered through the shared `clockwork` repo
 - `config/cloud/accounts.example.toml`: synthetic, inactive account registry;
   live aliases and paths belong in the ignored owner-only local registry
+- `config/macos/air-smb.example.toml`: native macOS SMB render-only template;
+  the ignored local copy carries the exact Air share path, account, and
+  WireGuard `/32` addresses
+- `config/macos/air-filebrowser.example.toml`: rootless Air Podman backend
+  template with an exact loopback bind and digest-pinned official image
 - `config/access/wireguard/endpoint-monitor.example.toml`: example local-only monitor config for direct-IP WireGuard endpoint drift detection and notification
 - `config/access/tailscale/`: Tailscale subnet router example
 - `config/web/`: optional Caddy and File Browser templates for web access, including private-VPN HTTPS, private-VPN HTTPS with mTLS client certificates, and public HTTPS modes that can bind on either all interfaces or a specific private host IP behind router/NAT forwarding
@@ -59,15 +64,79 @@ custom client app or a separate sync workflow.
 - `scripts/cloud_accounts.py`: creates and validates the ignored cloud account
   registry and checks encrypted rclone aliases plus backend types without
   contacting configured storage backends
+- `scripts/macos_smb_plan.py`: validates the native Air SMB boundary and
+  renders owner-only PF/share-point review artifacts without changing macOS
+- `scripts/macos_filebrowser_podman.py`: renders, bootstraps, starts, and reports
+  the rootless loopback-only Air File Browser backend without touching SMB/PF
 - `docs/cloud-storage.md`: inventory-only cloud onboarding and macOS Keychain
   workflow
 - `docs/host-setup.md`: host-side setup and client connection notes
 - `docs/iphone-shortcut.md`: iPhone shortcut and import/export guidance
 - `docs/access-patterns.md`: optional access templates and risk tradeoffs
 - `docs/filebrowser-directory-size-plan.md`: minimal custom-fork and upstream-PR plan for adding real File Browser folder sizes
+- `docs/macos-air-filebrowser.md`: Air rootless Podman, proxy-auth, LaunchAgent,
+  and activation contract
 - `docs/contributor-architecture-blueprint.md`: contributor-facing architecture
 - `docs/diagrams/repo-architecture.puml`: PlantUML architecture source
 - `docs/diagrams/repo-architecture.drawio`: draw.io architecture source
+
+## Native macOS Air Plan (Render Only)
+
+The temporary Air host has a separate, fail-closed native macOS path. It does
+not install Samba and does not reuse the Linux startup scripts. It plans an
+Apple `smbd` share that is authenticated, guest-disabled, SMB3-encrypted, and
+reachable only through an exact WireGuard `utun` interface and explicitly
+allowed client `/32` addresses.
+
+```bash
+python3 scripts/macos_smb_plan.py init
+# Edit config/macos/air-smb.local.toml and create its share directory as 0700.
+python3 scripts/macos_smb_plan.py validate
+python3 scripts/macos_smb_plan.py audit
+python3 scripts/macos_smb_plan.py render
+```
+
+The local TOML is ignored and must be mode `0600`. Rendered files live under
+ignored `artifacts/macos-air-smb/` with owner-only permissions. The audit fails
+if macOS share inventory cannot be read, any enabled share permits guests, an
+unrelated share is enabled, the configured `utun` `/32` is absent, or TCP 445
+is exposed outside the WireGuard boundary. Native `smbd` may wildcard-listen
+only after the exact PF anchor is independently verified.
+
+macOS allocates `utunN` names dynamically. If WireGuard or another VPN toggle
+changes the interface number, the active proof is invalid: rediscover the
+interface carrying the configured host `/32`, update the ignored config, and
+rerun audit/render. The `/32` is the identity source of truth; the renderer
+never broadens PF to a wildcard `utun` match.
+
+There is deliberately no live apply command. The renderer records the required
+PF-first activation and reverse-order rollback, but it never loads PF, edits a
+share point, toggles File Sharing, changes a macOS account, or handles a
+password. A future live path must require explicit operator confirmation and
+root, and must atomically restore both PF and share-point state on failure.
+
+## Air File Browser Backend
+
+The web backend has a separate rootless macOS implementation. It binds only
+`127.0.0.1:8080`; Wiring Harness owns the mTLS-protected WireGuard listener on
+port `8444`. Review first, then bootstrap without `sudo`:
+
+```bash
+python3 scripts/macos_filebrowser_podman.py validate
+python3 scripts/macos_filebrowser_podman.py render
+python3 scripts/macos_filebrowser_podman.py bootstrap
+python3 scripts/macos_filebrowser_podman.py status
+```
+
+The manager pins the Podman machine/connection and official image digest,
+runs as the current UID/GID, drops all capabilities, enables
+`no-new-privileges`, makes the container root read-only, and installs a user
+LaunchAgent for login startup. It never modifies the Public Folder, SMB, PF,
+WireGuard, or a password. The LaunchAgent remains alive as an event-driven
+health supervisor, stops only the labeled container on termination or health
+loss, and lets launchd restart the validated path after a failure. See
+`docs/macos-air-filebrowser.md` for the required Wiring Harness proxy-header
+overwrite and complete activation boundary.
 
 ## Quick Start
 

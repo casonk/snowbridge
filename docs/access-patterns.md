@@ -10,6 +10,24 @@ The safety baseline remains:
 - separate HTTPS web front end: optional and riskier than VPN-only access
 - direct public SMB exposure: not allowed
 
+## Native macOS Air SMB (Render-Only)
+
+Use the temporary Air profile only as a native macOS plan for SMB over the
+existing WireGuard mesh. The ignored local TOML fixes the host and each allowed
+client to an RFC1918 `/32`; the rendered PF anchor passes port 445 on the exact
+`utun` interface first, then blocks it everywhere else.
+
+Templates and tooling:
+
+- [air-smb.example.toml](../config/macos/air-smb.example.toml)
+- [macos_smb_plan.py](../scripts/macos_smb_plan.py)
+
+This path refuses guest or unrelated shares and pre-existing unprotected
+wildcard/LAN listeners. A native wildcard `smbd` listener is acceptable only
+behind a separately verified active PF boundary. The renderer has no apply
+mode; account authorization, PF activation, share mutation, and File Sharing
+activation remain gated until atomic rollback exists.
+
 ## 1. Stable Private IP
 
 Preferred default:

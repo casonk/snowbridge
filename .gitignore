@@ -20,6 +20,8 @@ config/web/caddy/*.local
 config/web/filebrowser/docker-compose.local.yml
 config/network/networkmanager-static-ip.local.sh
 config/cloud/accounts.local.toml
+config/macos/air-smb.local.toml
+config/macos/air-filebrowser.local.toml
 
 # Editor and OS noise
 .DS_Store
