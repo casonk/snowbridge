@@ -1,0 +1,26 @@
+# Rootless File Browser backend for the temporary Air primary.
+# `init` replaces the three placeholders and writes the ignored copy as 0600.
+
+schema_version = 1
+platform = "macos"
+mode = "rootless-podman"
+deployment_id = "air-primary"
+
+[host]
+# This is deliberately loopback-only. Wiring Harness owns the separate mTLS
+# listener on the Air WireGuard address.
+listen_address = "127.0.0.1"
+listen_port = 8080
+share_path = "/Users/<account>/Snowbridge"
+state_directory = "/Users/<account>/.local/share/snowbridge/air-filebrowser"
+
+[podman]
+binary = "<podman-binary>"
+machine = "podman-machine-default"
+connection = "podman-machine-default"
+container_name = "snowbridge-air-filebrowser"
+# Official File Browser v2.63.23 multi-platform manifest, published 2026-07-27.
+image = "docker.io/filebrowser/filebrowser@sha256:a469ea076d4a1b4b1d86a41d130f2f536cd9da996a2b1fb39c0d7635f9d89b9a"
+
+[launchd]
+python = "<python-binary>"

@@ -11,20 +11,21 @@ actor "Browser clients\niPhone Safari\nlaptop browser" as browser_clients
 
 package "Access Profiles" #F8FAFC {
   rectangle "LAN SMB\nlocal hostname / private IP" as lan_smb #FCE7F3
+  rectangle "Native macOS Air SMB\nrender-only | exact utun /32\nPF-first, guest disabled" as macos_air_smb #FCE7F3
   rectangle "WireGuard VPN\nwireguard-public-vpn | wireguard-lan-vpn\nsplit DNS + firewall rules" as wireguard_profiles #FCE7F3
   rectangle "HTTPS profiles\nprivate-vpn | private-vpn-mtls\npublic | public-private-ip" as https_profiles #FCE7F3
 }
 
 package "snowbridge Repo" #F8FAFC {
   rectangle "README.md\ndocs/host-setup.md\ndocs/access-patterns.md\ndocs/cloud-storage.md\narchitecture blueprint" as repo_docs #E2E8F0
-  rectangle "config/share-layout\nconfig/samba\nconfig/access\nconfig/web\nconfig/cloud" as repo_config #DBEAFE
-  rectangle "setup_bind_share.py\nsetup_wireguard.sh\nsetup_caddy_filebrowser.sh\nsetup_filebrowser_access.py\ncloud_accounts.py\nexport_caddy_*_profile.py\ndebug_private_access.sh" as repo_scripts #E0F2FE
+  rectangle "config/share-layout\nconfig/samba\nconfig/access\nconfig/web\nconfig/cloud\nconfig/macos" as repo_config #DBEAFE
+  rectangle "setup_bind_share.py\nsetup_wireguard.sh\nsetup_caddy_filebrowser.sh\nsetup_filebrowser_access.py\ncloud_accounts.py\nmacos_smb_plan.py\nexport_caddy_*_profile.py\ndebug_private_access.sh" as repo_scripts #E0F2FE
 }
 
 package "Host Runtime" #F8FAFC {
-  rectangle "Samba service\ndedicated SMB user" as samba_service #DCFCE7
+  rectangle "Linux Samba | Apple smbd\ndedicated or native SMB account" as samba_service #DCFCE7
   rectangle "Share root\n/srv/snowbridge/share\nbind-mounted folders" as share_root #FEF3C7
-  rectangle "WireGuard + dnsmasq + firewalld\nprivate routing and DNS" as private_access #DCFCE7
+  rectangle "WireGuard + firewall\nLinux firewalld | macOS PF\nprivate routing and DNS" as private_access #DCFCE7
   rectangle "Caddy + File Browser\noptional browser access\nproxy auth or mTLS at edge" as web_stack #DCFCE7
   rectangle "Staged install artifacts\ntmp/*.mobileconfig\nCA + client profiles" as staged_profiles #FDE68A
 }
@@ -35,11 +36,14 @@ package "Host-Only State" #F8FAFC {
 }
 
 smb_clients --> lan_smb
+smb_clients --> macos_air_smb
 smb_clients --> wireguard_profiles
 browser_clients --> wireguard_profiles
 browser_clients --> https_profiles
 
 lan_smb --> samba_service
+macos_air_smb --> samba_service
+macos_air_smb --> private_access
 wireguard_profiles --> samba_service
 wireguard_profiles --> private_access
 private_access --> web_stack
@@ -69,6 +73,12 @@ end note
 note right of share_root
   The share root lives outside git and acts as a bind-mounted
   staging tree instead of the canonical file location.
+end note
+
+note right of macos_air_smb
+  Owner-only config and artifacts only.
+  PF boundary precedes share/service activation.
+  No live apply until atomic rollback exists.
 end note
 
 note right of host_state

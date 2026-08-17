@@ -1,14 +1,86 @@
 # Host Setup
 
-This guide describes the intended baseline deployment for `snowbridge`: a
-home-desktop Samba share that trusted devices can mount with authenticated
-read/write access.
+This guide describes the intended baseline Linux deployment for `snowbridge`:
+a home-desktop Samba share that trusted devices can mount with authenticated
+read/write access. It also documents the separate render-only native macOS Air
+path used while the home host is unavailable.
 
 ## Assumptions
 
-- The host is a Linux desktop on the home network.
+- The canonical host is a Linux desktop on the home network. The temporary Air
+  host uses the native macOS planning path below.
 - The actual shared files live outside this repository.
 - Access is limited to the LAN or to devices connected through a private VPN.
+
+## Native macOS Air Planning Boundary
+
+The Air path uses Apple's native SMB service rather than attempting to run the
+Linux Samba and systemd workflow on macOS. Its configuration is local-only:
+
+```bash
+python3 scripts/macos_smb_plan.py init
+# Replace all placeholders in config/macos/air-smb.local.toml.
+python3 scripts/macos_smb_plan.py validate
+python3 scripts/macos_smb_plan.py audit
+python3 scripts/macos_smb_plan.py render
+```
+
+Before `audit` or `render`, create the selected share directory outside Git,
+owned by the expected macOS account and mode `0700`. The renderer supports one
+expected native account. It verifies directory ownership, standard Unix mode,
+and absence of an extended ACL it cannot interpret. It does not enable that
+account under macOS **Windows File Sharing**, set or inspect its password, or
+claim that the `sharing` command creates a per-share account allowlist. Native
+account authorization remains an explicit activation precondition.
+
+The strict local contract requires:
+
+- mode `0600` on `config/macos/air-smb.local.toml`;
+- guest access off, authenticated read/write access, and SMB3 encryption on;
+- an exact `utunN` name, one RFC1918 host `/32`, and explicit RFC1918 client
+  `/32` entries;
+- no other enabled SMB shares, so a global port-445 PF boundary cannot alter
+  another share's intended reachability;
+- no existing non-WireGuard TCP 445 listener. Apple's `smbd` normally uses a
+  wildcard listener; that is acceptable after activation only when the exact
+  WireGuard-only PF anchor is proven active.
+
+`utunN` is allocation-dependent on macOS. A WireGuard, Nord, or other VPN
+toggle can move the mesh to a different interface number. Such a change
+invalidates both the plan and active PF proof. Find the interface that actually
+carries the configured host `/32`, update the ignored config, and rerun the
+audit and renderer. Do not replace the exact interface with a wildcard `utun`
+rule; the host `/32` is the source of truth.
+
+Host inspection uses the locally documented macOS interfaces: `sharing(8)` to
+enumerate share points, `ifconfig(8)` to prove the WireGuard `/32`, `lsof` to
+inspect port 445, and `pfctl(8)` to syntax-check the rendered child anchor with
+`-n -a ... -f`. `sharing(8)` documents `-g 000` for disabling guests and `-E 1`
+for requiring encryption. Any failed or incomplete inventory is a hard
+refusal; paths, share names, and command output are not echoed by the audit.
+
+The artifacts are review material, not an installer. Their required order is:
+
+1. Capture restorable PF and share-point state.
+2. Install and verify the WireGuard-only PF boundary.
+3. Create or edit only the target share with guest access disabled and SMB3
+   encryption required.
+4. Enable File Sharing and verify access through WireGuard plus rejection on
+   every other boundary.
+5. On any failure, disable only what this transaction enabled, restore only the
+   target share, restore the prior PF anchor, release only its PF enable token,
+   and recheck exposure.
+
+There is intentionally no `apply` command. A live implementation would require
+explicit operator confirmation and `sudo`, and remains blocked until that
+cross-service rollback sequence is atomic and regression-tested. In
+particular, never enable an existing guest-writable Public Folder as a shortcut.
+
+The Air web backend is independent of that blocked SMB path. Use the reviewed
+rootless Podman workflow in `docs/macos-air-filebrowser.md` to render and then
+explicitly bootstrap `127.0.0.1:8080` without `sudo`. That workflow does not
+repair or enable a macOS share, and the backend must remain loopback-only behind
+the Wiring Harness mTLS Snowbridge edge.
 
 ## 1. Install Samba
 

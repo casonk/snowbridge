@@ -11,9 +11,59 @@
 
 ## Lessons
 
+### 2026-08-11 — A macOS Podman LaunchAgent must stay alive as the VM supervisor
+
+- A short-lived launchd runner can let the Podman VM disappear with its process
+  group even when it successfully started a container. The login job itself
+  must remain alive for the intended backend lifetime.
+- Do not treat a blocking `podman wait` as sufficient health supervision. Poll
+  the managed label, reviewed spec hash, exact loopback publish, running state,
+  and application health endpoint from the persistent unprivileged parent.
+- Use an event-backed signal path instead of an uninterruptible sleep loop. On
+  termination or health loss, stop only the recognized managed container; make
+  runtime/health failures exit unsuccessfully so launchd starts a fresh
+  validation cycle.
+
+### 2026-08-11 — A macOS Podman backend and its mesh edge need separate trust boundaries
+
+- Bind the rootless application only to host loopback and let the independently
+  reviewed mTLS edge own the WireGuard listener; never publish the backend
+  directly on the mesh merely because the edge is private.
+- Proxy authentication is safe only when the reverse proxy overwrites the
+  trusted identity header and the backend cannot be reached from an untrusted
+  interface. Test both parts together before activation.
+- Pin both the Podman machine/connection and the image digest. A login job must
+  not switch the ambient connection, pull a mutable tag, or silently replace a
+  stale/unknown container.
+- File Browser can auto-provision a proxy-authenticated user with an internally
+  generated password, which avoids generating, storing, or printing bootstrap
+  password material.
+- Keep native SMB/PF activation independent. Starting a loopback web backend is
+  not permission to repair, enable, or replace an unsafe macOS share point.
+
 - Document the repository around its real execution, curation, or integration flow instead of only the top-level folder list.
 - Keep local-only, private, reference-only, or generated boundaries explicit so published or runtime behavior is not confused with offline material or non-committable inputs.
 - Re-run repo-appropriate validation after changing generated artifacts, diagrams, workflows, or other CI-facing files so formatting and compatibility issues are caught before push.
+
+### 2026-08-11 — Native macOS SMB needs a PF-first, fail-closed activation boundary
+
+- Apple's `sharing` utility can disable guest access and require SMB3
+  encryption, but it does not create a per-share account allowlist or prove
+  that a macOS account is enabled for Windows File Sharing.
+- Verify share-directory ownership and permissions separately, and keep native
+  account authorization as an explicit precondition without handling passwords
+  in repo tooling.
+- Native `smbd` can wildcard-listen. Treat a pre-existing wildcard or explicit
+  non-WireGuard listener as unsafe unless the exact WireGuard-only PF anchor is
+  independently proven active.
+- Apply the PF boundary before enabling or editing the share. Do not implement
+  live activation until PF enable-token, prior-anchor, share-point, and service
+  state can all be restored atomically in reverse order.
+- A read-only renderer must fail if share inventory cannot be enumerated and
+  must never enable a guest-writable Public Folder as a shortcut.
+- macOS `utunN` names are allocation-dependent. Treat the configured WireGuard
+  host `/32` as the identity source of truth, and require interface rediscovery
+  plus a new render whenever the number changes; never widen PF to every utun.
 
 ### 2026-08-09 — Cloud account discovery is not synchronization authority
 
