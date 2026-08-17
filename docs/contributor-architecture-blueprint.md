@@ -14,6 +14,9 @@ end, and an inventory-only cloud-account onboarding boundary.
      Caddy stack is enabled.
 2. Access-profile layer
    - LAN SMB remains the simplest baseline for local access.
+   - The temporary Air host has a native macOS render-only profile. It models
+     Apple `smbd` behind an exact WireGuard `utun` plus PF boundary and refuses
+     guest, unrelated, or unprotected SMB surfaces.
    - Remote private access can use either `wireguard-public-vpn` for
      host-only reachability or `wireguard-lan-vpn` when the wider LAN should be
      reachable through the tunnel.
@@ -29,8 +32,9 @@ end, and an inventory-only cloud-account onboarding boundary.
    - `README.md`, `docs/host-setup.md`, `docs/access-patterns.md`, and this
      blueprint explain the supported deployment modes.
    - `config/share-layout/`, `config/samba/`, `config/access/`, `config/web/`,
-     and `config/cloud/` hold checked-in templates for share layout, network
-     access, optional web access, and synthetic cloud declarations.
+     `config/cloud/`, and `config/macos/` hold checked-in templates for share
+     layout, network access, optional web access, synthetic cloud declarations,
+     and the native Air plan.
    - `scripts/setup_bind_share.py`, `scripts/setup_wireguard.sh`,
      `scripts/setup_caddy_filebrowser.sh`, and
      `scripts/setup_filebrowser_access.py` convert those templates into host
@@ -58,12 +62,19 @@ end, and an inventory-only cloud-account onboarding boundary.
      registry, then uses only rclone's local encryption and alias/backend
      inventory commands for a storage-backend-offline doctor. Interactive
      provider enrollment remains a separate online permission gate.
+   - `scripts/macos_smb_plan.py` validates the owner-only native Air config and
+     live read-only inventory, then renders owner-only PF/share-point review
+     artifacts. It has no live apply path.
 4. Host runtime layer
-   - Samba and the dedicated SMB account serve the share root.
+   - Linux Samba and its dedicated SMB account serve the canonical share root.
+     On temporary Air, Apple `smbd` uses a native account and an owner-only
+     directory; enabling the Windows File Sharing account remains an external
+     activation precondition.
    - The share root is a staging tree under `/srv/snowbridge/share` whose
      visible folders are often bind-mounted from elsewhere on the host.
-   - WireGuard, dnsmasq, and firewalld implement private routing plus split DNS
-     for VPN-backed access.
+   - WireGuard, dnsmasq, and firewalld implement Linux private routing plus
+     split DNS. On Air, an exact `utun` and PF child anchor define the SMB
+     boundary.
    - Caddy and File Browser implement the optional browser surface, including
      proxy-auth or mTLS gating at the HTTPS edge.
    - Exported `.mobileconfig` profiles are staged into the share so iPhone
@@ -91,6 +102,7 @@ end, and an inventory-only cloud-account onboarding boundary.
 - `config/web/caddy/Caddyfile.public-private-ip.example`
 - `config/web/filebrowser/access.example.toml`
 - `config/cloud/accounts.example.toml`
+- `config/macos/air-smb.example.toml`
 - `scripts/setup_bind_share.py`
 - `scripts/setup_wireguard.sh`
 - `scripts/setup_caddy_filebrowser.sh`
@@ -106,6 +118,7 @@ end, and an inventory-only cloud-account onboarding boundary.
 - `scripts/export_caddy_mtls_profile.py`
 - `scripts/debug_private_access.sh`
 - `scripts/cloud_accounts.py`
+- `scripts/macos_smb_plan.py`
 - `docs/cloud-storage.md`
 - `docs/diagrams/repo-architecture.puml`
 - `docs/diagrams/repo-architecture.drawio`
@@ -130,5 +143,10 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m archility render ../snowbrid
 - Treat a configured cloud alias/backend pair as inventory evidence only.
   Copy, sync, mount, deletion, or phone-visible publication needs a separate
   recovery and conflict-policy change.
+- Treat Air artifacts as a reviewed plan, not proof of activation. Never claim
+  account authorization, PF enforcement, or service activation from a render.
+- A wildcard native `smbd` listener is acceptable only behind the verified PF
+  anchor. A pre-existing wildcard or explicit non-WireGuard listener without
+  that proof is a hard refusal.
 - Update `README.md`, `docs/host-setup.md`, `docs/access-patterns.md`, and the
   diagram sources together when the access model changes.
