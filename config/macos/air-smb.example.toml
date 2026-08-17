@@ -1,0 +1,32 @@
+# Snowbridge native macOS SMB plan template.
+#
+# Copy this to air-smb.local.toml with scripts/macos_smb_plan.py init, then
+# replace every angle-bracket placeholder. The local file is ignored by Git
+# and must remain owner-only. This file never contains an SMB password.
+
+schema_version = 1
+platform = "macos"
+mode = "render-only"
+deployment_id = "<set-local-deployment-id>"
+
+[share]
+name = "snowbridge"
+path = "/Users/<macos-account>/Snowbridge"
+# Expected native macOS account. The renderer verifies that this is the sole
+# owner of an owner-only share directory, but it never changes account
+# credentials or the macOS "Windows File Sharing" account toggle.
+expected_accounts = ["<macos-account>"]
+guest_access = false
+read_only = false
+smb3_encryption_required = true
+
+[wireguard]
+interface = "<utun-interface>"
+host_address = "10.99.0.254/32"
+allowed_client_addresses = ["10.99.0.241/32", "10.99.0.242/32"]
+
+[safety]
+refuse_any_guest_share = true
+refuse_non_target_shares = true
+refuse_non_wireguard_listener = true
+require_pf_default_deny = true

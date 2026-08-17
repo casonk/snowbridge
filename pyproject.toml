@@ -17,6 +17,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
   "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS :: MacOS X",
   "Topic :: System :: Filesystems",
   "Topic :: Utilities",
   "License :: OSI Approved :: MIT License",

@@ -4,6 +4,16 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- Added an Air-native rootless Podman File Browser manager with owner-only local
+  state, a digest-pinned official image, exact loopback publishing, proxy auth,
+  a hardened container contract, and a no-sudo login LaunchAgent with persistent
+  runtime/health supervision and fail-closed labeled-container shutdown. Its
+  explicit bootstrap does not inspect or mutate SMB, the Public Folder, PF, or
+  WireGuard.
+- Added a fail-closed native macOS Air SMB planner with an ignored owner-only
+  config, live guest/listener/WireGuard inventory, and owner-only PF plus
+  share-point review artifacts. Live activation remains intentionally absent
+  until PF and share-point rollback is atomic.
 - Initialized `snowbridge` as a personal fileshare utility repo.
 - Added the baseline governance and contributor files used across the
   portfolio.
