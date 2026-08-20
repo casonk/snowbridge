@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Detroit"
+    # Most of this repository's CI comes from the shared reusable workflows in
+    # casonk/.github, and dependabot covers those pins there. The jobs that
+    # remain here are repo-specific -- they cannot be folded into a shared
+    # workflow -- and they pin their own actions, so without this file those
+    # pins are covered by nothing at all and simply never move.
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
