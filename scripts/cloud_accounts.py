@@ -57,6 +57,126 @@ class CloudAccountError(RuntimeError):
 
 
 @dataclass(frozen=True)
+class CloudProvider:
+    """A named cloud provider Snowbridge onboards.
+
+    ``backend`` is the exact rclone type string. It is deliberately the only
+    binding between a provider and an account: an account already declares its
+    rclone type, and the doctor already cross-checks that declaration against
+    the encrypted config. Adding a second, separately declared provider field
+    would create a value that can disagree with the type rclone actually uses.
+
+    ``read_only_option`` is the rclone config setting that enrolls the account
+    without write permission, or ``None`` when the backend exposes no such
+    setting. That distinction is the reason this table exists: it is a
+    provider-permission fact that cannot be discovered offline at doctor time.
+    """
+
+    name: str
+    display_name: str
+    backend: str
+    credential: str
+    revocation: str
+    read_only_option: str | None
+    notes: tuple[str, ...]
+
+    @property
+    def supports_read_only_enrollment(self) -> bool:
+        return self.read_only_option is not None
+
+
+# Verified against rclone v1.75.0 `rclone help backend <type>`. Re-verify the
+# option names and scope values when the pinned rclone version changes; a
+# renamed scope silently grants more access than intended.
+PROVIDERS: tuple[CloudProvider, ...] = (
+    CloudProvider(
+        name="google-drive",
+        display_name="Google Drive",
+        backend="drive",
+        credential="oauth-token",
+        revocation="Google Account > Security > Your connections to third-party apps",
+        read_only_option="scope = drive.readonly",
+        notes=(
+            "Leaving scope unset requests full read/write access to every file.",
+            "scope = drive.file narrows access to files rclone itself created.",
+        ),
+    ),
+    CloudProvider(
+        name="onedrive",
+        display_name="Microsoft OneDrive",
+        backend="onedrive",
+        credential="oauth-token",
+        revocation="Microsoft account > Privacy > Apps and services you have granted access",
+        read_only_option=(
+            "access_scopes = Files.Read Files.Read.All Sites.Read.All offline_access"
+        ),
+        notes=(
+            "The default access_scopes value includes Files.ReadWrite and "
+            "Files.ReadWrite.All, so an unset value is a read/write grant.",
+        ),
+    ),
+    CloudProvider(
+        name="icloud",
+        display_name="iCloud Drive",
+        backend="iclouddrive",
+        credential="account-password",
+        revocation="account.apple.com > Sign-In and Security > App-Specific Passwords",
+        read_only_option=None,
+        notes=(
+            "rclone exposes no scope option for this backend, so enrollment is "
+            "always read/write. Least privilege must come from the selected "
+            "root folder, not from the grant.",
+            "The stored secret is an account password, not a scoped token. "
+            "rclone obscures it, and obscuring is reversible encoding rather "
+            "than encryption; only the config encryption protects it at rest.",
+            "Enroll with an app-specific password so the credential can be "
+            "revoked without changing the Apple ID password.",
+            "service = drive selects iCloud Drive; service = photos selects the "
+            "photo library instead.",
+        ),
+    ),
+)
+
+PROVIDERS_BY_BACKEND = {provider.backend: provider for provider in PROVIDERS}
+PROVIDERS_BY_NAME = {provider.name: provider for provider in PROVIDERS}
+
+
+def provider_for_backend(backend: str) -> CloudProvider | None:
+    """Return the named provider for an rclone backend type, if it is one."""
+
+    return PROVIDERS_BY_BACKEND.get(backend)
+
+
+def describe_accounts(accounts: Sequence["CloudAccount"]) -> tuple[str, ...]:
+    """Summarize declared accounts by provider without revealing aliases.
+
+    Account ids, remote aliases, and roots are owner-only metadata, so the
+    summary reports counts per provider rather than naming any account.
+    """
+
+    lines: list[str] = []
+    for provider in PROVIDERS:
+        matching = [a for a in accounts if a.backend == provider.backend]
+        if not matching:
+            continue
+        enabled = sum(account.enabled for account in matching)
+        detail = "read-only enrollment available"
+        if not provider.supports_read_only_enrollment:
+            detail = "no read-only enrollment; grant is always read/write"
+        lines.append(
+            f"{provider.name}: {len(matching)} declared, {enabled} enabled "
+            f"({provider.credential}, {detail})"
+        )
+    unlisted = sum(1 for a in accounts if a.backend not in PROVIDERS_BY_BACKEND)
+    if unlisted:
+        lines.append(
+            f"unlisted backends: {unlisted} declared "
+            "(inventory-only; not a Snowbridge-onboarded provider)"
+        )
+    return tuple(lines)
+
+
+@dataclass(frozen=True)
 class CloudAccount:
     account_id: str
     backend: str
@@ -527,6 +647,48 @@ def doctor_registry(
     return len(enabled), len(configured)
 
 
+def render_providers(*, as_json: bool = False) -> str:
+    """Render the provider table. This is local-only and contacts nothing."""
+
+    if as_json:
+        return json.dumps(
+            [
+                {
+                    "name": provider.name,
+                    "display_name": provider.display_name,
+                    "backend": provider.backend,
+                    "credential": provider.credential,
+                    "revocation": provider.revocation,
+                    "read_only_option": provider.read_only_option,
+                    "supports_read_only_enrollment": (
+                        provider.supports_read_only_enrollment
+                    ),
+                    "notes": list(provider.notes),
+                }
+                for provider in PROVIDERS
+            ],
+            indent=2,
+            sort_keys=True,
+        )
+    blocks: list[str] = []
+    for provider in PROVIDERS:
+        read_only = provider.read_only_option or "unavailable for this backend"
+        lines = [
+            f"{provider.name} ({provider.display_name})",
+            f"  rclone backend : {provider.backend}",
+            f"  credential     : {provider.credential}",
+            f"  read-only      : {read_only}",
+            f"  revoke at      : {provider.revocation}",
+        ]
+        lines.extend(f"  note           : {note}" for note in provider.notes)
+        blocks.append("\n".join(lines))
+    blocks.append(
+        "All providers are inventory-only. Enrollment scope is chosen once, at "
+        "rclone config time; Snowbridge cannot narrow it afterwards."
+    )
+    return "\n\n".join(blocks)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Manage a private, inventory-only Snowbridge cloud account registry."
@@ -538,6 +700,17 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--rclone-config", type=Path, default=DEFAULT_RCLONE_CONFIG)
 
     subparsers.add_parser("validate", help="Validate the owner-only local registry.")
+
+    providers_parser = subparsers.add_parser(
+        "providers",
+        help="List the onboarded cloud providers and their enrollment permissions.",
+    )
+    providers_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="as_json",
+        help="Emit the provider table as JSON.",
+    )
 
     doctor_parser = subparsers.add_parser(
         "doctor", help="Check encryption and remote aliases without contacting cloud storage."
@@ -565,6 +738,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             created = initialize_registry(arguments.config, arguments.rclone_config)
             print(f"created owner-only cloud account registry: {created}")
             return 0
+        if arguments.command == "providers":
+            print(render_providers(as_json=arguments.as_json))
+            return 0
         registry = load_registry(arguments.config)
         if arguments.command == "validate":
             enabled = sum(account.enabled for account in registry.accounts)
@@ -572,6 +748,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "valid inventory-only cloud account registry "
                 f"({len(registry.accounts)} account(s), {enabled} enabled)"
             )
+            for line in describe_accounts(registry.accounts):
+                print(f"  {line}")
             return 0
         if (
             arguments.password_command_executable is None
@@ -595,6 +773,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             "cloud account doctor passed without storage-backend access "
             f"({enabled} enabled account(s), {configured} configured remote(s))"
         )
+        for line in describe_accounts(registry.accounts):
+            print(f"  {line}")
         return 0
     except (CloudAccountError, OSError, tomllib.TOMLDecodeError) as error:
         print(f"error: {error}", file=sys.stderr)
