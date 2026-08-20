@@ -659,6 +659,66 @@ class RcloneConfigPasswordTests(unittest.TestCase):
         with self.assertRaisesRegex(rclone_config_password.PasswordHelperError, "has no value"):
             rclone_config_password.resolve_password("p", "entry", "Password")
 
+    def _seed_cache(self, database_path: str) -> Path:
+        cache_dir = rclone_config_password.prepare_cache_directory(
+            rclone_config_password.CACHE_DIR
+        )
+        cached = rclone_config_password.cached_password_path(cache_dir, database_path)
+        cached.write_text('{"password": "stale"}\n', encoding="utf-8")
+        cached.chmod(0o600)
+        return cached
+
+    def test_cache_filename_is_stable_for_a_database_path(self) -> None:
+        first = rclone_config_password.cached_password_path(Path("/cache"), "/vault.kdbx")
+        second = rclone_config_password.cached_password_path(Path("/cache"), "/vault.kdbx")
+        other = rclone_config_password.cached_password_path(Path("/cache"), "/elsewhere.kdbx")
+
+        self.assertEqual(first, second)
+        self.assertNotEqual(first, other)
+        self.assertTrue(first.name.startswith(rclone_config_password.CACHE_PREFIX))
+
+    def test_a_rejected_password_clears_only_that_cache_entry(self) -> None:
+        database = "/vault.kdbx"
+        cached = self._seed_cache(database)
+        keep = rclone_config_password.cached_password_path(cached.parent, "/other.kdbx")
+        keep.write_text('{"password": "keep"}\n', encoding="utf-8")
+
+        cleared = rclone_config_password.invalidate_cached_password(cached.parent, database)
+
+        self.assertTrue(cleared)
+        self.assertFalse(cached.exists())
+        self.assertTrue(keep.exists(), "an unrelated vault's cache must survive")
+
+    def test_invalid_credentials_discard_the_cache_and_say_so(self) -> None:
+        database = "/vault.kdbx"
+        cached = self._seed_cache(database)
+        os.environ["AUTO_PASS_KEEPASSXC_DB_PATH"] = database
+        self.addCleanup(os.environ.pop, "AUTO_PASS_KEEPASSXC_DB_PATH", None)
+        self.raise_error = StubKeepassCommandError(
+            "keepassxc-cli failed: Invalid credentials were provided (HMAC mismatch)"
+        )
+
+        with self.assertRaisesRegex(
+            rclone_config_password.PasswordHelperError, "discarded the cached database password"
+        ):
+            rclone_config_password.resolve_password("snowbridge", "entry", "Password")
+
+        self.assertFalse(cached.exists(), "a rejected password must not persist")
+
+    def test_a_missing_entry_leaves_a_working_cached_password_alone(self) -> None:
+        database = "/vault.kdbx"
+        cached = self._seed_cache(database)
+        os.environ["AUTO_PASS_KEEPASSXC_DB_PATH"] = database
+        self.addCleanup(os.environ.pop, "AUTO_PASS_KEEPASSXC_DB_PATH", None)
+        self.raise_error = StubKeepassCommandError("Could not find entry with path foo/bar")
+
+        with self.assertRaisesRegex(
+            rclone_config_password.PasswordHelperError, "auto-pass lookup failed"
+        ):
+            rclone_config_password.resolve_password("snowbridge", "entry", "Password")
+
+        self.assertTrue(cached.exists(), "the vault password was never in question here")
+
     def test_multiline_value_is_rejected(self) -> None:
         self.resolved = {"value": "first-line\nsecond-line"}
 

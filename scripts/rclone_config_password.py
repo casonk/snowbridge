@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import configparser
+import hashlib
 import os
 import sys
 from pathlib import Path
@@ -58,6 +59,12 @@ MINIMUM_PYTHON = (3, 11)
 # cache under the snowbridge config directory makes it owner-only, scoped to
 # this repo, and independent of that shared directory's ownership.
 CACHE_DIR = Path.home() / ".config" / "snowbridge" / "cache"
+CACHE_PREFIX = "keepassxc-db-password-"
+# auto-pass caches whatever was typed at its prompt before any lookup proves
+# the value correct. A mistyped password therefore poisons the cache: later
+# runs read it instead of prompting and fail identically forever. These markers
+# identify that case so the bad entry can be discarded.
+CREDENTIAL_FAILURE_MARKERS = ("invalid credentials", "hmac mismatch")
 CONFIG_SECTION = "cloud"
 ENTRY_OPTION = "rclone_config_keepass_entry"
 FIELD_OPTION = "rclone_config_keepass_field"
@@ -109,6 +116,34 @@ def prepare_cache_directory(path: Path = CACHE_DIR) -> Path:
     return path
 
 
+def cached_password_path(cache_dir: Path, database_path: str) -> Path:
+    """Mirror auto-pass's cache filename for one database path."""
+
+    fingerprint = hashlib.sha256(database_path.encode("utf-8")).hexdigest()[:16]
+    return cache_dir / f"{CACHE_PREFIX}{fingerprint}.json"
+
+
+def invalidate_cached_password(cache_dir: Path, database_path: str) -> bool:
+    """Discard a cached database password that the vault rejected."""
+
+    if database_path:
+        targets = [cached_password_path(cache_dir, database_path)]
+    else:
+        # Without a resolved path, clear the whole scoped directory. It only
+        # ever holds entries this helper cached, so the cost is a re-prompt.
+        targets = sorted(cache_dir.glob(f"{CACHE_PREFIX}*.json"))
+    cleared = False
+    for target in targets:
+        try:
+            target.unlink()
+            cleared = True
+        except FileNotFoundError:
+            continue
+        except OSError:
+            return False
+    return cleared
+
+
 def resolve_password(profile: str, entry: str, field: str) -> str:
     """Resolve one KeePassXC field through the auto-pass sibling repo."""
 
@@ -140,15 +175,22 @@ def resolve_password(profile: str, entry: str, field: str) -> str:
     if environment_file.is_file():
         load_config_environment(environment_file, profile=profile or None)
 
-    store = KeepassXCStoreConfig(
-        database_password_cache_dir=os.fspath(prepare_cache_directory(CACHE_DIR))
-    )
+    cache_dir = prepare_cache_directory(CACHE_DIR)
+    store = KeepassXCStoreConfig(database_password_cache_dir=os.fspath(cache_dir))
     try:
         resolved = resolve_keepassxc_entry(entry, attrs_map={"value": field}, config=store)
     except KeepassCommandError as error:
         # KeePassXC reports the entry path and database on failure, never the
         # attribute value, so this message stays free of the secret.
-        _fail(f"auto-pass lookup failed for entry {entry!r} field {field!r}: {error}")
+        hint = ""
+        if any(marker in str(error).lower() for marker in CREDENTIAL_FAILURE_MARKERS):
+            database_path = os.environ.get("AUTO_PASS_KEEPASSXC_DB_PATH", "").strip()
+            if invalidate_cached_password(cache_dir, database_path):
+                hint = (
+                    "; discarded the cached database password, so running this "
+                    "again from a terminal will prompt for it"
+                )
+        _fail(f"auto-pass lookup failed for entry {entry!r} field {field!r}: {error}{hint}")
 
     password = resolved.get("value", "")
     if not password:
