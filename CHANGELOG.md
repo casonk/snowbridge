@@ -4,6 +4,18 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- Added a KeePassXC-backed rclone config-password helper and a
+  `doctor --password-source` selector, so the config encryption password can
+  come from auto-pass instead of the macOS Login Keychain. The helper writes
+  the password only to stdout, pins its interpreter because rclone runs it
+  under a minimal `PATH`, and the doctor now distinguishes a failing password
+  provider from a genuinely unencrypted config.
+- Added named cloud provider support for Google Drive, OneDrive, and iCloud
+  Drive, each bound to one exact rclone backend type, with a `providers`
+  command, per-provider enrollment guidance, and provider reporting in
+  `validate` and `doctor`. Onboarding remains inventory-only: the provider
+  table records which enrollments can be scoped read-only and which cannot,
+  and iCloud is documented as an always-read/write, account-password grant.
 - Added an Air-native rootless Podman File Browser manager with owner-only local
   state, a digest-pinned official image, exact loopback publishing, proxy auth,
   a hardened container contract, and a no-sudo login LaunchAgent with persistent
