@@ -151,14 +151,24 @@ password:
 python3 scripts/rclone_config_password.py --check
 ```
 
-Two prerequisites are easy to miss, because the doctor runs rclone in a
+Run that check from a terminal the first time. The database password is
+prompted once and cached, which is what lets later non-interactive runs work.
+
+Three prerequisites are easy to miss, because the doctor runs rclone in a
 deliberately minimal environment and rclone spawns this helper beneath it:
 
-- **The named profile must be self-sufficient.** No `AUTO_PASS_*` variable
-  from your shell survives into the helper, so the profile named above has to
-  carry both the database path and its password in
+- **No `AUTO_PASS_*` variable from your shell survives into the helper.** The
+  profile named above must therefore supply the database path from
   `../auto-pass/config/auto-pass.env.local`. A profile whose database sits on
   an unmounted share cannot be opened.
+- **The database password comes from the cache, not from that file.** Leave
+  the profile's password empty and unlock once interactively. The unlocked
+  password is cached at mode 0600 under `~/.config/snowbridge/cache`, an
+  owner-only directory this helper creates and re-asserts the mode on.
+  auto-pass would otherwise cache into the shared `~/.cache`, which other
+  tools use and which is not writable on every host. The cache expires, so the
+  prompt returns periodically; putting the database password in the env file
+  instead would make it a permanent plaintext secret.
 - **Python 3.11 or newer is required**, because that is what auto-pass
   declares. The minimal `PATH` places `/usr/bin` ahead of Homebrew, so a bare
   `python3` there is the macOS system Python 3.9. `--password-source

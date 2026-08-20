@@ -521,6 +521,10 @@ class RcloneConfigPasswordTests(unittest.TestCase):
 
         self._original_root = rclone_config_password.AUTO_PASS_ROOT
         rclone_config_password.AUTO_PASS_ROOT = self.auto_pass_root
+        # Keep the real ~/.config/snowbridge/cache untouched by the suite.
+        self._original_cache = rclone_config_password.CACHE_DIR
+        rclone_config_password.CACHE_DIR = self.root / "cache"
+        self.store_configs: list[object] = []
         self._original_path = list(sys.path)
         self._original_modules = {
             name: sys.modules.get(name)
@@ -533,6 +537,7 @@ class RcloneConfigPasswordTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         rclone_config_password.AUTO_PASS_ROOT = self._original_root
+        rclone_config_password.CACHE_DIR = self._original_cache
         sys.path[:] = self._original_path
         for name, module in self._original_modules.items():
             if module is None:
@@ -551,14 +556,20 @@ class RcloneConfigPasswordTests(unittest.TestCase):
             self.load_calls.append((path, profile))
             return ({}, {})
 
-        def resolve_keepassxc_entry(entry, attrs_map):  # noqa: ANN001, ANN202
+        def resolve_keepassxc_entry(entry, attrs_map, config=None):  # noqa: ANN001, ANN202
+            self.store_configs.append(config)
             if self.raise_error is not None:
                 raise self.raise_error
             return dict(self.resolved)
 
+        class StubStoreConfig:
+            def __init__(self, database_password_cache_dir: str = "") -> None:
+                self.database_password_cache_dir = database_password_cache_dir
+
         envfile.load_config_environment = load_config_environment
         keepassxc.resolve_keepassxc_entry = resolve_keepassxc_entry
         keepassxc.KeepassCommandError = StubKeepassCommandError
+        keepassxc.KeepassXCStoreConfig = StubStoreConfig
         package.envfile = envfile
         package.keepassxc = keepassxc
         sys.modules["auto_pass"] = package
@@ -567,6 +578,33 @@ class RcloneConfigPasswordTests(unittest.TestCase):
 
     def write_config(self, body: str) -> None:
         self.config_path.write_text(body, encoding="utf-8")
+
+    def test_cache_directory_is_created_owner_only(self) -> None:
+        target = self.root / "config" / "snowbridge" / "cache"
+
+        created = rclone_config_password.prepare_cache_directory(target)
+
+        self.assertEqual(created, target)
+        self.assertTrue(target.is_dir())
+        self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o700)
+
+    def test_cache_directory_permissions_are_tightened_when_already_loose(self) -> None:
+        target = self.root / "loose-cache"
+        target.mkdir(mode=0o755)
+        target.chmod(0o755)
+
+        rclone_config_password.prepare_cache_directory(target)
+
+        self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o700)
+
+    def test_cache_directory_failure_is_reported_without_a_traceback(self) -> None:
+        blocked = self.root / "not-a-directory"
+        blocked.write_text("", encoding="utf-8")
+
+        with self.assertRaisesRegex(
+            rclone_config_password.PasswordHelperError, "password cache directory"
+        ):
+            rclone_config_password.prepare_cache_directory(blocked / "cache")
 
     def test_missing_config_and_missing_entry_fail_closed(self) -> None:
         with self.assertRaisesRegex(rclone_config_password.PasswordHelperError, "does not exist"):
@@ -601,6 +639,13 @@ class RcloneConfigPasswordTests(unittest.TestCase):
         self.assertEqual(len(self.load_calls), 1)
         self.assertEqual(self.load_calls[0][0], environment_file)
         self.assertEqual(self.load_calls[0][1], "snowbridge")
+        # The snowbridge-scoped cache must reach auto-pass, otherwise the
+        # unlocked password would land in the shared ~/.cache instead.
+        self.assertEqual(len(self.store_configs), 1)
+        self.assertEqual(
+            Path(self.store_configs[0].database_password_cache_dir),
+            rclone_config_password.CACHE_DIR,
+        )
 
     def test_lookup_failure_and_empty_value_fail_closed(self) -> None:
         self.raise_error = StubKeepassCommandError("entry not found")

@@ -52,6 +52,12 @@ AUTO_PASS_CONFIG = REPO_ROOT / "config" / "auto-pass.ini"
 DEFAULT_FIELD = "Password"
 # auto-pass declares requires-python = ">=3.11".
 MINIMUM_PYTHON = (3, 11)
+# auto-pass caches the unlocked database password so later non-interactive runs
+# can reuse it. Its default location is the shared ~/.cache, which on this host
+# is root-owned and unwritable, and which other tools also use. Keeping the
+# cache under the snowbridge config directory makes it owner-only, scoped to
+# this repo, and independent of that shared directory's ownership.
+CACHE_DIR = Path.home() / ".config" / "snowbridge" / "cache"
 CONFIG_SECTION = "cloud"
 ENTRY_OPTION = "rclone_config_keepass_entry"
 FIELD_OPTION = "rclone_config_keepass_field"
@@ -87,6 +93,22 @@ def read_helper_config(path: Path = AUTO_PASS_CONFIG) -> tuple[str, str, str]:
     return profile, entry, field
 
 
+def prepare_cache_directory(path: Path = CACHE_DIR) -> Path:
+    """Create the owner-only cache directory holding the unlocked DB password."""
+
+    try:
+        path.mkdir(mode=0o700, parents=True, exist_ok=True)
+        # mkdir's mode is subject to umask, and the directory may predate this
+        # helper, so the permission is asserted rather than assumed.
+        os.chmod(path, 0o700)
+        details = path.stat()
+    except OSError as error:
+        _fail(f"cannot prepare password cache directory {path}: {error}")
+    if hasattr(os, "getuid") and details.st_uid != os.getuid():
+        _fail(f"password cache directory {path} must be owned by the current user")
+    return path
+
+
 def resolve_password(profile: str, entry: str, field: str) -> str:
     """Resolve one KeePassXC field through the auto-pass sibling repo."""
 
@@ -106,7 +128,11 @@ def resolve_password(profile: str, entry: str, field: str) -> str:
         sys.path.insert(0, os.fspath(source))
     try:
         from auto_pass.envfile import load_config_environment
-        from auto_pass.keepassxc import KeepassCommandError, resolve_keepassxc_entry
+        from auto_pass.keepassxc import (
+            KeepassCommandError,
+            KeepassXCStoreConfig,
+            resolve_keepassxc_entry,
+        )
     except ImportError as error:
         _fail(f"cannot import auto-pass from {source}: {error}")
 
@@ -114,8 +140,11 @@ def resolve_password(profile: str, entry: str, field: str) -> str:
     if environment_file.is_file():
         load_config_environment(environment_file, profile=profile or None)
 
+    store = KeepassXCStoreConfig(
+        database_password_cache_dir=os.fspath(prepare_cache_directory(CACHE_DIR))
+    )
     try:
-        resolved = resolve_keepassxc_entry(entry, attrs_map={"value": field})
+        resolved = resolve_keepassxc_entry(entry, attrs_map={"value": field}, config=store)
     except KeepassCommandError as error:
         # KeePassXC reports the entry path and database on failure, never the
         # attribute value, so this message stays free of the secret.
