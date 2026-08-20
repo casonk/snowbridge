@@ -72,9 +72,12 @@ account-protection features may block it or change its behavior.
   `config/cloud/accounts.local.toml`.
 - OAuth refresh tokens and provider credentials live only in an encrypted
   rclone config outside the Git checkout.
-- On macOS, keep the rclone-config encryption password in Login Keychain and
-  let rclone retrieve it through `--password-command`. Do not put it in an
-  environment variable, command argument, tracked file, chat, or terminal log.
+- Keep the rclone-config encryption password in the macOS Login Keychain or in
+  KeePassXC through auto-pass, and let rclone retrieve it through
+  `--password-command`. Do not put it in an environment variable, command
+  argument, tracked file, chat, or terminal log. The auto-pass helper writes
+  the password only to stdout, which rclone consumes; its diagnostics and its
+  `--check` mode never print the value.
 - `inventory` is the only accepted mode. Two-way sync, mounts, deletions, and
   phone-visible publication need a separate conflict, recovery, and access
   review; rclone is not an ACID transaction coordinator.
@@ -105,9 +108,76 @@ account, replace that line with one or more `[[accounts]]` tables; do not append
 an array-of-tables after it, because that would be invalid TOML. The tracked
 example shows the table shape but must never receive live account metadata.
 
+## Choose where the config password lives
+
+The rclone config encryption password is what keeps OAuth refresh tokens and
+the iCloud app-specific password unreadable at rest. It is not itself a
+provider credential. Store it in exactly one of:
+
+- the macOS Login Keychain, the default on darwin; or
+- KeePassXC through the `auto-pass` sibling repo, for owners who keep
+  portfolio secrets in a vault.
+
+Both are local-only. Pick one and keep a recovery copy of the password in the
+portfolio password manager either way: losing it makes the encrypted rclone
+config unrecoverable.
+
+## Config password from KeePassXC (auto-pass)
+
+Store the password in the vault, then point the repo at that entry. Create the
+group first, because `keepassxc-cli add` will not create a missing parent:
+
+```bash
+keepassxc-cli mkdir "$KDBX" snowbridge
+keepassxc-cli add --password-prompt "$KDBX" snowbridge/rclone-config
+```
+
+Copy the tracked example to the ignored `config/auto-pass.ini` and set the
+entry path:
+
+```ini
+[auto_pass]
+profile = snowbridge
+
+[cloud]
+rclone_config_keepass_entry = snowbridge/rclone-config
+rclone_config_keepass_field = Password
+```
+
+Verify the lookup. `--check` prints only the resolved length, never the
+password:
+
+```bash
+python3 scripts/rclone_config_password.py --check
+```
+
+Two prerequisites are easy to miss, because the doctor runs rclone in a
+deliberately minimal environment and rclone spawns this helper beneath it:
+
+- **The named profile must be self-sufficient.** No `AUTO_PASS_*` variable
+  from your shell survives into the helper, so the profile named above has to
+  carry both the database path and its password in
+  `../auto-pass/config/auto-pass.env.local`. A profile whose database sits on
+  an unmounted share cannot be opened.
+- **Python 3.11 or newer is required**, because that is what auto-pass
+  declares. The minimal `PATH` places `/usr/bin` ahead of Homebrew, so a bare
+  `python3` there is the macOS system Python 3.9. `--password-source
+  auto-pass` therefore pins the interpreter running the tool; the helper
+  refuses an older one with an explicit message rather than an import error.
+
+Then run the doctor against that source:
+
+```bash
+python3 scripts/cloud_accounts.py doctor --password-source auto-pass
+```
+
+If the provider cannot produce the password, the doctor reports that
+specifically rather than claiming the config is unencrypted.
+
 ## Create the macOS Keychain secret
 
-First verify that the fixed item does not already exist:
+Skip this section when using auto-pass. First verify that the fixed item does
+not already exist:
 
 ```bash
 /usr/bin/security find-generic-password \
@@ -135,6 +205,17 @@ install -d -m 0700 "$HOME/.config/snowbridge"
 rclone \
   --config "$HOME/.config/snowbridge/rclone.conf" \
   --password-command "/usr/bin/security find-generic-password -a snowbridge -s snowbridge-rclone-config -w" \
+  config encryption set
+```
+
+With auto-pass, substitute the helper for the Keychain lookup. Pin the
+interpreter, for the `PATH` reason described above:
+
+```bash
+install -d -m 0700 "$HOME/.config/snowbridge"
+rclone \
+  --config "$HOME/.config/snowbridge/rclone.conf" \
+  --password-command "$(command -v python3) $PWD/scripts/rclone_config_password.py" \
   config encryption set
 ```
 

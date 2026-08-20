@@ -41,6 +41,22 @@ MACOS_PASSWORD_COMMAND = (
     "snowbridge-rclone-config",
     "-w",
 )
+# KeePassXC-backed alternative to the Keychain helper. It is a repo script
+# rather than a fixed system binary, so it is still subject to the same
+# password-command validation as any custom helper.
+#
+# The interpreter is pinned to the one running this tool instead of relying on
+# the script's shebang. rclone is launched with a minimal PATH whose /usr/bin
+# precedes Homebrew, so `env python3` there resolves to the macOS system
+# Python 3.9, which is older than auto-pass requires.
+AUTO_PASS_PASSWORD_COMMAND = (
+    os.fspath(Path(sys.executable).resolve()),
+    os.fspath(REPO_ROOT / "scripts" / "rclone_config_password.py"),
+)
+PASSWORD_SOURCES = {
+    "keychain": MACOS_PASSWORD_COMMAND,
+    "auto-pass": AUTO_PASS_PASSWORD_COMMAND,
+}
 MAX_CONFIG_BYTES = 1024 * 1024
 MAX_RCLONE_CONFIG_BYTES = 4 * 1024 * 1024
 MAX_ACCOUNTS = 32
@@ -581,6 +597,16 @@ def doctor_registry(
         rclone, config_path, checked_password_command, ["config", "encryption", "check"]
     )
     if encryption.returncode != 0:
+        # rclone reports a failing --password-command distinctly from a config
+        # that is simply not encrypted. Separating them matters because the
+        # remedies are opposite: fix the password provider, or encrypt the
+        # config. The provider's own stderr is not echoed, so nothing it
+        # printed can reach this output.
+        if "--password-command" in encryption.stderr:
+            _fail(
+                "the config-password provider failed, so the encrypted rclone "
+                "config could not be opened; run it directly to see why"
+            )
         _fail("rclone config encryption check failed; plaintext configs are refused")
     remotes_result = _run_local_rclone(
         rclone, config_path, checked_password_command, ["listremotes", "--json"]
@@ -717,6 +743,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     doctor_parser.add_argument("--rclone", default="rclone")
     doctor_parser.add_argument(
+        "--password-source",
+        choices=sorted(PASSWORD_SOURCES),
+        help=(
+            "Built-in config-password provider: keychain (macOS Login Keychain, "
+            "the default on darwin) or auto-pass (KeePassXC via the sibling repo)."
+        ),
+    )
+    doctor_parser.add_argument(
         "--password-command-executable",
         type=Path,
         help="Absolute executable for the local rclone config-password provider.",
@@ -730,6 +764,32 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def select_password_command(arguments: argparse.Namespace) -> Sequence[str]:
+    """Choose exactly one config-password provider, failing closed on conflict."""
+
+    custom_requested = (
+        arguments.password_command_executable is not None
+        or arguments.password_command_argument is not None
+    )
+    if arguments.password_source is not None:
+        if custom_requested:
+            _fail(
+                "--password-source and --password-command-executable are "
+                "mutually exclusive; choose one config-password provider"
+            )
+        return PASSWORD_SOURCES[arguments.password_source]
+    if custom_requested:
+        if arguments.password_command_executable is None:
+            _fail("doctor requires --password-command-executable on this platform")
+        return (
+            os.fspath(arguments.password_command_executable),
+            *(arguments.password_command_argument or ()),
+        )
+    if sys.platform == "darwin":
+        return MACOS_PASSWORD_COMMAND
+    _fail("doctor requires --password-source or --password-command-executable")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     arguments = parser.parse_args(argv)
@@ -741,6 +801,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         if arguments.command == "providers":
             print(render_providers(as_json=arguments.as_json))
             return 0
+        # Resolved before the registry is read so a contradictory provider
+        # selection is reported as such, not as a missing-registry error.
+        password_command = (
+            select_password_command(arguments) if arguments.command == "doctor" else ()
+        )
         registry = load_registry(arguments.config)
         if arguments.command == "validate":
             enabled = sum(account.enabled for account in registry.accounts)
@@ -751,19 +816,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             for line in describe_accounts(registry.accounts):
                 print(f"  {line}")
             return 0
-        if (
-            arguments.password_command_executable is None
-            and arguments.password_command_argument is None
-            and sys.platform == "darwin"
-        ):
-            password_command = MACOS_PASSWORD_COMMAND
-        else:
-            if arguments.password_command_executable is None:
-                _fail("doctor requires --password-command-executable on this platform")
-            password_command = (
-                os.fspath(arguments.password_command_executable),
-                *(arguments.password_command_argument or ()),
-            )
         enabled, configured = doctor_registry(
             registry,
             rclone_binary=arguments.rclone,
