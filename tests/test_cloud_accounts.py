@@ -7,11 +7,13 @@ import os
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 
-from scripts import cloud_accounts
+from scripts import cloud_accounts, rclone_config_password
 
 
 class CloudAccountsTests(unittest.TestCase):
@@ -261,6 +263,51 @@ class CloudAccountsTests(unittest.TestCase):
                 )
         self.assertNotIn("encrypted-test-fixture", stderr.getvalue())
 
+    def test_doctor_separates_a_failing_password_provider_from_a_plaintext_config(
+        self,
+    ) -> None:
+        self.write_registry()
+        self.rclone_config.parent.mkdir(mode=0o700)
+        self.rclone_config.write_text("encrypted-test-fixture\n", encoding="utf-8")
+        self.rclone_config.chmod(0o600)
+        registry = cloud_accounts.load_registry(self.registry_path)
+
+        failing = self.root / "password-command-failure"
+        failing.write_text(
+            "#!/usr/bin/env python3\n"
+            "import sys\n"
+            "sys.stderr.write('ERROR : Using --password-command returned: exit status 2\\n')\n"
+            "raise SystemExit(1)\n",
+            encoding="utf-8",
+        )
+        failing.chmod(0o700)
+        with self.assertRaisesRegex(
+            cloud_accounts.CloudAccountError, "config-password provider failed"
+        ):
+            cloud_accounts.doctor_registry(
+                registry,
+                rclone_binary=os.fspath(failing),
+                password_command=("/usr/bin/printf", "synthetic-test-password"),
+            )
+
+        plaintext = self.root / "plaintext-config"
+        plaintext.write_text(
+            "#!/usr/bin/env python3\n"
+            "import sys\n"
+            "sys.stderr.write('Error: config file is NOT encrypted\\n')\n"
+            "raise SystemExit(2)\n",
+            encoding="utf-8",
+        )
+        plaintext.chmod(0o700)
+        with self.assertRaisesRegex(
+            cloud_accounts.CloudAccountError, "plaintext configs are refused"
+        ):
+            cloud_accounts.doctor_registry(
+                registry,
+                rclone_binary=os.fspath(plaintext),
+                password_command=("/usr/bin/printf", "synthetic-test-password"),
+            )
+
     def test_doctor_rejects_backend_mismatch(self) -> None:
         self.write_registry(
             accounts=(
@@ -349,6 +396,309 @@ class CloudAccountsTests(unittest.TestCase):
         )
 
         self.assertEqual(result, (1, 1))
+
+
+class CloudProviderTests(unittest.TestCase):
+    def test_provider_table_is_unique_and_marks_icloud_as_write_only_enrollment(self) -> None:
+        names = [provider.name for provider in cloud_accounts.PROVIDERS]
+        backends = [provider.backend for provider in cloud_accounts.PROVIDERS]
+
+        self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(len(backends), len(set(backends)))
+        self.assertEqual(set(names), {"google-drive", "onedrive", "icloud"})
+
+        icloud = cloud_accounts.PROVIDERS_BY_NAME["icloud"]
+        self.assertFalse(icloud.supports_read_only_enrollment)
+        self.assertEqual(icloud.credential, "account-password")
+        for name in ("google-drive", "onedrive"):
+            provider = cloud_accounts.PROVIDERS_BY_NAME[name]
+            self.assertTrue(provider.supports_read_only_enrollment)
+            self.assertEqual(provider.credential, "oauth-token")
+
+    def test_provider_lookup_by_backend_ignores_unlisted_types(self) -> None:
+        self.assertIsNotNone(cloud_accounts.provider_for_backend("drive"))
+        self.assertIsNone(cloud_accounts.provider_for_backend("local"))
+        self.assertIsNone(cloud_accounts.provider_for_backend("gcs"))
+
+    def test_render_providers_json_covers_every_documented_field(self) -> None:
+        payload = json.loads(cloud_accounts.render_providers(as_json=True))
+
+        self.assertEqual(len(payload), len(cloud_accounts.PROVIDERS))
+        icloud = next(entry for entry in payload if entry["name"] == "icloud")
+        self.assertEqual(icloud["backend"], "iclouddrive")
+        self.assertIsNone(icloud["read_only_option"])
+        self.assertFalse(icloud["supports_read_only_enrollment"])
+        self.assertTrue(icloud["notes"])
+
+    def test_providers_command_runs_without_a_registry(self) -> None:
+        missing = Path(tempfile.gettempdir()) / "snowbridge-absent-registry.toml"
+        stdout = io.StringIO()
+
+        with contextlib.redirect_stdout(stdout):
+            code = cloud_accounts.main(["--config", os.fspath(missing), "providers"])
+
+        self.assertEqual(code, 0)
+        self.assertIn("iclouddrive", stdout.getvalue())
+
+    def test_describe_accounts_counts_providers_without_naming_accounts(self) -> None:
+        accounts = (
+            cloud_accounts.CloudAccount(
+                account_id="secret-alias",
+                backend="drive",
+                remote="secret-alias",
+                root="folder",
+                share_target=Path("/srv/one"),
+                mode="inventory",
+                enabled=True,
+            ),
+            cloud_accounts.CloudAccount(
+                account_id="another-alias",
+                backend="drive",
+                remote="another-alias",
+                root="folder",
+                share_target=Path("/srv/two"),
+                mode="inventory",
+                enabled=False,
+            ),
+            cloud_accounts.CloudAccount(
+                account_id="third-alias",
+                backend="local",
+                remote="third-alias",
+                root="folder",
+                share_target=Path("/srv/three"),
+                mode="inventory",
+                enabled=False,
+            ),
+        )
+
+        lines = cloud_accounts.describe_accounts(accounts)
+        joined = "\n".join(lines)
+
+        self.assertIn("google-drive: 2 declared, 1 enabled", joined)
+        self.assertIn("unlisted backends: 1 declared", joined)
+        for alias in ("secret-alias", "another-alias", "third-alias"):
+            self.assertNotIn(alias, joined)
+
+    @unittest.skipUnless(shutil.which("rclone"), "rclone is not installed")
+    def test_declared_backends_still_exist_in_the_installed_rclone(self) -> None:
+        """Catch an rclone rename before it silently invalidates the table."""
+
+        rclone = shutil.which("rclone")
+        assert rclone is not None
+        completed = subprocess.run(
+            [rclone, "config", "providers"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            env=cloud_accounts._rclone_environment(),
+        )
+        available = {entry["Name"] for entry in json.loads(completed.stdout)}
+
+        for provider in cloud_accounts.PROVIDERS:
+            with self.subTest(provider=provider.name):
+                self.assertIn(provider.backend, available)
+
+
+class StubKeepassCommandError(Exception):
+    pass
+
+
+class RcloneConfigPasswordTests(unittest.TestCase):
+    """Cover the auto-pass password helper without importing auto-pass.
+
+    The cloud CI job installs no Python dependencies and has no sibling
+    auto-pass checkout, so the module is stubbed through sys.modules and the
+    sibling root is redirected at a temporary directory.
+    """
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        self.config_path = self.root / "auto-pass.ini"
+        self.auto_pass_root = self.root / "auto-pass"
+        (self.auto_pass_root / "src").mkdir(parents=True)
+
+        self._original_root = rclone_config_password.AUTO_PASS_ROOT
+        rclone_config_password.AUTO_PASS_ROOT = self.auto_pass_root
+        self._original_path = list(sys.path)
+        self._original_modules = {
+            name: sys.modules.get(name)
+            for name in ("auto_pass", "auto_pass.envfile", "auto_pass.keepassxc")
+        }
+        self.load_calls: list[tuple[Path, str | None]] = []
+        self.resolved: dict[str, str] = {"value": "synthetic-config-password"}
+        self.raise_error: Exception | None = None
+        self._install_stub()
+
+    def tearDown(self) -> None:
+        rclone_config_password.AUTO_PASS_ROOT = self._original_root
+        sys.path[:] = self._original_path
+        for name, module in self._original_modules.items():
+            if module is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = module
+        self.temporary.cleanup()
+
+    def _install_stub(self) -> None:
+        package = types.ModuleType("auto_pass")
+        package.__path__ = []  # type: ignore[attr-defined]
+        envfile = types.ModuleType("auto_pass.envfile")
+        keepassxc = types.ModuleType("auto_pass.keepassxc")
+
+        def load_config_environment(path, profile=None):  # noqa: ANN001, ANN202
+            self.load_calls.append((path, profile))
+            return ({}, {})
+
+        def resolve_keepassxc_entry(entry, attrs_map):  # noqa: ANN001, ANN202
+            if self.raise_error is not None:
+                raise self.raise_error
+            return dict(self.resolved)
+
+        envfile.load_config_environment = load_config_environment
+        keepassxc.resolve_keepassxc_entry = resolve_keepassxc_entry
+        keepassxc.KeepassCommandError = StubKeepassCommandError
+        package.envfile = envfile
+        package.keepassxc = keepassxc
+        sys.modules["auto_pass"] = package
+        sys.modules["auto_pass.envfile"] = envfile
+        sys.modules["auto_pass.keepassxc"] = keepassxc
+
+    def write_config(self, body: str) -> None:
+        self.config_path.write_text(body, encoding="utf-8")
+
+    def test_missing_config_and_missing_entry_fail_closed(self) -> None:
+        with self.assertRaisesRegex(rclone_config_password.PasswordHelperError, "does not exist"):
+            rclone_config_password.read_helper_config(self.config_path)
+
+        self.write_config("[auto_pass]\nprofile = snowbridge\n")
+        with self.assertRaisesRegex(
+            rclone_config_password.PasswordHelperError, "rclone_config_keepass_entry"
+        ):
+            rclone_config_password.read_helper_config(self.config_path)
+
+    def test_config_defaults_field_to_password(self) -> None:
+        self.write_config(
+            "[auto_pass]\nprofile = snowbridge\n"
+            "[cloud]\nrclone_config_keepass_entry = snowbridge/rclone\n"
+        )
+
+        profile, entry, field = rclone_config_password.read_helper_config(self.config_path)
+
+        self.assertEqual((profile, entry, field), ("snowbridge", "snowbridge/rclone", "Password"))
+
+    def test_resolve_uses_profile_scoped_env_file_and_returns_value(self) -> None:
+        environment_file = self.auto_pass_root / "config" / "auto-pass.env.local"
+        environment_file.parent.mkdir(parents=True)
+        environment_file.write_text("# synthetic\n", encoding="utf-8")
+
+        password = rclone_config_password.resolve_password(
+            "snowbridge", "snowbridge/rclone", "Password"
+        )
+
+        self.assertEqual(password, "synthetic-config-password")
+        self.assertEqual(len(self.load_calls), 1)
+        self.assertEqual(self.load_calls[0][0], environment_file)
+        self.assertEqual(self.load_calls[0][1], "snowbridge")
+
+    def test_lookup_failure_and_empty_value_fail_closed(self) -> None:
+        self.raise_error = StubKeepassCommandError("entry not found")
+        with self.assertRaisesRegex(
+            rclone_config_password.PasswordHelperError, "auto-pass lookup failed"
+        ):
+            rclone_config_password.resolve_password("p", "entry", "Password")
+
+        self.raise_error = None
+        self.resolved = {"value": ""}
+        with self.assertRaisesRegex(rclone_config_password.PasswordHelperError, "has no value"):
+            rclone_config_password.resolve_password("p", "entry", "Password")
+
+    def test_multiline_value_is_rejected(self) -> None:
+        self.resolved = {"value": "first-line\nsecond-line"}
+
+        with self.assertRaisesRegex(rclone_config_password.PasswordHelperError, "line break"):
+            rclone_config_password.resolve_password("p", "entry", "Password")
+
+    def test_check_mode_reports_length_without_printing_the_password(self) -> None:
+        self.write_config(
+            "[auto_pass]\nprofile = snowbridge\n"
+            "[cloud]\nrclone_config_keepass_entry = snowbridge/rclone\n"
+        )
+        original = rclone_config_password.AUTO_PASS_CONFIG
+        rclone_config_password.AUTO_PASS_CONFIG = self.config_path
+        stdout = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(stdout):
+                code = rclone_config_password.main(["--check"])
+        finally:
+            rclone_config_password.AUTO_PASS_CONFIG = original
+
+        self.assertEqual(code, 0)
+        self.assertIn("25 characters", stdout.getvalue())
+        self.assertNotIn("synthetic-config-password", stdout.getvalue())
+
+    def test_default_mode_writes_only_the_password_to_stdout(self) -> None:
+        self.write_config(
+            "[auto_pass]\nprofile = snowbridge\n"
+            "[cloud]\nrclone_config_keepass_entry = snowbridge/rclone\n"
+        )
+        original = rclone_config_password.AUTO_PASS_CONFIG
+        rclone_config_password.AUTO_PASS_CONFIG = self.config_path
+        stdout = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(stdout):
+                code = rclone_config_password.main([])
+        finally:
+            rclone_config_password.AUTO_PASS_CONFIG = original
+
+        self.assertEqual(code, 0)
+        self.assertEqual(stdout.getvalue(), "synthetic-config-password\n")
+
+
+class PasswordSourceSelectionTests(unittest.TestCase):
+    def test_auto_pass_source_pins_the_interpreter_and_repo_helper(self) -> None:
+        command = cloud_accounts.PASSWORD_SOURCES["auto-pass"]
+
+        self.assertEqual(len(command), 2)
+        interpreter, script = Path(command[0]), Path(command[1])
+        # Pinned rather than relying on the shebang: rclone runs the helper with
+        # a minimal PATH whose /usr/bin precedes Homebrew, so `env python3`
+        # there is the macOS system Python, older than auto-pass supports.
+        self.assertTrue(interpreter.is_absolute())
+        self.assertTrue(os.access(interpreter, os.X_OK))
+        self.assertEqual(interpreter, Path(sys.executable).resolve())
+        self.assertTrue(script.is_absolute())
+        self.assertEqual(script.name, "rclone_config_password.py")
+        self.assertTrue(script.is_file(), "the auto-pass helper script must exist")
+        self.assertTrue(os.access(script, os.X_OK), "the helper must stay directly runnable")
+
+    def test_helper_refuses_an_interpreter_older_than_auto_pass_supports(self) -> None:
+        self.assertGreaterEqual(rclone_config_password.MINIMUM_PYTHON, (3, 11))
+
+    def test_helper_command_passes_password_command_validation(self) -> None:
+        encoded = cloud_accounts._validate_password_command(
+            cloud_accounts.PASSWORD_SOURCES["auto-pass"]
+        )
+
+        self.assertIn("rclone_config_password.py", encoded)
+
+    def test_password_source_and_custom_executable_are_mutually_exclusive(self) -> None:
+        stderr = io.StringIO()
+
+        with contextlib.redirect_stderr(stderr):
+            code = cloud_accounts.main(
+                [
+                    "doctor",
+                    "--password-source",
+                    "auto-pass",
+                    "--password-command-executable",
+                    "/usr/bin/printf",
+                ]
+            )
+
+        self.assertEqual(code, 2)
+        self.assertIn("mutually exclusive", stderr.getvalue())
 
 
 if __name__ == "__main__":
