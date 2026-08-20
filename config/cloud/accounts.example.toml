@@ -1,14 +1,44 @@
 # Synthetic, inactive example. Use `scripts/cloud_accounts.py init`, then
-# replace its `accounts = []` line with reviewed tables like this one. Never
+# replace its `accounts = []` line with reviewed tables like these. Never
 # copy live aliases, paths, or account metadata into this tracked example.
+#
+# `backend` is the exact rclone type and is the only provider declaration:
+# `scripts/cloud_accounts.py doctor` cross-checks it against the encrypted
+# rclone config, so a second provider field could only ever disagree with it.
+# Run `scripts/cloud_accounts.py providers` for the supported types.
 schema_version = 1
 rclone_config = "/path/to/private/encrypted-rclone.conf"
 
+# Google Drive. Enroll with `scope = drive.readonly` unless a later, reviewed
+# mode needs write access; an unset scope is a full read/write grant.
 [[accounts]]
-id = "example-cloud"
+id = "example-google-drive"
 backend = "drive"
-remote = "example-cloud"
+remote = "example-google-drive"
 root = "selected-folder"
-share_target = "/srv/snowbridge/share/example-cloud"
+share_target = "/srv/snowbridge/share/example-google-drive"
+mode = "inventory"
+enabled = false
+
+# Microsoft OneDrive. The default access_scopes include Files.ReadWrite, so
+# read-only enrollment must be requested explicitly at rclone config time.
+[[accounts]]
+id = "example-onedrive"
+backend = "onedrive"
+remote = "example-onedrive"
+root = "selected-folder"
+share_target = "/srv/snowbridge/share/example-onedrive"
+mode = "inventory"
+enabled = false
+
+# iCloud Drive. rclone exposes no scope option for this backend, so the grant
+# is always read/write and the stored secret is an account password rather
+# than a scoped token. Enroll with an app-specific password.
+[[accounts]]
+id = "example-icloud"
+backend = "iclouddrive"
+remote = "example-icloud"
+root = "selected-folder"
+share_target = "/srv/snowbridge/share/example-icloud"
 mode = "inventory"
 enabled = false
