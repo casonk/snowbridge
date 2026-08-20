@@ -248,12 +248,17 @@ cannot: rclone exposes no scope option for `iclouddrive`, so its grant is
 always read/write and its stored secret is an account password rather than a
 token. Enroll iCloud with an app-specific password.
 
+The rclone config encryption password comes from the macOS Login Keychain by
+default, or from KeePassXC through the `auto-pass` sibling repo.
+
 ```bash
 python3 scripts/cloud_accounts.py init
 python3 scripts/cloud_accounts.py providers
 python3 scripts/cloud_accounts.py validate
+# Verify the KeePassXC lookup; prints only the length, never the password:
+python3 scripts/rclone_config_password.py --check
 # After separately approved provider enrollment:
-python3 scripts/cloud_accounts.py doctor
+python3 scripts/cloud_accounts.py doctor --password-source auto-pass
 ```
 
 See [docs/cloud-storage.md](docs/cloud-storage.md) before configuring a remote.
