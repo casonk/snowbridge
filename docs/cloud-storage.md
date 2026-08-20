@@ -12,6 +12,60 @@ and request scopes that permit writes or deletions. Review that provider's
 consent screen and select the least privilege compatible with the intended
 later use before approving it.
 
+## Supported providers
+
+Snowbridge onboards three providers by name. Each maps to one exact rclone
+backend type, which is the value an account declares as `backend` and the only
+provider binding in the registry — the doctor cross-checks it against the
+encrypted rclone config, so a separate provider field could only disagree with
+the type rclone actually uses.
+
+| Provider | rclone backend | Credential | Read-only enrollment |
+| --- | --- | --- | --- |
+| `google-drive` | `drive` | OAuth token | `scope = drive.readonly` |
+| `onedrive` | `onedrive` | OAuth token | `access_scopes = Files.Read Files.Read.All Sites.Read.All offline_access` |
+| `icloud` | `iclouddrive` | Apple ID + password | none available |
+
+Print the table, including revocation locations and per-provider notes:
+
+```bash
+python3 scripts/cloud_accounts.py providers
+python3 scripts/cloud_accounts.py providers --json
+```
+
+The values above were verified against rclone v1.75.0. Re-verify them with
+`rclone help backend <type>` when the installed rclone changes: a renamed or
+redefined scope silently grants more access than intended.
+
+### Google Drive and OneDrive
+
+Both authenticate with an OAuth refresh token that is scoped at consent time
+and revocable at the provider without changing the account password. Both
+default to read/write. Choose the scope during `rclone config`, because
+Snowbridge cannot narrow a grant afterwards — only re-enrollment can.
+
+### iCloud Drive
+
+iCloud differs in a way that matters for the threat model, and the difference
+is structural rather than a configuration choice:
+
+- rclone exposes no scope option for `iclouddrive`, so enrollment is always
+  read/write. Least privilege has to come from the selected root folder.
+- The stored secret is an account password, not a scoped token. rclone
+  obscures it, and obscuring is reversible encoding, not encryption. Only the
+  config encryption protects it at rest, which is why an encrypted rclone
+  config is mandatory before any account is added.
+- Enroll with an app-specific password generated at
+  `account.apple.com` > Sign-In and Security > App-Specific Passwords. That
+  keeps the credential individually revocable. Never store the primary Apple
+  ID password, whose revocation means changing the account password.
+- `service = drive` selects iCloud Drive; `service = photos` selects the photo
+  library instead. Confirm which one an account is enrolling.
+
+Confirm the provider's own current terms for this access path before
+enrolling. rclone's iCloud support is not a published Apple integration, so
+account-protection features may block it or change its behavior.
+
 ## Security boundary
 
 - Real aliases and local paths live only in ignored
@@ -89,7 +143,8 @@ This encryption step is local-only.
 ## Online provider enrollment
 
 Stop here until the provider, intended folder, and acceptable permission scope
-have been chosen. Then start rclone's provider-specific flow from a private
+have been chosen; see [Supported providers](#supported-providers) for the scope
+each one accepts. Then start rclone's provider-specific flow from a private
 terminal. This command is online and may grant write or deletion permissions:
 
 ```bash
@@ -114,8 +169,10 @@ rclone \
 ```
 
 Replace `accounts = []` in the ignored local registry with a matching table.
-The `backend` value is the exact rclone type (for example, `drive`, `dropbox`,
-`onedrive`, `s3`, or `sftp`), not a display name. Keep `enabled = false` until
+The `backend` value is the exact rclone type (`drive`, `onedrive`, or
+`iclouddrive` for the onboarded providers; other inventory-only types such as
+`dropbox`, `s3`, or `sftp` remain accepted), not a display name. Keep
+`enabled = false` until
 the backend, non-empty selected root, intended later behavior, and provider
 consent grant are reviewed. Then set it to true, validate, and run the offline
 doctor:

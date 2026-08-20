@@ -351,5 +351,107 @@ class CloudAccountsTests(unittest.TestCase):
         self.assertEqual(result, (1, 1))
 
 
+class CloudProviderTests(unittest.TestCase):
+    def test_provider_table_is_unique_and_marks_icloud_as_write_only_enrollment(self) -> None:
+        names = [provider.name for provider in cloud_accounts.PROVIDERS]
+        backends = [provider.backend for provider in cloud_accounts.PROVIDERS]
+
+        self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(len(backends), len(set(backends)))
+        self.assertEqual(set(names), {"google-drive", "onedrive", "icloud"})
+
+        icloud = cloud_accounts.PROVIDERS_BY_NAME["icloud"]
+        self.assertFalse(icloud.supports_read_only_enrollment)
+        self.assertEqual(icloud.credential, "account-password")
+        for name in ("google-drive", "onedrive"):
+            provider = cloud_accounts.PROVIDERS_BY_NAME[name]
+            self.assertTrue(provider.supports_read_only_enrollment)
+            self.assertEqual(provider.credential, "oauth-token")
+
+    def test_provider_lookup_by_backend_ignores_unlisted_types(self) -> None:
+        self.assertIsNotNone(cloud_accounts.provider_for_backend("drive"))
+        self.assertIsNone(cloud_accounts.provider_for_backend("local"))
+        self.assertIsNone(cloud_accounts.provider_for_backend("gcs"))
+
+    def test_render_providers_json_covers_every_documented_field(self) -> None:
+        payload = json.loads(cloud_accounts.render_providers(as_json=True))
+
+        self.assertEqual(len(payload), len(cloud_accounts.PROVIDERS))
+        icloud = next(entry for entry in payload if entry["name"] == "icloud")
+        self.assertEqual(icloud["backend"], "iclouddrive")
+        self.assertIsNone(icloud["read_only_option"])
+        self.assertFalse(icloud["supports_read_only_enrollment"])
+        self.assertTrue(icloud["notes"])
+
+    def test_providers_command_runs_without_a_registry(self) -> None:
+        missing = Path(tempfile.gettempdir()) / "snowbridge-absent-registry.toml"
+        stdout = io.StringIO()
+
+        with contextlib.redirect_stdout(stdout):
+            code = cloud_accounts.main(["--config", os.fspath(missing), "providers"])
+
+        self.assertEqual(code, 0)
+        self.assertIn("iclouddrive", stdout.getvalue())
+
+    def test_describe_accounts_counts_providers_without_naming_accounts(self) -> None:
+        accounts = (
+            cloud_accounts.CloudAccount(
+                account_id="secret-alias",
+                backend="drive",
+                remote="secret-alias",
+                root="folder",
+                share_target=Path("/srv/one"),
+                mode="inventory",
+                enabled=True,
+            ),
+            cloud_accounts.CloudAccount(
+                account_id="another-alias",
+                backend="drive",
+                remote="another-alias",
+                root="folder",
+                share_target=Path("/srv/two"),
+                mode="inventory",
+                enabled=False,
+            ),
+            cloud_accounts.CloudAccount(
+                account_id="third-alias",
+                backend="local",
+                remote="third-alias",
+                root="folder",
+                share_target=Path("/srv/three"),
+                mode="inventory",
+                enabled=False,
+            ),
+        )
+
+        lines = cloud_accounts.describe_accounts(accounts)
+        joined = "\n".join(lines)
+
+        self.assertIn("google-drive: 2 declared, 1 enabled", joined)
+        self.assertIn("unlisted backends: 1 declared", joined)
+        for alias in ("secret-alias", "another-alias", "third-alias"):
+            self.assertNotIn(alias, joined)
+
+    @unittest.skipUnless(shutil.which("rclone"), "rclone is not installed")
+    def test_declared_backends_still_exist_in_the_installed_rclone(self) -> None:
+        """Catch an rclone rename before it silently invalidates the table."""
+
+        rclone = shutil.which("rclone")
+        assert rclone is not None
+        completed = subprocess.run(
+            [rclone, "config", "providers"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            env=cloud_accounts._rclone_environment(),
+        )
+        available = {entry["Name"] for entry in json.loads(completed.stdout)}
+
+        for provider in cloud_accounts.PROVIDERS:
+            with self.subTest(provider=provider.name):
+                self.assertIn(provider.backend, available)
+
+
 if __name__ == "__main__":
     unittest.main()
