@@ -239,11 +239,36 @@ each one accepts. Then start rclone's provider-specific flow from a private
 terminal. This command is online and may grant write or deletion permissions:
 
 ```bash
+scripts/rclone_snowbridge.sh config
+```
+
+Use that wrapper rather than a bare `rclone`. A plain `rclone config` reads and
+writes `~/.config/rclone/rclone.conf`, rclone's own default, and would enroll
+the provider into an unencrypted file outside Snowbridge entirely. The wrapper
+pins `--config` and the config-password helper, and selects a Python 3.11+
+interpreter for it.
+
+With the Keychain instead of auto-pass, pass the lookup directly:
+
+```bash
 rclone \
   --config "$HOME/.config/snowbridge/rclone.conf" \
   --password-command "/usr/bin/security find-generic-password -a snowbridge -s snowbridge-rclone-config -w" \
   config
 ```
+
+Answer the wizard with the least privilege that fits the intended use:
+
+- **Google Drive** (`drive`): set `scope` to `drive.readonly`. Leaving it unset
+  requests full read/write access to every file.
+- **OneDrive** (`onedrive`): set `access_scopes` to
+  `Files.Read Files.Read.All Sites.Read.All offline_access`. The default value
+  includes `Files.ReadWrite` and `Files.ReadWrite.All`.
+- **iCloud Drive** (`iclouddrive`): supply the Apple ID and an app-specific
+  password, and set `service` to `drive` for iCloud Drive rather than the photo
+  library. There is no read-only scope for this backend. Use the wizard rather
+  than `rclone config create`, which would place the password in shell history
+  and in the process argument list.
 
 Do not paste OAuth codes, tokens, client secrets, account email addresses, or
 the config password into Git or chat. Give each remote a non-identifying alias
@@ -253,10 +278,7 @@ After enrollment completes, inspect the local alias and rclone backend type
 without accessing the provider:
 
 ```bash
-rclone \
-  --config "$HOME/.config/snowbridge/rclone.conf" \
-  --password-command "/usr/bin/security find-generic-password -a snowbridge -s snowbridge-rclone-config -w" \
-  listremotes --long
+scripts/rclone_snowbridge.sh listremotes --long
 ```
 
 Replace `accounts = []` in the ignored local registry with a matching table.
