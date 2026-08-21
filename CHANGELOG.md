@@ -4,6 +4,10 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- Added `scripts/rclone_snowbridge.sh`, which pins rclone at the Snowbridge
+  encrypted config and its config-password helper. A bare `rclone config`
+  would otherwise enroll a provider into rclone's own unencrypted default
+  config outside the repo.
 - Added a KeePassXC-backed rclone config-password helper and a
   `doctor --password-source` selector, so the config encryption password can
   come from auto-pass instead of the macOS Login Keychain. The helper writes

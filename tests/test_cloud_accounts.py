@@ -761,6 +761,66 @@ class RcloneConfigPasswordTests(unittest.TestCase):
         self.assertEqual(stdout.getvalue(), "synthetic-config-password\n")
 
 
+class RcloneWrapperTests(unittest.TestCase):
+    """The wrapper must always pin --config, never rclone's own default."""
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        self.wrapper = cloud_accounts.REPO_ROOT / "scripts" / "rclone_snowbridge.sh"
+
+    def tearDown(self) -> None:
+        self.temporary.cleanup()
+
+    def _fake_rclone_bin(self) -> Path:
+        binary_dir = self.root / "bin"
+        binary_dir.mkdir()
+        fake = binary_dir / "rclone"
+        fake.write_text(
+            '#!/bin/sh\nprintf "%s\\n" "$@"\n',
+            encoding="utf-8",
+        )
+        fake.chmod(0o755)
+        return binary_dir
+
+    def test_wrapper_is_executable(self) -> None:
+        self.assertTrue(self.wrapper.is_file())
+        self.assertTrue(os.access(self.wrapper, os.X_OK))
+
+    def test_wrapper_pins_the_snowbridge_config_and_password_command(self) -> None:
+        binary_dir = self._fake_rclone_bin()
+        config = self.root / "rclone.conf"
+        config.write_text("# encrypted fixture\n", encoding="utf-8")
+        environment = dict(os.environ)
+        environment["PATH"] = f"{binary_dir}:{environment['PATH']}"
+        environment["SNOWBRIDGE_RCLONE_CONFIG"] = os.fspath(config)
+
+        completed = subprocess.run(
+            [os.fspath(self.wrapper), "listremotes"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=environment,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        arguments = completed.stdout.split("\n")
+        self.assertIn("--config", arguments)
+        self.assertIn(os.fspath(config), arguments)
+        self.assertIn("--password-command", arguments)
+        self.assertIn("listremotes", arguments)
+        password_command = arguments[arguments.index("--password-command") + 1]
+        self.assertIn("rclone_config_password.py", password_command)
+        interpreter = password_command.split(" ", 1)[0]
+        version = subprocess.run(
+            [interpreter, "-c", "import sys; print(sys.version_info >= (3, 11))"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertEqual(version.stdout.strip(), "True", "wrapper picked a stale interpreter")
+
+
 class PasswordSourceSelectionTests(unittest.TestCase):
     def test_auto_pass_source_pins_the_interpreter_and_repo_helper(self) -> None:
         command = cloud_accounts.PASSWORD_SOURCES["auto-pass"]
