@@ -24,7 +24,7 @@ the type rclone actually uses.
 | --- | --- | --- | --- |
 | `google-drive` | `drive` | OAuth token | `scope = drive.readonly` |
 | `onedrive` | `onedrive` | OAuth token | `access_scopes = Files.Read Files.Read.All Sites.Read.All offline_access` |
-| `icloud` | `iclouddrive` | Apple ID + password | none available |
+| `icloud` | `iclouddrive` | Primary Apple ID password | none available |
 
 Print the table, including revocation locations and per-provider notes:
 
@@ -51,20 +51,48 @@ is structural rather than a configuration choice:
 
 - rclone exposes no scope option for `iclouddrive`, so enrollment is always
   read/write. Least privilege has to come from the selected root folder.
-- The stored secret is an account password, not a scoped token. rclone
-  obscures it, and obscuring is reversible encoding, not encryption. Only the
-  config encryption protects it at rest, which is why an encrypted rclone
-  config is mandatory before any account is added.
-- Enroll with an app-specific password generated at
-  `account.apple.com` > Sign-In and Security > App-Specific Passwords. That
-  keeps the credential individually revocable. Never store the primary Apple
-  ID password, whose revocation means changing the account password.
+- **App-specific passwords do not work.** rclone's documentation states:
+  "App-specific passwords are not accepted. Only use your regular Apple ID
+  password and 2FA." The stored secret is therefore the primary account
+  password, and rclone only obscures it, which is reversible encoding rather
+  than encryption. Only the config encryption protects it at rest, which is
+  why an encrypted rclone config is mandatory before any account is added.
+- Consequently there is **no per-app revocation**. Withdrawing this one
+  integration means changing the Apple ID password everywhere it is used.
+  Weigh that against the value of enrolling iCloud at all; the other two
+  providers issue scoped tokens that revoke independently.
+- Enrollment stores a trust token valid for about 30 days, so
+  re-authentication is periodic rather than one-time.
 - `service = drive` selects iCloud Drive; `service = photos` selects the photo
   library instead. Confirm which one an account is enrolling.
 
 Confirm the provider's own current terms for this access path before
 enrolling. rclone's iCloud support is not a published Apple integration, so
 account-protection features may block it or change its behavior.
+
+### iCloud enrollment failures
+
+`rclone config` can reach the 2FA prompt and then fail with
+`validate2FACode failed: HTTP error 412`, while the response body reports the
+submitted code as `"valid" : true`. A valid code with a 412 (Precondition
+Failed) means the code was right and something about the account or session
+state was not. Two known causes, cheapest to check first:
+
+1. **Web access is disabled or ADP needs approval.** rclone requests PCS
+   cookies after 2FA when Advanced Data Protection is on, and Apple may
+   require approval on a trusted device first. Confirm "Access iCloud Data on
+   the Web" is enabled at `icloud.com` > Data & Privacy, approve any prompt on
+   a trusted device, then retry.
+2. **An upstream session bug.** Apple's SRP codes are bound to the
+   `scnt`/session-id pair they were issued against. rclone has opened a fresh
+   session before submitting the code, so Apple rejects it. This is tracked as
+   [rclone#9324](https://github.com/rclone/rclone/issues/9324) and had no
+   merged fix when this was written; a patch was proposed but not landed.
+
+If the second cause applies, no local configuration change will help. Enroll
+Google Drive and OneDrive, leave iCloud declared but `enabled = false`, and
+revisit after an rclone release that closes that issue. The inventory-only
+doctor passes without it.
 
 ## Security boundary
 
@@ -264,11 +292,12 @@ Answer the wizard with the least privilege that fits the intended use:
 - **OneDrive** (`onedrive`): set `access_scopes` to
   `Files.Read Files.Read.All Sites.Read.All offline_access`. The default value
   includes `Files.ReadWrite` and `Files.ReadWrite.All`.
-- **iCloud Drive** (`iclouddrive`): supply the Apple ID and an app-specific
-  password, and set `service` to `drive` for iCloud Drive rather than the photo
-  library. There is no read-only scope for this backend. Use the wizard rather
-  than `rclone config create`, which would place the password in shell history
-  and in the process argument list.
+- **iCloud Drive** (`iclouddrive`): supply the Apple ID and its **primary
+  password** — app-specific passwords are rejected — then the 2FA code, and set
+  `service` to `drive` for iCloud Drive rather than the photo library. There is
+  no read-only scope for this backend. Use the wizard rather than `rclone
+  config create`, which would place the password in shell history and in the
+  process argument list.
 
 Do not paste OAuth codes, tokens, client secrets, account email addresses, or
 the config password into Git or chat. Give each remote a non-identifying alias

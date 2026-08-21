@@ -135,18 +135,23 @@ PROVIDERS: tuple[CloudProvider, ...] = (
         name="icloud",
         display_name="iCloud Drive",
         backend="iclouddrive",
-        credential="account-password",
-        revocation="account.apple.com > Sign-In and Security > App-Specific Passwords",
+        credential="primary-apple-id-password",
+        revocation="change the Apple ID password; there is no per-app revocation",
         read_only_option=None,
         notes=(
             "rclone exposes no scope option for this backend, so enrollment is "
             "always read/write. Least privilege must come from the selected "
             "root folder, not from the grant.",
-            "The stored secret is an account password, not a scoped token. "
-            "rclone obscures it, and obscuring is reversible encoding rather "
-            "than encryption; only the config encryption protects it at rest.",
-            "Enroll with an app-specific password so the credential can be "
-            "revoked without changing the Apple ID password.",
+            "rclone does not accept app-specific passwords here; it requires "
+            "the primary Apple ID password plus 2FA. The stored secret "
+            "therefore unlocks the whole account, and rclone only obscures it, "
+            "which is reversible encoding rather than encryption. Only the "
+            "config encryption protects it at rest.",
+            "Because the credential is the account password, revoking this "
+            "one integration means changing that password everywhere. Weigh "
+            "that before enrolling iCloud at all.",
+            "Enrollment also stores a trust token that expires after about 30 "
+            "days, so re-authentication is periodic rather than one-time.",
             "service = drive selects iCloud Drive; service = photos selects the "
             "photo library instead.",
         ),

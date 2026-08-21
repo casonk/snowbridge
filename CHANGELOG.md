@@ -4,6 +4,11 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- Corrected the iCloud guidance: rclone rejects app-specific passwords for
+  `iclouddrive` and requires the primary Apple ID password plus 2FA, so that
+  credential unlocks the whole account and has no per-app revocation. Also
+  documented the `validate2FACode ... HTTP error 412` enrollment failure and
+  its two known causes.
 - Added `scripts/rclone_snowbridge.sh`, which pins rclone at the Snowbridge
   encrypted config and its config-password helper. A bare `rclone config`
   would otherwise enroll a provider into rclone's own unencrypted default

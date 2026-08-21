@@ -32,8 +32,9 @@ mode = "inventory"
 enabled = false
 
 # iCloud Drive. rclone exposes no scope option for this backend, so the grant
-# is always read/write and the stored secret is an account password rather
-# than a scoped token. Enroll with an app-specific password.
+# is always read/write. rclone rejects app-specific passwords here and needs
+# the primary Apple ID password, so the stored secret unlocks the whole
+# account and can only be revoked by changing that password.
 [[accounts]]
 id = "example-icloud"
 backend = "iclouddrive"
