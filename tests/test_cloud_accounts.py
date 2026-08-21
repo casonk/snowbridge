@@ -409,11 +409,27 @@ class CloudProviderTests(unittest.TestCase):
 
         icloud = cloud_accounts.PROVIDERS_BY_NAME["icloud"]
         self.assertFalse(icloud.supports_read_only_enrollment)
-        self.assertEqual(icloud.credential, "account-password")
+        self.assertEqual(icloud.credential, "primary-apple-id-password")
         for name in ("google-drive", "onedrive"):
             provider = cloud_accounts.PROVIDERS_BY_NAME[name]
             self.assertTrue(provider.supports_read_only_enrollment)
             self.assertEqual(provider.credential, "oauth-token")
+
+    def test_icloud_notes_do_not_recommend_an_app_specific_password(self) -> None:
+        """rclone rejects app-specific passwords for iclouddrive.
+
+        Recommending one sends the operator down a flow that cannot succeed
+        and understates the credential's blast radius, so the guidance must
+        say the opposite.
+        """
+
+        icloud = cloud_accounts.PROVIDERS_BY_NAME["icloud"]
+        notes = " ".join(icloud.notes).lower()
+
+        self.assertIn("does not accept app-specific passwords", notes)
+        self.assertIn("primary apple id password", notes)
+        self.assertNotIn("app-specific password so", notes)
+        self.assertNotIn("app-specific passwords", icloud.revocation.lower())
 
     def test_provider_lookup_by_backend_ignores_unlisted_types(self) -> None:
         self.assertIsNotNone(cloud_accounts.provider_for_backend("drive"))

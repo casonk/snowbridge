@@ -245,8 +245,9 @@ Google Drive, OneDrive, and iCloud Drive are onboarded by name, each bound to
 one exact rclone backend type. Google Drive and OneDrive authenticate with a
 scoped, separately revocable OAuth token and can be enrolled read-only. iCloud
 cannot: rclone exposes no scope option for `iclouddrive`, so its grant is
-always read/write and its stored secret is an account password rather than a
-token. Enroll iCloud with an app-specific password.
+always read/write. rclone also rejects app-specific passwords there and
+requires the primary Apple ID password, so that credential unlocks the whole
+account and revoking it means changing the account password.
 
 The rclone config encryption password comes from the macOS Login Keychain by
 default, or from KeePassXC through the `auto-pass` sibling repo.
