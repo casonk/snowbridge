@@ -4,6 +4,11 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- Fixed the repo being impossible to `pip install`. `pyproject.toml` declared no
+  package configuration, so setuptools fell back to flat-layout auto-discovery,
+  found `artifacts/` and `config/` as candidate top-level packages, and aborted
+  the build. Declaring an empty package list states the intent directly: this
+  repo ships operational scripts, not an importable distribution.
 - Added a KeePassXC-backed rclone config-password helper and a
   `doctor --password-source` selector, so the config encryption password can
   come from auto-pass instead of the macOS Login Keychain. The helper writes
