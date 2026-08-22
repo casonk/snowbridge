@@ -36,6 +36,14 @@ dev = [
     "dyno_lab @ git+https://github.com/casonk/dyno-lab.git",
 ]
 
+[tool.setuptools]
+# This repo ships operational scripts, not an importable distribution, so there
+# is deliberately nothing to package. Without this, setuptools falls back to
+# flat-layout auto-discovery, finds `artifacts/` and `config/` as candidate
+# top-level packages, cannot choose between them, and aborts the build -- which
+# made the repo impossible to `pip install` at all.
+packages = []
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
