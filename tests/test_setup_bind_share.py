@@ -82,7 +82,7 @@ class MountedSourceMatchesTests(unittest.TestCase):
             )
 
     def test_accepts_plain_path_match_via_realpath(self) -> None:
-        expected = pathlib.Path("/mnt/4tb-m2/git/private-repository/artifacts")
+        expected = pathlib.Path("/mnt/4tb-m2/data/example-consumer/artifacts")
 
         with mock.patch.object(
             setup_bind_share, "mounted_source_details", return_value=None
