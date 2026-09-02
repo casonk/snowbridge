@@ -11,6 +11,13 @@
 
 ## Lessons
 
+- Portfolio-general WireGuard/VPN installer and example conventions live in
+  `traction-control/LESSONSLEARNED.md` (agents read it first); the entries here
+  are repo-specific. Up-integrated from here: coherent key-pair generation,
+  treating realistic sample values as incomplete config, routing-scope profile
+  names, profile-specific local filenames, DNS resolver provisioning, and
+  firewalld zone assignment.
+
 ### 2026-08-11 — A macOS Podman LaunchAgent must stay alive as the VM supervisor
 
 - A short-lived launchd runner can let the Podman VM disappear with its process
@@ -215,26 +222,6 @@
   local config automatically and only fail when the line is genuinely
   ambiguous.
 
-### 2026-03-28 — WireGuard peer templates should generate missing key pairs coherently
-
-- The server private key and the iPhone public key form one pair, and the
-  iPhone private key and the server public key form the other.
-- When both placeholders for a pair are still present, the setup script should
-  generate and write a coherent pair automatically instead of failing on a
-  missing key that the repo is already in a position to create.
-
-### 2026-03-28 — Setup scripts should treat checked-in sample values as incomplete config
-
-- Generic placeholder detection is not enough when an example uses a realistic
-  sample value such as `vpn.example.com:51820`.
-- If a sample value would still produce a syntactically valid but unusable
-  config, the setup script should fail with a targeted message instead of
-  quietly proceeding or exporting a misleading client artifact.
-- When there is a safe mechanical fallback, such as substituting the current
-  public IP for a still-sample VPN endpoint, the script can apply it
-  automatically but should still warn that a stable endpoint is the better
-  final state.
-
 ### 2026-03-28 — Private VPN web examples should distinguish loopback-only from phone-reachable binds
 
 - A private HTTPS stack that binds Caddy only to `127.0.0.1` is usable for
@@ -250,23 +237,6 @@
 - For private HTTPS trust bootstrapping, prefer generating a `.mobileconfig`
   profile that installs the root certificate payload, then document the
   follow-up `Certificate Trust Settings` step explicitly.
-
-### 2026-03-30 — If a VPN profile advertises DNS, the installer should actually provide it
-
-- Advertising `DNS = 10.99.0.1` in the WireGuard client profile is not enough
-  on its own; the repo also needs to configure a resolver on that tunnel
-  address.
-- For private hostname access such as `files.snowbridge.internal`, prefer a
-  small split-DNS helper over teaching clients to browse the raw tunnel IP,
-  especially when the HTTPS layer depends on hostname-based certificate
-  selection.
-- When the host also has a desktop-only `/etc/hosts` override for the same
-  private name, the WireGuard DNS helper must ignore `/etc/hosts` or it will
-  hand VPN clients a bogus `127.0.0.1` answer alongside the real tunnel IP.
-- On firewalld-based systems, the VPN interface itself needs an explicit zone
-  assignment; otherwise SMB might work because the default zone allows `samba`
-  while private HTTPS and DNS silently fail because that same zone does not
-  allow `https` or `dns`.
 
 ### 2026-03-30 — Repeated multi-service troubleshooting should have a single capture script
 
@@ -332,23 +302,6 @@
 - When a mode is meant to bind a service only on a host's private RFC1918
   address, prefer explicit validation and a best-effort default over leaving
   `0.0.0.0` in place and hoping the user narrows it later.
-
-### 2026-03-30 — VPN profile names should describe routing scope, not just transport
-
-- A single generic WireGuard example blurs together two materially different
-  setups: "publicly reachable VPN to the host only" and "publicly reachable VPN
-  that also routes the wider home LAN".
-- Prefer explicit repo profiles for host-only versus wider-LAN WireGuard so the
-  intended `AllowedIPs`, forwarding requirements, and firewall expectations are
-  visible at the template and installer level.
-
-### 2026-03-30 — Multiple local profiles need distinct local filenames, not just profile flags
-
-- If two profiles share the same ignored local config paths, initializing the
-  second profile silently overwrites or mutates the first profile's local state.
-- When the repo supports side-by-side profile variants, the default local file
-  names should also be profile-specific so users can keep both variants ready at
-  once.
 
 ### 2026-03-30 — Do not carry legacy Samba `socket options` tuning into share sections
 
