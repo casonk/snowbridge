@@ -3,8 +3,12 @@ set namespaceSeparator none
 top to bottom direction
 skinparam componentStyle rectangle
 rectangle "check_wireguard_endpoint\n1 python file" as check_wireguard_endpoint
+rectangle "cloud_accounts\n1 python file" as cloud_accounts
 rectangle "export_caddy_mtls_profile\n1 python file" as export_caddy_mtls_profile
 rectangle "export_caddy_root_profile\n1 python file" as export_caddy_root_profile
+rectangle "macos_filebrowser_podman\n1 python file" as macos_filebrowser_podman
+rectangle "macos_smb_plan\n1 python file" as macos_smb_plan
+rectangle "rclone_config_password\n1 python file" as rclone_config_password
 rectangle "setup_bind_share\n1 python file" as setup_bind_share
 rectangle "setup_filebrowser_access\n1 python file" as setup_filebrowser_access
 @enduml

@@ -11,14 +11,17 @@ rectangle "config/network/networkmanager-static-ip.example.sh\n0 local shell edg
 rectangle "config/network/networkmanager-static-ip.local.sh\n0 local shell edges\n2 external tools" as shell_config_network_networkmanager_static_ip_local_sh #DBEAFE
 rectangle "scripts/build_filebrowser_fork_image.sh\n0 local shell edges\n4 external tools" as shell_scripts_build_filebrowser_fork_image_sh #DBEAFE
 rectangle "scripts/check_filebrowser_backend.sh\n0 local shell edges\n7 external tools" as shell_scripts_check_filebrowser_backend_sh #DBEAFE
+rectangle "scripts/check_share_bind_mounts.sh\n0 local shell edges\n9 external tools" as shell_scripts_check_share_bind_mounts_sh #DBEAFE
 rectangle "scripts/debug_private_access.sh\n0 local shell edges\n11 external tools" as shell_scripts_debug_private_access_sh #DBEAFE
 rectangle "scripts/deploy_filebrowser_fork_image.sh\n0 local shell edges\n10 external tools" as shell_scripts_deploy_filebrowser_fork_image_sh #DBEAFE
 rectangle "scripts/recover_setup_share.sh\n0 local shell edges\n4 external tools" as shell_scripts_recover_setup_share_sh #DBEAFE
 rectangle "scripts/remount_luks_share.sh\n0 local shell edges\n3 external tools" as shell_scripts_remount_luks_share_sh #DBEAFE
+rectangle "scripts/repair_share_access.sh\n0 local shell edges\n0 external tools" as shell_scripts_repair_share_access_sh #DBEAFE
 rectangle "scripts/run_tachometer_profile.sh\n0 local shell edges\n3 external tools" as shell_scripts_run_tachometer_profile_sh #DBEAFE
 rectangle "scripts/setup_caddy_filebrowser.sh\n0 local shell edges\n32 external tools" as shell_scripts_setup_caddy_filebrowser_sh #DBEAFE
 rectangle "scripts/setup_filebrowser_backend_watch.sh\n0 local shell edges\n2 external tools" as shell_scripts_setup_filebrowser_backend_watch_sh #DBEAFE
 rectangle "scripts/setup_filebrowser_fork_workspace.sh\n0 local shell edges\n7 external tools" as shell_scripts_setup_filebrowser_fork_workspace_sh #DBEAFE
+rectangle "scripts/setup_share_bind_mount_watch.sh\n0 local shell edges\n2 external tools" as shell_scripts_setup_share_bind_mount_watch_sh #DBEAFE
 rectangle "scripts/setup_wireguard_endpoint_monitor.sh\n0 local shell edges\n3 external tools" as shell_scripts_setup_wireguard_endpoint_monitor_sh #DBEAFE
 rectangle "scripts/start_snowbridge.sh\n0 local shell edges\n7 external tools" as shell_scripts_start_snowbridge_sh #DBEAFE
 rectangle "vendor/filebrowser-upstream/docker/alpine/healthcheck.sh\n0 local shell edges\n5 external tools" as shell_vendor_filebrowser_upstream_docker_alpine_healthcheck_sh #DBEAFE
@@ -52,11 +55,13 @@ cloud "docker" as tool_docker #FEF3C7
 cloud "docker compose" as tool_docker_compose #FEF3C7
 cloud "docker-compose" as tool_docker_compose_2 #FEF3C7
 cloud "e2fsck" as tool_e2fsck #FEF3C7
+cloud "findmnt" as tool_findmnt #FEF3C7
 cloud "golang-go" as tool_golang_go #FEF3C7
 cloud "grep" as tool_grep #FEF3C7
 cloud "host" as tool_host #FEF3C7
 cloud "i" as tool_i #FEF3C7
 cloud "id" as tool_id #FEF3C7
+cloud "in_block" as tool_in_block #FEF3C7
 cloud "in_global" as tool_in_global_2 #FEF3C7
 cloud "install" as tool_install #FEF3C7
 cloud "ip" as tool_ip #FEF3C7
@@ -77,6 +82,7 @@ cloud "print" as tool_print #FEF3C7
 cloud "private-vpn" as tool_private_vpn #FEF3C7
 cloud "private-vpn-mtls" as tool_private_vpn_mtls #FEF3C7
 cloud "public" as tool_public #FEF3C7
+cloud "repair_count" as tool_repair_count #FEF3C7
 cloud "rm" as tool_rm #FEF3C7
 cloud "run" as tool_run #FEF3C7
 cloud "sed" as tool_sed #FEF3C7
@@ -114,6 +120,15 @@ shell_scripts_check_filebrowser_backend_sh --> tool_docker_compose
 shell_scripts_check_filebrowser_backend_sh --> tool_rm
 shell_scripts_check_filebrowser_backend_sh --> tool_sleep
 shell_scripts_check_filebrowser_backend_sh --> tool_up
+shell_scripts_check_share_bind_mounts_sh --> tool_cat
+shell_scripts_check_share_bind_mounts_sh --> tool_findmnt
+shell_scripts_check_share_bind_mounts_sh --> tool_in_block
+shell_scripts_check_share_bind_mounts_sh --> tool_mapfile
+shell_scripts_check_share_bind_mounts_sh --> tool_mount
+shell_scripts_check_share_bind_mounts_sh --> tool_next
+shell_scripts_check_share_bind_mounts_sh --> tool_print
+shell_scripts_check_share_bind_mounts_sh --> tool_repair_count
+shell_scripts_check_share_bind_mounts_sh --> tool_umount
 shell_scripts_debug_private_access_sh --> tool_tool_443
 shell_scripts_debug_private_access_sh --> tool_tool_445
 shell_scripts_debug_private_access_sh --> tool_tool_80
@@ -186,6 +201,8 @@ shell_scripts_setup_filebrowser_fork_workspace_sh --> tool_ln
 shell_scripts_setup_filebrowser_fork_workspace_sh --> tool_minor
 shell_scripts_setup_filebrowser_fork_workspace_sh --> tool_node
 shell_scripts_setup_filebrowser_fork_workspace_sh --> tool_rm
+shell_scripts_setup_share_bind_mount_watch_sh --> tool_cat
+shell_scripts_setup_share_bind_mount_watch_sh --> tool_systemctl
 shell_scripts_setup_wireguard_endpoint_monitor_sh --> tool_cat
 shell_scripts_setup_wireguard_endpoint_monitor_sh --> tool_install
 shell_scripts_setup_wireguard_endpoint_monitor_sh --> tool_systemctl
@@ -206,8 +223,8 @@ shell_vendor_filebrowser_upstream_docker_common_healthcheck_sh --> tool_wget
 shell_vendor_filebrowser_upstream_docker_s6_custom_cont_init_d_20_config --> tool_cp
 shell_vendor_filebrowser_upstream_docker_s6_custom_cont_init_d_20_config --> tool_srv
 note as shellGraphSummary
-Scanned 21 shell scripts.
+Scanned 24 shell scripts.
 Detected 0 local shell edges.
-Detected 71 external tools.
+Detected 74 external tools.
 end note
 @enduml
