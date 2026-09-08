@@ -5,22 +5,25 @@ skinparam shadowing false
 skinparam defaultFontName Monospace
 skinparam componentStyle rectangle
 skinparam linetype ortho
-rectangle ".github/workflows/ci.yml\n4 detected tools" as source_github_workflows_ci_yml #E0F2FE
-rectangle ".github/workflows/secret-scan.yml\n5 detected tools" as source_github_workflows_secret_scan_yml #E0F2FE
+rectangle ".github/workflows/ci.yml\n8 detected tools" as source_github_workflows_ci_yml #E0F2FE
+rectangle ".github/workflows/secret-scan.yml\n1 detected tool" as source_github_workflows_secret_scan_yml #E0F2FE
 rectangle "config/access/tailscale/tailscale-subnet-router.example.sh\n1 detected tool" as source_config_access_tailscale_tailscale_subnet_router_example_sh #E0F2FE
 rectangle "config/access/tailscale/tailscale-subnet-router.local.sh\n1 detected tool" as source_config_access_tailscale_tailscale_subnet_router_local_sh #E0F2FE
 rectangle "config/network/networkmanager-static-ip.example.sh\n2 detected tools" as source_config_network_networkmanager_static_ip_example_sh #E0F2FE
 rectangle "config/network/networkmanager-static-ip.local.sh\n2 detected tools" as source_config_network_networkmanager_static_ip_local_sh #E0F2FE
 rectangle "scripts/build_filebrowser_fork_image.sh\n4 detected tools" as source_scripts_build_filebrowser_fork_image_sh #E0F2FE
 rectangle "scripts/check_filebrowser_backend.sh\n7 detected tools" as source_scripts_check_filebrowser_backend_sh #E0F2FE
+rectangle "scripts/check_share_bind_mounts.sh\n9 detected tools" as source_scripts_check_share_bind_mounts_sh #E0F2FE
 rectangle "scripts/debug_private_access.sh\n12 detected tools" as source_scripts_debug_private_access_sh #E0F2FE
 rectangle "scripts/deploy_filebrowser_fork_image.sh\n10 detected tools" as source_scripts_deploy_filebrowser_fork_image_sh #E0F2FE
 rectangle "scripts/recover_setup_share.sh\n4 detected tools" as source_scripts_recover_setup_share_sh #E0F2FE
 rectangle "scripts/remount_luks_share.sh\n3 detected tools" as source_scripts_remount_luks_share_sh #E0F2FE
+rectangle "scripts/repair_share_access.sh\n1 detected tool" as source_scripts_repair_share_access_sh #E0F2FE
 rectangle "scripts/run_tachometer_profile.sh\n3 detected tools" as source_scripts_run_tachometer_profile_sh #E0F2FE
 rectangle "scripts/setup_caddy_filebrowser.sh\n32 detected tools" as source_scripts_setup_caddy_filebrowser_sh #E0F2FE
 rectangle "scripts/setup_filebrowser_backend_watch.sh\n2 detected tools" as source_scripts_setup_filebrowser_backend_watch_sh #E0F2FE
 rectangle "scripts/setup_filebrowser_fork_workspace.sh\n7 detected tools" as source_scripts_setup_filebrowser_fork_workspace_sh #E0F2FE
+rectangle "scripts/setup_share_bind_mount_watch.sh\n2 detected tools" as source_scripts_setup_share_bind_mount_watch_sh #E0F2FE
 rectangle "scripts/setup_wireguard_endpoint_monitor.sh\n3 detected tools" as source_scripts_setup_wireguard_endpoint_monitor_sh #E0F2FE
 rectangle "scripts/start_snowbridge.sh\n8 detected tools" as source_scripts_start_snowbridge_sh #E0F2FE
 rectangle "vendor/filebrowser-upstream/Dockerfile\n8 detected tools" as source_vendor_filebrowser_upstream_dockerfile #E0F2FE
@@ -45,7 +48,6 @@ cloud "^[[:space:]]*" as tool_space #FEF3C7
 cloud "^[[:space:]]+" as tool_space_2 #FEF3C7
 cloud "actions/checkout" as tool_actions_checkout #FEF3C7
 cloud "actions/setup-python" as tool_actions_setup_python #FEF3C7
-cloud "actions/upload-artifact" as tool_actions_upload_artifact #FEF3C7
 cloud "addgroup" as tool_addgroup #FEF3C7
 cloud "adduser" as tool_adduser #FEF3C7
 cloud "apk" as tool_apk #FEF3C7
@@ -56,27 +58,29 @@ cloud "attempt" as tool_attempt #FEF3C7
 cloud "attempt++" as tool_attempt_2 #FEF3C7
 cloud "awk" as tool_awk #FEF3C7
 cloud "bash" as tool_bash #FEF3C7
+cloud "casonk/.github/.github/workflows/python-ci.yml" as tool_casonk_github_github_workflows_python_ci_yml #FEF3C7
+cloud "casonk/.github/.github/workflows/secret-scan.yml" as tool_casonk_github_github_workflows_secret_scan_yml #FEF3C7
 cloud "cat" as tool_cat #FEF3C7
 cloud "chmod" as tool_chmod #FEF3C7
 cloud "chown" as tool_chown #FEF3C7
 cloud "cli" as tool_cli #FEF3C7
 cloud "cp" as tool_cp #FEF3C7
 cloud "cryptsetup" as tool_cryptsetup #FEF3C7
-cloud "curl" as tool_curl #FEF3C7
 cloud "dig" as tool_dig #FEF3C7
 cloud "dnf" as tool_dnf #FEF3C7
 cloud "docker" as tool_docker #FEF3C7
 cloud "docker compose" as tool_docker_compose #FEF3C7
 cloud "docker-compose" as tool_docker_compose_2 #FEF3C7
 cloud "e2fsck" as tool_e2fsck #FEF3C7
+cloud "findmnt" as tool_findmnt #FEF3C7
 cloud "git" as tool_git #FEF3C7
-cloud "gitleaks/gitleaks-action" as tool_gitleaks_gitleaks_action #FEF3C7
 cloud "go" as tool_go #FEF3C7
 cloud "golang-go" as tool_golang_go #FEF3C7
 cloud "grep" as tool_grep #FEF3C7
 cloud "host" as tool_host #FEF3C7
 cloud "i" as tool_i #FEF3C7
 cloud "id" as tool_id #FEF3C7
+cloud "in_block" as tool_in_block #FEF3C7
 cloud "in_global" as tool_in_global_2 #FEF3C7
 cloud "install" as tool_install #FEF3C7
 cloud "ip" as tool_ip #FEF3C7
@@ -95,17 +99,19 @@ cloud "pip" as tool_pip #FEF3C7
 cloud "pnpm" as tool_pnpm #FEF3C7
 cloud "podman" as tool_podman #FEF3C7
 cloud "podman-compose" as tool_podman_compose #FEF3C7
-cloud "pre-commit" as tool_pre_commit #FEF3C7
 cloud "print" as tool_print #FEF3C7
 cloud "private-vpn" as tool_private_vpn #FEF3C7
 cloud "private-vpn-mtls" as tool_private_vpn_mtls #FEF3C7
 cloud "public" as tool_public #FEF3C7
+cloud "rclone" as tool_rclone #FEF3C7
+cloud "repair_count" as tool_repair_count #FEF3C7
 cloud "rm" as tool_rm #FEF3C7
 cloud "run" as tool_run #FEF3C7
 cloud "sed" as tool_sed #FEF3C7
 cloud "setcap" as tool_setcap #FEF3C7
 cloud "settings.json" as tool_settings_json #FEF3C7
 cloud "sh" as tool_sh #FEF3C7
+cloud "sha256sum" as tool_sha256sum #FEF3C7
 cloud "site" as tool_site #FEF3C7
 cloud "sleep" as tool_sleep #FEF3C7
 cloud "split(site," as tool_split_site #FEF3C7
@@ -113,9 +119,10 @@ cloud "srv" as tool_srv #FEF3C7
 cloud "summarize" as tool_summarize #FEF3C7
 cloud "systemctl" as tool_systemctl #FEF3C7
 cloud "tachometer" as tool_tachometer #FEF3C7
-cloud "tar" as tool_tar #FEF3C7
 cloud "tr" as tool_tr #FEF3C7
 cloud "umount" as tool_umount #FEF3C7
+cloud "unittest" as tool_unittest #FEF3C7
+cloud "unzip" as tool_unzip #FEF3C7
 cloud "up" as tool_up #FEF3C7
 cloud "update-ca-certificates" as tool_update_ca_certificates #FEF3C7
 cloud "update-ca-trust" as tool_update_ca_trust #FEF3C7
@@ -125,13 +132,13 @@ cloud "wget" as tool_wget #FEF3C7
 cloud "yum" as tool_yum #FEF3C7
 source_github_workflows_ci_yml --> tool_actions_checkout
 source_github_workflows_ci_yml --> tool_actions_setup_python
-source_github_workflows_ci_yml --> tool_pip
-source_github_workflows_ci_yml --> tool_pre_commit
-source_github_workflows_secret_scan_yml --> tool_actions_checkout
-source_github_workflows_secret_scan_yml --> tool_actions_upload_artifact
-source_github_workflows_secret_scan_yml --> tool_curl
-source_github_workflows_secret_scan_yml --> tool_gitleaks_gitleaks_action
-source_github_workflows_secret_scan_yml --> tool_tar
+source_github_workflows_ci_yml --> tool_casonk_github_github_workflows_python_ci_yml
+source_github_workflows_ci_yml --> tool_install
+source_github_workflows_ci_yml --> tool_rclone
+source_github_workflows_ci_yml --> tool_sha256sum
+source_github_workflows_ci_yml --> tool_unittest
+source_github_workflows_ci_yml --> tool_unzip
+source_github_workflows_secret_scan_yml --> tool_casonk_github_github_workflows_secret_scan_yml
 source_config_access_tailscale_tailscale_subnet_router_example_sh --> tool_systemctl
 source_config_access_tailscale_tailscale_subnet_router_local_sh --> tool_systemctl
 source_config_network_networkmanager_static_ip_example_sh --> tool_ipv6_method
@@ -149,6 +156,15 @@ source_scripts_check_filebrowser_backend_sh --> tool_docker_compose
 source_scripts_check_filebrowser_backend_sh --> tool_rm
 source_scripts_check_filebrowser_backend_sh --> tool_sleep
 source_scripts_check_filebrowser_backend_sh --> tool_up
+source_scripts_check_share_bind_mounts_sh --> tool_cat
+source_scripts_check_share_bind_mounts_sh --> tool_findmnt
+source_scripts_check_share_bind_mounts_sh --> tool_in_block
+source_scripts_check_share_bind_mounts_sh --> tool_mapfile
+source_scripts_check_share_bind_mounts_sh --> tool_mount
+source_scripts_check_share_bind_mounts_sh --> tool_next
+source_scripts_check_share_bind_mounts_sh --> tool_print
+source_scripts_check_share_bind_mounts_sh --> tool_repair_count
+source_scripts_check_share_bind_mounts_sh --> tool_umount
 source_scripts_debug_private_access_sh --> tool_tool_443
 source_scripts_debug_private_access_sh --> tool_tool_445
 source_scripts_debug_private_access_sh --> tool_tool_80
@@ -178,6 +194,7 @@ source_scripts_recover_setup_share_sh --> tool_sleep
 source_scripts_remount_luks_share_sh --> tool_mapfile
 source_scripts_remount_luks_share_sh --> tool_mount
 source_scripts_remount_luks_share_sh --> tool_umount
+source_scripts_repair_share_access_sh --> tool_bash
 source_scripts_run_tachometer_profile_sh --> tool_run
 source_scripts_run_tachometer_profile_sh --> tool_summarize
 source_scripts_run_tachometer_profile_sh --> tool_tachometer
@@ -222,6 +239,8 @@ source_scripts_setup_filebrowser_fork_workspace_sh --> tool_ln
 source_scripts_setup_filebrowser_fork_workspace_sh --> tool_minor
 source_scripts_setup_filebrowser_fork_workspace_sh --> tool_node
 source_scripts_setup_filebrowser_fork_workspace_sh --> tool_rm
+source_scripts_setup_share_bind_mount_watch_sh --> tool_cat
+source_scripts_setup_share_bind_mount_watch_sh --> tool_systemctl
 source_scripts_setup_wireguard_endpoint_monitor_sh --> tool_cat
 source_scripts_setup_wireguard_endpoint_monitor_sh --> tool_install
 source_scripts_setup_wireguard_endpoint_monitor_sh --> tool_systemctl
@@ -267,7 +286,7 @@ source_vendor_filebrowser_upstream_docker_s6_custom_cont_init_d_20_config --> to
 source_vendor_filebrowser_upstream_www_dockerfile --> tool_docker
 source_vendor_filebrowser_upstream_www_dockerfile --> tool_pip
 note as toolingGraphSummary
-Scanned 28 tooling entrypoints.
-Detected 90 third-party tools.
+Scanned 31 tooling entrypoints.
+Detected 94 third-party tools.
 end note
 @enduml
