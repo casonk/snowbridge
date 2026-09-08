@@ -1,5 +1,28 @@
 @startuml classes_snowbridge
 set namespaceSeparator none
+class "AirFileBrowserConfig" as macos_filebrowser_podman.AirFileBrowserConfig {
+  config_directory : Path
+  container_name : str
+  database_directory : Path
+  database_path : Path
+  deployment_id : str
+  home : Path
+  image : str
+  launchagent_path : Path
+  listen_address : str
+  listen_port : int
+  logs_directory : Path
+  podman_binary : Path
+  podman_connection : str
+  podman_machine : str
+  python_binary : Path
+  settings_path : Path
+  share_path : Path
+  state_directory : Path
+  state_marker : Path
+}
+class "<color:red>AirFileBrowserError</color>" as macos_filebrowser_podman.AirFileBrowserError {
+}
 class "AppSpec" as setup_filebrowser_access.AppSpec {
   root : str
 }
@@ -9,7 +32,42 @@ class "AuthSpec" as setup_filebrowser_access.AuthSpec {
   proxy_header : str | None
   proxy_username : str | None
 }
+class "CloudAccount" as cloud_accounts.CloudAccount {
+  account_id : str
+  backend : str
+  enabled : bool
+  mode : str
+  remote : str
+  root : str
+  share_target : Path
+}
+class "<color:red>CloudAccountError</color>" as cloud_accounts.CloudAccountError {
+}
+class "CloudProvider" as cloud_accounts.CloudProvider {
+  backend : str
+  credential : str
+  display_name : str
+  name : str
+  notes : tuple[str, ...]
+  read_only_option : str | None
+  revocation : str
+  supports_read_only_enrollment : bool
+}
+class "CloudRegistry" as cloud_accounts.CloudRegistry {
+  accounts : tuple[CloudAccount, ...]
+  rclone_config : Path
+}
+class "CommandRunner" as macos_filebrowser_podman.CommandRunner {
+  run(command: Sequence[str]) -> subprocess.CompletedProcess[str]
+}
 class "<color:red>ConfigError</color>" as setup_bind_share.ConfigError {
+}
+class "ContainerState" as macos_filebrowser_podman.ContainerState {
+  exists : bool
+  loopback_binding_valid : bool
+  managed : bool
+  running : bool
+  spec_hash : str
 }
 class "EmailConfig" as check_wireguard_endpoint.EmailConfig {
   config_path : Path
@@ -30,6 +88,7 @@ class "FolderMount" as setup_bind_share.FolderMount {
   name : str
   persist : bool
   recursive_acl : bool
+  requires_mounts_for : str | None
   source : Path
   target_path : Path
   target_relative : PurePosixPath
@@ -43,6 +102,16 @@ class "GlobalSettings" as setup_bind_share.GlobalSettings {
   smb_group : str
   smb_user : str
 }
+class "HostInventory" as macos_smb_plan.HostInventory {
+  guest_smb_share_count : int
+  non_target_smb_share_count : int
+  pf_boundary_verified : bool
+  provenance : str
+  target_share_state : str
+  tcp_445_listeners : tuple[str, ...]
+  wireguard_addresses : tuple[str, ...]
+  wireguard_interface_present : bool
+}
 class "IdentityPaths" as export_caddy_mtls_profile.IdentityPaths {
   cert_path : Path
   key_path : Path
@@ -52,6 +121,8 @@ class "IdentityPaths" as export_caddy_mtls_profile.IdentityPaths {
   slug : str
   staged_p12_path : Path
   staged_profile_path : Path
+}
+class "<color:red>MacOSSMBPlanError</color>" as macos_smb_plan.MacOSSMBPlanError {
 }
 class "MonitorConfig" as check_wireguard_endpoint.MonitorConfig {
   bind_interface : str | None
@@ -89,6 +160,25 @@ class "Ownership" as export_caddy_root_profile.Ownership {
   owner_name : str
   uid : int
 }
+class "<color:red>PasswordHelperError</color>" as rclone_config_password.PasswordHelperError {
+}
+class "PlanConfig" as macos_smb_plan.PlanConfig {
+  deployment_id : str
+  share
+  wireguard
+}
+class "PodmanManager" as macos_filebrowser_podman.PodmanManager {
+  config
+  runner
+  container_state() -> ContainerState
+  ensure_image() -> None
+  ensure_machine_running() -> None
+  image_exists() -> bool
+  machine_state() -> str
+  reconcile_container() -> None
+  stop_managed_container() -> ContainerState
+  verify_connection() -> None
+}
 class "ProfileConfig" as check_wireguard_endpoint.ProfileConfig {
   config_path : Path
   name : str
@@ -122,6 +212,17 @@ class "<color:red>SetupError</color>" as export_caddy_root_profile.SetupError {
 }
 class "<color:red>SetupError</color>" as setup_filebrowser_access.SetupError {
 }
+class "ShareConfig" as macos_smb_plan.ShareConfig {
+  expected_accounts : tuple[str, ...]
+  name : str
+  path : Path
+}
+class "ShareRecord" as macos_smb_plan.ShareRecord {
+  guest_access : bool
+  name : str
+  path : str
+  smb_enabled : bool
+}
 class "SignalConfig" as check_wireguard_endpoint.SignalConfig {
   config_path : Path
   enabled : bool
@@ -129,12 +230,25 @@ class "SignalConfig" as check_wireguard_endpoint.SignalConfig {
   recipient : str
   sender_script : Path
 }
+class "StopEvent" as macos_filebrowser_podman.StopEvent {
+  is_set() -> bool
+  wait(timeout: float) -> bool
+}
 class "UserSpec" as setup_filebrowser_access.UserSpec {
   admin : bool
   password : str
   scope : str
   username : str
 }
+class "WireGuardConfig" as macos_smb_plan.WireGuardConfig {
+  allowed_client_addresses : tuple[ipaddress.IPv4Interface, ...]
+  host_address : IPv4Interface
+  interface : str
+}
 check_wireguard_endpoint.MonitorConfig --> check_wireguard_endpoint.EmailConfig : email
 check_wireguard_endpoint.MonitorConfig --> check_wireguard_endpoint.SignalConfig : signal
+macos_filebrowser_podman.PodmanManager --> macos_filebrowser_podman.CommandRunner : runner
+macos_smb_plan.PlanConfig --> macos_smb_plan.ShareConfig : share
+macos_smb_plan.PlanConfig --> macos_smb_plan.WireGuardConfig : wireguard
+macos_filebrowser_podman.AirFileBrowserConfig --o macos_filebrowser_podman.PodmanManager : config
 @enduml
