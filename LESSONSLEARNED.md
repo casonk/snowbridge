@@ -17,6 +17,14 @@
   treating realistic sample values as incomplete config, routing-scope profile
   names, profile-specific local filenames, DNS resolver provisioning, and
   firewalld zone assignment.
+- Never reuse one WireGuard client key across multiple phones or computers.
+  Give every concurrently active device a unique key and tunnel IP, and keep
+  device-named local profiles/QR artifacts so an obsolete shared identity is
+  not imported accidentally.
+- When changing the WireGuard server listen port, update every ignored
+  Snowbridge peer profile monitored by `check_wireguard_endpoint.py`, regenerate
+  its QR artifact, and retain a local backup. Public-IP drift monitoring
+  preserves each profile's existing port; it does not migrate ports itself.
 
 ### 2026-08-11 — A macOS Podman LaunchAgent must stay alive as the VM supervisor
 
