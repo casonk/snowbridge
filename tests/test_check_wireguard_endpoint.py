@@ -12,8 +12,8 @@ from scripts import check_wireguard_endpoint
 
 class ParseEndpointValueTests(unittest.TestCase):
     def test_parses_ipv4_endpoint(self) -> None:
-        parsed = check_wireguard_endpoint.parse_endpoint_value("68.41.12.47:51820")
-        self.assertEqual(parsed.host, "68.41.12.47")
+        parsed = check_wireguard_endpoint.parse_endpoint_value("203.0.113.47:51820")
+        self.assertEqual(parsed.host, "203.0.113.47")
         self.assertEqual(parsed.port, 51820)
 
     def test_parses_bracketed_ipv6_endpoint(self) -> None:
@@ -80,7 +80,7 @@ class RunMonitorTests(unittest.TestCase):
             outcome = check_wireguard_endpoint.run_monitor(
                 config,
                 state,
-                public_ip_detector=lambda _urls, _iface: "68.41.12.47",
+                public_ip_detector=lambda _urls, _iface: "203.0.113.47",
                 qr_renderer=lambda profile: rendered.append(profile.qr_path),
                 email_sender=lambda _cfg, subject, body: emails.append((subject, body)),
                 signal_sender=lambda _cfg, message: signals.append(message),
@@ -89,24 +89,24 @@ class RunMonitorTests(unittest.TestCase):
             self.assertTrue(outcome.endpoint_changed)
             self.assertEqual(
                 public_profile.read_text(encoding="utf-8").splitlines()[-1],
-                "Endpoint = 68.41.12.47:51820",
+                "Endpoint = 203.0.113.47:51820",
             )
             self.assertEqual(
                 lan_profile.read_text(encoding="utf-8").splitlines()[-1],
-                "Endpoint = 68.41.12.47:51820",
+                "Endpoint = 203.0.113.47:51820",
             )
             self.assertEqual(rendered, [root / "public.png", root / "lan.png"])
             self.assertEqual(len(emails), 1)
             self.assertEqual(len(signals), 1)
-            self.assertEqual(state["last_applied_public_ip"], "68.41.12.47")
-            self.assertEqual(state["last_applied_endpoint"], "68.41.12.47:51820")
+            self.assertEqual(state["last_applied_public_ip"], "203.0.113.47")
+            self.assertEqual(state["last_applied_endpoint"], "203.0.113.47:51820")
 
     def test_skips_repeated_notification_when_endpoint_and_state_match(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             profile_path = root / "iphone-peer.public-vpn.local.conf"
             profile_path.write_text(
-                "[Peer]\nEndpoint = 68.41.12.47:51820\n",
+                "[Peer]\nEndpoint = 203.0.113.47:51820\n",
                 encoding="utf-8",
             )
 
@@ -143,18 +143,18 @@ class RunMonitorTests(unittest.TestCase):
             emails: list[tuple[str, str]] = []
             signals: list[str] = []
             state: dict[str, object] = {
-                "last_applied_public_ip": "68.41.12.47",
-                "last_applied_endpoint": "68.41.12.47:51820",
+                "last_applied_public_ip": "203.0.113.47",
+                "last_applied_endpoint": "203.0.113.47:51820",
                 "notifications": {
-                    "email": {"last_sent_endpoint": "68.41.12.47:51820"},
-                    "signal": {"last_sent_endpoint": "68.41.12.47:51820"},
+                    "email": {"last_sent_endpoint": "203.0.113.47:51820"},
+                    "signal": {"last_sent_endpoint": "203.0.113.47:51820"},
                 },
             }
 
             outcome = check_wireguard_endpoint.run_monitor(
                 config,
                 state,
-                public_ip_detector=lambda _urls, _iface: "68.41.12.47",
+                public_ip_detector=lambda _urls, _iface: "203.0.113.47",
                 qr_renderer=lambda profile: rendered.append(profile.qr_path),
                 email_sender=lambda _cfg, subject, body: emails.append((subject, body)),
                 signal_sender=lambda _cfg, message: signals.append(message),
@@ -170,7 +170,7 @@ class RunMonitorTests(unittest.TestCase):
             root = Path(tmpdir)
             profile_path = root / "iphone-peer.public-vpn.local.conf"
             profile_path.write_text(
-                "[Peer]\nEndpoint = 68.41.12.47:51820\n",
+                "[Peer]\nEndpoint = 203.0.113.47:51820\n",
                 encoding="utf-8",
             )
 
@@ -205,8 +205,8 @@ class RunMonitorTests(unittest.TestCase):
 
             emails: list[tuple[str, str]] = []
             state: dict[str, object] = {
-                "last_applied_public_ip": "68.41.12.47",
-                "last_applied_endpoint": "68.41.12.47:51820",
+                "last_applied_public_ip": "203.0.113.47",
+                "last_applied_endpoint": "203.0.113.47:51820",
                 "notifications": {
                     "email": {"last_sent_endpoint": "68.41.117.38:51820"},
                 },
@@ -215,7 +215,7 @@ class RunMonitorTests(unittest.TestCase):
             outcome = check_wireguard_endpoint.run_monitor(
                 config,
                 state,
-                public_ip_detector=lambda _urls, _iface: "68.41.12.47",
+                public_ip_detector=lambda _urls, _iface: "203.0.113.47",
                 qr_renderer=lambda profile: None,
                 email_sender=lambda _cfg, subject, body: emails.append((subject, body)),
                 signal_sender=lambda _cfg, message: None,
@@ -225,7 +225,7 @@ class RunMonitorTests(unittest.TestCase):
             self.assertEqual(len(emails), 1)
             self.assertEqual(
                 state["notifications"]["email"]["last_sent_endpoint"],  # type: ignore[index]
-                "68.41.12.47:51820",
+                "203.0.113.47:51820",
             )
 
     def test_note_to_self_signal_config_does_not_require_recipient(self) -> None:
@@ -272,7 +272,7 @@ class RunMonitorTests(unittest.TestCase):
             outcome = check_wireguard_endpoint.run_monitor(
                 config,
                 state,
-                public_ip_detector=lambda _urls, _iface: "68.41.12.47",
+                public_ip_detector=lambda _urls, _iface: "203.0.113.47",
                 qr_renderer=lambda profile: None,
                 email_sender=lambda _cfg, subject, body: None,
                 signal_sender=lambda _cfg, message: signals.append(message),
