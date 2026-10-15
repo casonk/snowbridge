@@ -1,5 +1,28 @@
 [
  {
+  "RuleID": "portfolio-git-workspace-path",
+  "Description": "Hardcoded absolute path to local git workspace in config/code/scripts",
+  "StartLine": 51,
+  "EndLine": 51,
+  "StartColumn": 35,
+  "EndColumn": 50,
+  "Match": "/mnt/4tb-m2/git/",
+  "Secret": "/mnt/4tb-m2/git/",
+  "File": "tests/test_setup_bind_share.py",
+  "SymlinkFile": "",
+  "Commit": "2f40f3648a085cb4faf5e2d8e5fdd291a684d85f",
+  "Entropy": 3.0778196,
+  "Author": "casonk",
+  "Email": "72440835+casonk@users.noreply.github.com",
+  "Date": "2026-04-04T09:48:52Z",
+  "Message": "fix: normalize bind mount source matching",
+  "Tags": [
+   "local-path",
+   "machine-specific"
+  ],
+  "Fingerprint": "2f40f3648a085cb4faf5e2d8e5fdd291a684d85f:tests/test_setup_bind_share.py:portfolio-git-workspace-path:51"
+ },
+ {
   "RuleID": "keepass-real-profile-name",
   "Description": "Real KeePass profile name committed to a config or example file",
   "StartLine": 11,
@@ -10,7 +33,7 @@
   "Secret": "infra",
   "File": "config/web/filebrowser/access.example.toml",
   "SymlinkFile": "",
-  "Commit": "8d49e746fd151e802948464c8d41917de93fe546",
+  "Commit": "eb74e091c05b4d5a957fa993443a3b06b232b195",
   "Entropy": 2.321928,
   "Author": "casonk",
   "Email": "72440835+casonk@users.noreply.github.com",
@@ -20,7 +43,7 @@
    "keepass",
    "sensitive-config"
   ],
-  "Fingerprint": "8d49e746fd151e802948464c8d41917de93fe546:config/web/filebrowser/access.example.toml:keepass-real-profile-name:11"
+  "Fingerprint": "eb74e091c05b4d5a957fa993443a3b06b232b195:config/web/filebrowser/access.example.toml:keepass-real-profile-name:11"
  },
  {
   "RuleID": "keepass-real-profile-name",
@@ -33,7 +56,7 @@
   "Secret": "infra",
   "File": "config/auto-pass.example.ini",
   "SymlinkFile": "",
-  "Commit": "8d49e746fd151e802948464c8d41917de93fe546",
+  "Commit": "eb74e091c05b4d5a957fa993443a3b06b232b195",
   "Entropy": 2.321928,
   "Author": "casonk",
   "Email": "72440835+casonk@users.noreply.github.com",
@@ -43,29 +66,6 @@
    "keepass",
    "sensitive-config"
   ],
-  "Fingerprint": "8d49e746fd151e802948464c8d41917de93fe546:config/auto-pass.example.ini:keepass-real-profile-name:5"
- },
- {
-  "RuleID": "portfolio-git-workspace-path",
-  "Description": "Hardcoded absolute path to local git workspace in config/code/scripts",
-  "StartLine": 51,
-  "EndLine": 51,
-  "StartColumn": 35,
-  "EndColumn": 50,
-  "Match": "/mnt/4tb-m2/git/",
-  "Secret": "/mnt/4tb-m2/git/",
-  "File": "tests/test_setup_bind_share.py",
-  "SymlinkFile": "",
-  "Commit": "31d4dd0e83a4f2ec36767e6c5fd37dfcbe68f8af",
-  "Entropy": 3.0778196,
-  "Author": "casonk",
-  "Email": "72440835+casonk@users.noreply.github.com",
-  "Date": "2026-04-04T09:48:52Z",
-  "Message": "fix: normalize bind mount source matching",
-  "Tags": [
-   "local-path",
-   "machine-specific"
-  ],
-  "Fingerprint": "31d4dd0e83a4f2ec36767e6c5fd37dfcbe68f8af:tests/test_setup_bind_share.py:portfolio-git-workspace-path:51"
+  "Fingerprint": "eb74e091c05b4d5a957fa993443a3b06b232b195:config/auto-pass.example.ini:keepass-real-profile-name:5"
  }
 ]
