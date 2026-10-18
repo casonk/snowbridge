@@ -15,6 +15,7 @@ TIMEOUT="5"
 WAIT_ATTEMPTS="1"
 WAIT_SLEEP="2"
 RESTART=0
+CONTAINER_NAME="snowbridge-filebrowser"
 COMPOSE_CMD=()
 COMPOSE_CMD_TEXT=""
 
@@ -30,6 +31,7 @@ Options:
   --env-file PATH         File Browser env file. Default: config/web/filebrowser/filebrowser.env.local
   --compose-file PATH     Compose file. Default: docker-compose.local.yml when present, otherwise example.
   --url URL               Probe URL. Default: http://127.0.0.1:${FILEBROWSER_HTTP_PORT}/
+  --container NAME        Podman container checked for a live conmon. Default: snowbridge-filebrowser
   --timeout SECONDS       curl max-time for each probe. Default: 5
   --wait-attempts COUNT   Probe attempts before returning. Default: 1
   --wait-sleep SECONDS    Delay between attempts. Default: 2
@@ -66,6 +68,11 @@ parse_args() {
         ;;
       --compose-file)
         COMPOSE_FILE="$2"
+        shift 2
+        ;;
+      --container)
+        [[ $# -ge 2 ]] || fail "--container requires a value"
+        CONTAINER_NAME="$2"
         shift 2
         ;;
       --url)
@@ -188,6 +195,28 @@ wait_for_backend() {
   return 1
 }
 
+# A running container whose conmon has died still answers the probe, but the
+# Go server is killed by SIGPIPE on its next log line because nothing reads
+# its stdout/stderr any more. Treat that as unhealthy so it is replaced before
+# a user request crashes it. Unknown state (no podman, container not visible
+# to this user) is not treated as orphaned.
+container_orphaned() {
+  local state
+  local running
+  local conmon_pid
+
+  command_exists podman || return 1
+  state="$(podman inspect --format '{{.State.Running}} {{.State.ConmonPid}}' "${CONTAINER_NAME}" 2>/dev/null)" || return 1
+  read -r running conmon_pid <<<"${state}"
+  [[ "${running}" == "true" ]] || return 1
+
+  if [[ "${conmon_pid}" =~ ^[1-9][0-9]*$ ]] && [[ "$(cat "/proc/${conmon_pid}/comm" 2>/dev/null)" == "conmon" ]]; then
+    return 1
+  fi
+  log "File Browser container ${CONTAINER_NAME} is running without conmon (pid ${conmon_pid:-none}); it will die on its next log write"
+  return 0
+}
+
 restart_backend() {
   (( RESTART == 1 )) || return 1
   [[ "${EUID:-$(id -u)}" -eq 0 ]] || fail "run as root (sudo) to restart the File Browser backend"
@@ -213,7 +242,7 @@ main() {
   command_exists curl || fail "curl not found"
   load_env_if_needed
 
-  if wait_for_backend; then
+  if wait_for_backend && ! container_orphaned; then
     exit 0
   fi
 

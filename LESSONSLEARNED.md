@@ -470,3 +470,14 @@
   --collect` so the container monitor outlives the watchdog unit. If a
   container is running but the host port is absent, `compose up -d` alone does
   not repair it; recreate only the affected service.
+
+### 2026-10-18 — An orphaned Podman container dies on its next log line
+
+- When `conmon` is killed, the container keeps serving, but nothing reads its
+  stdout/stderr pipe. Go programs such as File Browser are killed by SIGPIPE
+  the next time they log, often hours or days later and usually on an error
+  path (a failed delete, a cancelled stream), so the outage looks unrelated to
+  the event that killed `conmon`.
+- A health probe alone cannot see this. Check that the container's
+  `State.ConmonPid` is a live `conmon` process and recreate the container if
+  it is not.
