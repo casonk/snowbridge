@@ -196,7 +196,10 @@ sudo ./scripts/setup_filebrowser_backend_watch.sh --install-systemd
 The timer checks every 5 minutes by default and recreates only the File Browser
 service when the local backend probe fails, including when a running container
 has lost its host port forwarding. The restart runs in a separate systemd scope
-so the watchdog unit cannot stop Podman's port-forwarding process. This
+so the watchdog unit cannot stop Podman's port-forwarding process. A container
+that still answers but has lost its `conmon` monitor is also recreated, because
+File Browser is killed by SIGPIPE on its next log write once nothing reads its
+output. This
 complements the post-LUKS startup script; it does not replace the bind-mount
 refresh after the encrypted drives are unlocked.
 
