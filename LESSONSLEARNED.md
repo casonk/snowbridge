@@ -458,3 +458,15 @@
 - A nested filesystem permission error should not turn the whole listing into a
   403 page. Skip unreadable descendants and return the size of the accessible
   contents instead.
+
+### 2026-10-18 — Podman recovery from a oneshot watchdog needs its own systemd scope
+
+- Running `podman-compose up -d` directly from a systemd `Type=oneshot`
+  watchdog can leave Podman's `conmon` in the watchdog service cgroup. When the
+  watchdog exits, systemd may stop or abort that cgroup, killing `conmon` and
+  dropping the host port even though Podman briefly reports the container as
+  running.
+- Run a recovery `podman-compose` invocation through `systemd-run --scope
+  --collect` so the container monitor outlives the watchdog unit. If a
+  container is running but the host port is absent, `compose up -d` alone does
+  not repair it; recreate only the affected service.
