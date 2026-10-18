@@ -193,10 +193,12 @@ or Podman state changes, install the File Browser backend watchdog:
 sudo ./scripts/setup_filebrowser_backend_watch.sh --install-systemd
 ```
 
-The timer checks every 5 minutes by default and runs `compose up -d` for the
-File Browser service when the local backend probe fails. This complements the
-post-LUKS startup script; it does not replace the bind-mount refresh after the
-encrypted drives are unlocked.
+The timer checks every 5 minutes by default and recreates only the File Browser
+service when the local backend probe fails, including when a running container
+has lost its host port forwarding. The restart runs in a separate systemd scope
+so the watchdog unit cannot stop Podman's port-forwarding process. This
+complements the post-LUKS startup script; it does not replace the bind-mount
+refresh after the encrypted drives are unlocked.
 
 If you are not using `start_snowbridge.sh`, install the bind-mount watchdog
 directly so the SMB share folders do not stay empty or stale after source

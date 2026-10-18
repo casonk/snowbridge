@@ -22,11 +22,11 @@ usage() {
   cat <<'EOF'
 Usage: check_filebrowser_backend.sh [options]
 
-Probe the local File Browser backend with a GET request. With --restart, start
-the configured compose service if the backend is not returning the web UI.
+Probe the local File Browser backend with a GET request. With --restart,
+recreate the configured compose service if the backend is not returning the web UI.
 
 Options:
-  --restart               Run compose up -d when the backend probe fails.
+  --restart               Recreate the File Browser service when the backend probe fails.
   --env-file PATH         File Browser env file. Default: config/web/filebrowser/filebrowser.env.local
   --compose-file PATH     Compose file. Default: docker-compose.local.yml when present, otherwise example.
   --url URL               Probe URL. Default: http://127.0.0.1:${FILEBROWSER_HTTP_PORT}/
@@ -195,11 +195,17 @@ restart_backend() {
   [[ -f "${COMPOSE_FILE}" ]] || fail "compose file not found: ${COMPOSE_FILE}"
 
   set_compose_command
-  log "starting File Browser backend with ${COMPOSE_CMD_TEXT}"
-  "${COMPOSE_CMD[@]}" \
+  command_exists systemd-run || fail "systemd-run is required to keep the container outside the watchdog service cgroup"
+  log "recreating File Browser backend with ${COMPOSE_CMD_TEXT}"
+  # conmon must outlive this oneshot watchdog unit. Launch compose in its own
+  # transient scope so systemd does not kill the port-forwarding process when
+  # the watchdog exits.
+  systemd-run --scope --collect \
+    --unit="snowbridge-filebrowser-recovery-$(date +%s)-$$" \
+    "${COMPOSE_CMD[@]}" \
     --env-file "${ENV_FILE}" \
     -f "${COMPOSE_FILE}" \
-    up -d
+    up -d --force-recreate filebrowser
 }
 
 main() {
