@@ -4,6 +4,21 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- Added opt-in folder icons to the File Browser fork
+  (`snowbridge/ai-folder-icons`), picked by host-local crew-chief Ollama.
+  Browser listings now read cached picks only; a protected prefetch API and
+  daily Clockwork job generate up to 40 missing picks per run. Requests pass
+  through the central ECU gate at batch priority. Suggestions and manual
+  overrides use separate cache entries, so a scheduled run cannot replace a
+  manual choice. `scripts/setup_crew_chief_relay.sh` keeps container access to
+  the local model behind an owner-only unix socket. Added
+  `scripts/activate_filebrowser_folder_icons.sh` to configure and deploy the
+  feature, verify the first prefetch, and enable its Clockwork timer in one
+  interactive job. It detects mTLS proxy auth, provisions a host client
+  certificate, trusts the Wiring Harness CA for the proxy's HTTPS server
+  certificate, accommodates its legacy CA's missing X.509 keyUsage extension
+  without disabling chain or hostname checks, and avoids requiring a second
+  File Browser password in that mode.
 - Fixed the repo being impossible to `pip install`. `pyproject.toml` declared no
   package configuration, so setuptools fell back to flat-layout auto-discovery,
   found `artifacts/` and `config/` as candidate top-level packages, and aborted

@@ -11,6 +11,40 @@
 
 ## Lessons
 
+- Run cosmetic AI enrichment from a scheduled, authenticated prefetch path;
+  browser reads should return cached results without waiting on inference. Keep
+  generated suggestions separate from manual overrides, key both to the
+  File Browser scope, and send background model requests through central ECU
+  at batch priority.
+- For mTLS through a central reverse proxy, keep the server trust CA and the
+  application client-identity CA distinct. The scheduler trusts the CA that
+  issued the proxy's HTTPS certificate; the proxy separately validates the
+  scheduler certificate against the application's client CA.
+- A legacy private trust anchor without X.509 `keyUsage` can fail Python's
+  strict TLS validation even when normal chain verification succeeds. If the
+  trust anchor is explicitly pinned, disable only the strict-policy flag and
+  retain CA-chain, time, and hostname checks; do not turn off certificate
+  verification or hostname checking.
+
+- KeePassXC `merge --same-credentials` reduces cold-start unlock prompts to
+  one per source when the destination and source vault use the same credentials;
+  do not enable it for mixed-password vault sets.
+
+- Process KeePass candidates independently on a fresh copy of the cumulative
+  working database. If one candidate cannot be opened or merged, discard only
+  that attempt, report it, and continue with the remaining candidates. Publish
+  successful candidates only through explicit `--apply`, preserving the prior
+  master as a backup and returning a nonzero status when any source was skipped.
+
+- A multi-vault merge preview must apply candidates sequentially to a disposable
+  copy of the master. KeePassXC's per-command `--dry-run` compares every source
+  to the unchanged baseline and misses conflicts between later candidates.
+
+- A cold-start KeePass merge needs an explicit staging and publication boundary:
+  merge candidates into a temporary copy, require `--apply`, atomically replace
+  the authoritative vault, and retain a timestamped pre-merge backup. Continuous
+  two-way synchronization remains a separate conflict-ownership problem.
+
 - Portfolio-general WireGuard/VPN installer and example conventions live in
   `traction-control/LESSONSLEARNED.md` (agents read it first); the entries here
   are repo-specific. Up-integrated from here: coherent key-pair generation,
@@ -481,3 +515,18 @@
 - A health probe alone cannot see this. Check that the container's
   `State.ConmonPid` is a live `conmon` process and recreate the container if
   it is not.
+
+- AI features in this repo must use host-local inference through the
+  crew-chief Ollama service, never an external model API or API key, unless
+  the user explicitly asks otherwise. Bridged containers reach crew-chief
+  through a dedicated relay service (`setup_crew_chief_relay.sh`), not host
+  networking, so they cannot reach other host loopback services.
+- Do not place a systemd `.socket` unit's listener inside a directory that a
+  container mounts with `:Z`: the relabel to `container_file_t` makes SELinux
+  deny PID 1 socket creation (`Failed to create listening socket ...:
+  Permission denied`). Create the socket from a service running as the
+  container's user instead, or use a directory the container does not
+  relabel.
+- A JSON-schema `enum` passed to Ollama's `format` only constrains decoding;
+  the model is not shown the choices. List the allowed values in the prompt
+  too, or small models fall back to the safest-looking value.
