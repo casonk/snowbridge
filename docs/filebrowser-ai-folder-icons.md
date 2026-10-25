@@ -53,6 +53,8 @@ Browser listing ─► cached manual override, else cached model suggestion
 The fork branch is `snowbridge/ai-folder-icons` in
 `vendor/filebrowser-upstream`, based on `snowbridge/dirsize`. Backend code is
 under `foldericons/`; the route handlers are in `http/foldericons.go`.
+That nested fork checkout is gitignored by Snowbridge and must be preserved
+separately; this repository's commits do not contain its source changes.
 
 ## Enable the feature and scheduler
 
