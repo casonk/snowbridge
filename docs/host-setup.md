@@ -5,6 +5,29 @@ a home-desktop Samba share that trusted devices can mount with authenticated
 read/write access. It also documents the separate render-only native macOS Air
 path used while the home host is unavailable.
 
+## KeePass cold start
+
+The share can hold the authoritative KeePassXC vault. To consolidate existing
+Mac and phone databases, stage their `.kdbx` files on `desk` and use the
+repository helper:
+
+```bash
+python3 scripts/keepass_cold_start.py \
+  --same-credentials \
+  --master /srv/snowbridge/share/KeePass/vault.kdbx \
+  --candidate /staging/mac.kdbx \
+  --candidate /staging/phone.kdbx
+```
+
+With `--same-credentials` (only when the master and all candidates share
+the same unlock credentials), KeePassXC prompts once per candidate merge.
+Each source is still unlocked once. The helper performs merges on a temporary
+copy and leaves the master unchanged unless `--apply` is given. Add `--apply`
+only after reviewing the merge; it preserves the prior master beside the new
+one with a timestamped backup. The helper does
+not copy or print passwords. Once published, point both machines at the shared
+vault and stop using independent writable copies.
+
 ## Assumptions
 
 - The canonical host is a Linux desktop on the home network. The temporary Air
@@ -664,6 +687,14 @@ container use the same image tag. The simplest local helper flow is
 `./scripts/deploy_filebrowser_fork_image.sh`; use
 `./scripts/build_filebrowser_fork_image.sh` only when you want to build/tag the
 image without recreating the stack yet.
+The fork's optional folder icons are picked by a host-local model (the
+crew-chief Ollama service) and are off by default. Browser listings read the
+cache only; a daily Clockwork timer prefetches missing suggestions, and the
+central ECU gate handles each model call at batch priority. The scheduler uses
+a dedicated read-only File Browser account with the same `Scope` as the normal
+browser user. See `docs/filebrowser-ai-folder-icons.md` for the account,
+owner-only credential file, relay, and timer setup before setting
+`FILEBROWSER_AI_FOLDER_ICONS=true`.
 If a password line in `access.local.toml` is pasted in a shell-friendly form
 that is not TOML-safe yet, the script will normalize fixable cases
 automatically.

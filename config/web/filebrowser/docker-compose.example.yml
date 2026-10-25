@@ -9,6 +9,13 @@ services:
     environment:
       FB_ADDRESS: 0.0.0.0
       FB_PORT: "8080"
+      # Local-model folder icons (snowbridge fork only). The model is the
+      # host's crew-chief Ollama, reached through setup_crew_chief_relay.sh.
+      FB_AI_FOLDER_ICONS: "${FILEBROWSER_AI_FOLDER_ICONS:-false}"
+      FB_AI_FOLDER_ICONS_MODEL: "${FILEBROWSER_AI_FOLDER_ICONS_MODEL:-qwen3:14b}"
+      FB_AI_FOLDER_ICONS_PREFETCH_USER: "${FILEBROWSER_AI_FOLDER_ICONS_PREFETCH_USER:-}"
+      FB_AI_FOLDER_ICONS_URL: unix:///config/crew-chief.sock
+      FB_AI_FOLDER_ICONS_CACHE: /database/folder-icons.json
     ports:
       - "127.0.0.1:${FILEBROWSER_HTTP_PORT}:8080"
     volumes:

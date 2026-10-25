@@ -17,9 +17,11 @@ config/access/wireguard/port-migration-backup-*/
 config/access/wireguard/endpoint-monitor.local.toml
 config/access/tailscale/tailscale-subnet-router.local.sh
 config/web/filebrowser/filebrowser.env.local
+config/web/filebrowser/folder-icons-scheduler.local.json
 config/web/filebrowser/access.local.toml
 config/web/caddy/*.local
 config/web/filebrowser/docker-compose.local.yml
+config/clockwork/*.local.toml
 config/network/networkmanager-static-ip.local.sh
 config/cloud/accounts.local.toml
 config/macos/air-smb.local.toml

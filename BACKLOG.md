@@ -10,6 +10,8 @@ Mark items `[x]` when complete and move them to Done.
 
 ## Pending
 
+- [ ] [manual:2026-10-23] **Recover and reconcile the Air KeePass vault** — the small Air candidate could not be unlocked during the cold-start ingest and was not merged. Keep the original vault; verify the correct unlock credentials and file integrity, compare its contents against the consolidated master, then ingest any missing entries without overwriting conflicting records.
+
 - [ ] [manual:2026-10-15] **Ask GitHub Support to purge pre-rewrite commits** — this
   repository's published history was rewritten (most recently on 2026-10-15,
   to remove per-commit AI attribution trailers). GitHub keeps serving the old

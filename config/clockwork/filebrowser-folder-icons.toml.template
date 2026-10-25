@@ -1,0 +1,20 @@
+[[jobs]]
+name = "snowbridge-folder-icon-prefetch"
+description = "Prefetch cached icons for visible Snowbridge folders"
+scope = "user"
+service_type = "oneshot"
+working_directory = "%h/git/util-repos/snowbridge"
+exec_start = "/usr/bin/python3 %h/git/util-repos/snowbridge/scripts/prefetch_filebrowser_folder_icons.py"
+standard_output = "journal"
+standard_error = "journal"
+
+[jobs.timer]
+kind = "calendar"
+on_calendar = "*-*-* 04:10:00"
+persistent = true
+randomized_delay_sec = "900"
+
+[jobs.cron]
+expression = "10 4 * * *"
+command = "mkdir -p $HOME/.local/share && /usr/bin/python3 $HOME/git/util-repos/snowbridge/scripts/prefetch_filebrowser_folder_icons.py >> $HOME/.local/share/snowbridge-folder-icon-prefetch.log 2>&1"
+comments = ["Auto-generated from systemd timer: daily at 04:10 with up to 15m jitter"]
