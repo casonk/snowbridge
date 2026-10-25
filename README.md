@@ -7,6 +7,31 @@ This repo lives under:
 
 - `./util-repos/snowbridge`
 
+## KeePass cold-start sync
+
+Snowbridge can host one authoritative KeePassXC vault, while Glovebox
+distributes the path and profile needed by `auto-pass`. When bringing existing
+Mac and phone vaults together for the first time, copy those `.kdbx` files to
+`desk` or another owner-controlled staging area and run:
+
+```bash
+python3 scripts/keepass_cold_start.py \
+  --same-credentials \
+  --master /srv/snowbridge/share/KeePass/vault.kdbx \
+  --candidate /path/from-mac.kdbx \
+  --candidate /path/from-phone.kdbx
+```
+
+When all vaults use the same unlock credentials, `--same-credentials` gives
+one KeePassXC unlock prompt per candidate merge instead of two. Each source
+still needs to be unlocked once. The helper merges into a temporary working
+copy and leaves the master unchanged. Review the proposed merge, then repeat
+with `--apply` to atomically publish the result; the previous master is kept as
+`vault.kdbx.pre-cold-start-<timestamp>`. This is an explicit one-time ingest,
+not continuous bidirectional synchronization. After publication, both machines
+should mount the same Snowbridge share and use that one vault. Do not edit the
+vault concurrently from disconnected local copies.
+
 ## Purpose
 
 - Version-control the host configuration and operating notes for a personal
@@ -58,6 +83,8 @@ custom client app or a separate sync workflow.
 - `scripts/setup_filebrowser_fork_workspace.sh`: installs the local File Browser fork prerequisites and runs the upstream-style frontend/backend checks against `vendor/filebrowser-upstream`
 - `scripts/build_filebrowser_fork_image.sh`: builds the patched File Browser binary from `vendor/filebrowser-upstream`, stages a minimal container context, and tags a local custom image for `FILEBROWSER_IMAGE`
 - `scripts/deploy_filebrowser_fork_image.sh`: builds the local fork image, writes its tag into `config/web/filebrowser/filebrowser.env.local`, and recreates the File Browser + Caddy stack
+- `scripts/setup_crew_chief_relay.sh`: installs a systemd relay service whose unix socket lets the File Browser container reach only the host-local crew-chief Ollama, for local-model folder icons
+- `scripts/prefetch_filebrowser_folder_icons.py`: scheduled, read-only File Browser client that asks the fork's protected prefetch API for up to 40 cached suggestions per run
 - `scripts/export_caddy_root_profile.py`: generates an iPhone-installable `.mobileconfig` for Caddy's local CA and stages it into the SMB share
 - `scripts/export_caddy_mtls_profile.py`: issues a per-device mTLS client identity, packages it with the private Caddy root CA into an iPhone-installable `.mobileconfig`, and stages the results into the SMB share
 - `scripts/debug_private_access.sh`: collects a single report covering WireGuard, dnsmasq, firewalld, Samba, Caddy, and File Browser state for private-access debugging
@@ -74,6 +101,8 @@ custom client app or a separate sync workflow.
 - `docs/iphone-shortcut.md`: iPhone shortcut and import/export guidance
 - `docs/access-patterns.md`: optional access templates and risk tradeoffs
 - `docs/filebrowser-directory-size-plan.md`: minimal custom-fork and upstream-PR plan for adding real File Browser folder sizes
+- `docs/filebrowser-ai-folder-icons.md`: opt-in folder icons picked by a host-local model (crew-chief Ollama) in the File Browser fork
+- `config/clockwork/filebrowser-folder-icons.toml.template`: daily Clockwork schedule for folder icon prefetching; Ollama inference runs at ECU batch priority
 - `docs/macos-air-filebrowser.md`: Air rootless Podman, proxy-auth, LaunchAgent,
   and activation contract
 - `docs/contributor-architecture-blueprint.md`: contributor-facing architecture
