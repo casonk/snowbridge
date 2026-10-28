@@ -9,8 +9,8 @@ This repo lives under:
 
 ## KeePass cold-start sync
 
-Snowbridge can host one authoritative KeePassXC vault, while Glovebox
-distributes the path and profile needed by `auto-pass`. When bringing existing
+Snowbridge can host one authoritative KeePassXC vault, while a separate
+local-configuration store distributes the path and profile needed by `auto-pass`. When bringing existing
 Mac and phone vaults together for the first time, copy those `.kdbx` files to
 `desk` or another owner-controlled staging area and run:
 
