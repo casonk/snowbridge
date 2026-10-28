@@ -12,7 +12,8 @@
 
 ## Public Datasets and APIs
 
-- No standing public data APIs are required; the repo serves local file shares and local/private web surfaces.
+- https://api.ipify.org/, https://ifconfig.me/ip, and https://icanhazip.com/ —
+  bounded public IPv4 lookup fallbacks used by the WireGuard endpoint monitor
 
 ## Documentation and Specifications
 
