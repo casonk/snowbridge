@@ -4,6 +4,9 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- Describe the local-configuration store generically in the KeePass cold-start
+  section instead of naming a private repository.
+
 - Add the `Private :: Do Not Upload` classifier so PyPI rejects an upload of this
   distribution; the repository is not published as a package.
 
