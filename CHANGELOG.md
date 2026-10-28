@@ -4,6 +4,9 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- Add the `Private :: Do Not Upload` classifier so PyPI rejects an upload of this
+  distribution; the repository is not published as a package.
+
 - Added opt-in folder icons to the File Browser fork
   (`snowbridge/ai-folder-icons`), picked by host-local crew-chief Ollama.
   Browser listings now read cached picks only; a protected prefetch API and
