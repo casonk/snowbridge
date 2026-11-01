@@ -27,7 +27,10 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import NoReturn
 
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = REPO_ROOT / "config/cloud/accounts.local.toml"

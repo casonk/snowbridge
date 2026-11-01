@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "SMB-based private file-sharing utility and home-desktop fileshare configuration."
 readme = "README.md"
 requires-python = ">=3.10"
+dependencies = ["tomli>=2; python_version < '3.11'"]
 authors = [
   { name = "Cason Konzer", email = "casonk@umich.edu" },
 ]
