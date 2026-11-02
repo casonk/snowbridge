@@ -62,3 +62,9 @@ CLAUDE.md
 .ruff_cache/
 .pytest_cache/
 *.egg-info/
+
+# coverage output
+coverage.xml
+.coverage
+.coverage.*
+htmlcov/
