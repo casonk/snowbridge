@@ -48,6 +48,9 @@ packages = []
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# the tests import the operational scripts as `scripts.<name>`; `pytest` (unlike
+# `python -m pytest`) does not put the repository root on sys.path
+pythonpath = ["."]
 
 [tool.black]
 line-length = 100
