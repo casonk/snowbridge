@@ -12,6 +12,7 @@ import tempfile
 import types
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from scripts import cloud_accounts, rclone_config_password
 
@@ -521,6 +522,10 @@ class RcloneConfigPasswordTests(unittest.TestCase):
 
         self._original_root = rclone_config_password.AUTO_PASS_ROOT
         rclone_config_password.AUTO_PASS_ROOT = self.auto_pass_root
+        # auto-pass is stubbed below, so its own minimum Python is not what these tests
+        # exercise; without this they would fail on any interpreter older than 3.11.
+        self._original_minimum = rclone_config_password.MINIMUM_PYTHON
+        rclone_config_password.MINIMUM_PYTHON = (3, 0)
         self._original_path = list(sys.path)
         self._original_modules = {
             name: sys.modules.get(name)
@@ -533,6 +538,7 @@ class RcloneConfigPasswordTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         rclone_config_password.AUTO_PASS_ROOT = self._original_root
+        rclone_config_password.MINIMUM_PYTHON = self._original_minimum
         sys.path[:] = self._original_path
         for name, module in self._original_modules.items():
             if module is None:
@@ -637,6 +643,36 @@ class RcloneConfigPasswordTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("25 characters", stdout.getvalue())
         self.assertNotIn("synthetic-config-password", stdout.getvalue())
+
+    def test_an_interpreter_older_than_auto_pass_supports_fails_closed_without_a_lookup(self) -> None:
+        rclone_config_password.MINIMUM_PYTHON = self._original_minimum
+        self.config_path.write_text(
+            "[cloud]\nrclone_config_keepass_entry = cloud/rclone\n", encoding="utf-8"
+        )
+        with mock.patch.object(sys, "version_info", (3, 10, 22, "final", 0)):
+            with self.assertRaisesRegex(
+                rclone_config_password.PasswordHelperError, r"auto-pass requires Python 3\.11\+"
+            ):
+                rclone_config_password.resolve_password("infra", "cloud/rclone", "Password")
+        self.assertEqual(self.load_calls, [])
+
+    def test_the_helper_exits_2_and_prints_nothing_to_stdout_on_an_old_interpreter(self) -> None:
+        rclone_config_password.MINIMUM_PYTHON = self._original_minimum
+        self.config_path.write_text(
+            "[cloud]\nrclone_config_keepass_entry = cloud/rclone\n", encoding="utf-8"
+        )
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with (
+            mock.patch.object(rclone_config_password, "AUTO_PASS_CONFIG", self.config_path),
+            mock.patch.object(sys, "version_info", (3, 10, 22, "final", 0)),
+            contextlib.redirect_stdout(stdout),
+            contextlib.redirect_stderr(stderr),
+        ):
+            code = rclone_config_password.main([])
+        self.assertEqual(code, 2)
+        # rclone reads the first stdout line as the password: nothing may be written there
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertIn("requires Python 3.11+", stderr.getvalue())
 
     def test_default_mode_writes_only_the_password_to_stdout(self) -> None:
         self.write_config(

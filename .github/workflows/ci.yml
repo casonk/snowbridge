@@ -9,9 +9,13 @@ jobs:
       github.event.pull_request.head.repo.full_name != github.repository
     uses: casonk/.github/.github/workflows/python-ci.yml@main
     with:
-      python-versions: '["3.12"]'
-      skip-install: true
-      run-pytest: false
+      # Floor and ceiling of requires-python = ">=3.10".
+      python-versions: '["3.10", "3.12"]'
+      install-extra: dev
+      coverage: true
+      coverage-source: scripts
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   cloud-account-regression:
     if: >-
