@@ -4,22 +4,38 @@
 from __future__ import annotations
 
 import argparse
-import grp
 import hashlib
 import os
 import plistlib
-import pwd
 import re
 import secrets
 import shutil
-import ssl
 import subprocess
 import sys
 import tempfile
-import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import NoReturn
+
+try:  # imported as part of the package (tests) ...
+    from scripts.caddy_profile_common import (
+        Ownership,
+        SetupError,
+        fail,
+        load_certificate_der,
+        log,
+        resolve_ownership,
+        stable_uuid,
+    )
+except ModuleNotFoundError:  # ... or run directly: sudo python3 scripts/<name>.py
+    from caddy_profile_common import (  # type: ignore[no-redef]
+        Ownership,
+        SetupError,
+        fail,
+        load_certificate_der,
+        log,
+        resolve_ownership,
+        stable_uuid,
+    )
 
 
 DEFAULT_SERVER_ROOT_CERT = Path("/var/lib/snowbridge/caddy/data/caddy/pki/authorities/local/root.crt")
@@ -34,18 +50,6 @@ DEFAULT_PROFILE_IDENTIFIER_PREFIX = "local.snowbridge.caddy-mtls"
 DEFAULT_ORGANIZATION = "snowbridge"
 
 
-class SetupError(RuntimeError):
-    """Raised when mTLS profile generation cannot continue safely."""
-
-
-@dataclass(frozen=True)
-class Ownership:
-    uid: int
-    gid: int
-    owner_name: str
-    group_name: str
-
-
 @dataclass(frozen=True)
 class IdentityPaths:
     slug: str
@@ -56,14 +60,6 @@ class IdentityPaths:
     serial_path: Path
     staged_profile_path: Path
     staged_p12_path: Path
-
-
-def log(message: str) -> None:
-    print(message)
-
-
-def fail(message: str) -> NoReturn:
-    raise SetupError(message)
 
 
 def require_root() -> None:
@@ -156,18 +152,6 @@ def slugify_device_name(device_name: str) -> str:
     return slug
 
 
-def resolve_ownership(owner_name: str, group_name: str) -> Ownership:
-    try:
-        owner = pwd.getpwnam(owner_name)
-    except KeyError:
-        fail(f"owner account not found: {owner_name}")
-    try:
-        group = grp.getgrnam(group_name)
-    except KeyError:
-        fail(f"group not found: {group_name}")
-    return Ownership(uid=owner.pw_uid, gid=group.gr_gid, owner_name=owner_name, group_name=group_name)
-
-
 def command_exists(name: str) -> bool:
     return shutil.which(name) is not None
 
@@ -240,52 +224,6 @@ def copy_file(source: Path, target: Path, mode: int, ownership: Ownership, dry_r
     shutil.copy2(source, target)
     os.chmod(target, mode)
     os.chown(target, ownership.uid, ownership.gid)
-
-
-def load_certificate_der(cert_path: Path) -> bytes:
-    if not cert_path.is_file():
-        fail(f"certificate not found: {cert_path}")
-
-    raw = cert_path.read_bytes()
-    # The root certificate is embedded in a profile that other devices read, so a CA private key
-    # (for example root.key next to root.crt) must never be accepted by mistake.
-    if b"PRIVATE KEY" in raw:
-        fail(f"refusing to use {cert_path}: it contains private key material, not a certificate")
-
-    if b"-----BEGIN CERTIFICATE-----" not in raw:
-        return _require_certificate_structure(raw, cert_path)
-
-    try:
-        pem_text = raw.decode("ascii")
-    except UnicodeDecodeError:
-        fail(f"certificate looks PEM-encoded but is not ASCII-readable: {cert_path}")
-
-    try:
-        der_bytes = ssl.PEM_cert_to_DER_cert(pem_text)
-    except ValueError as exc:
-        fail(f"unable to parse PEM certificate at {cert_path}: {exc}")
-
-    if isinstance(der_bytes, str):
-        der_bytes = der_bytes.encode("latin1")
-    return _require_certificate_structure(der_bytes, cert_path)
-
-
-def _require_certificate_structure(der: bytes, source: Path) -> bytes:
-    """Accept DER only if it is shaped like an X.509 certificate.
-
-    A certificate is SEQUENCE { tbsCertificate SEQUENCE, ... }; a DER private key (PKCS#8, RSA)
-    is SEQUENCE { INTEGER version, ... }, and arbitrary text is neither. (Kept in step with
-    export_caddy_root_profile.py, which has the same guard.)
-    """
-    if len(der) >= 3 and der[0] == 0x30:
-        offset = 2 + (der[1] & 0x7F if der[1] & 0x80 else 0)
-        if offset < len(der) and der[offset] == 0x30:
-            return der
-    fail(f"not a PEM or DER certificate: {source}")
-
-
-def stable_uuid(label: str, digest: str) -> str:
-    return str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{label}:{digest}")).upper()
 
 
 def build_identity_paths(device_name: str, issued_dir: Path, output: str | None, p12_output: str | None) -> IdentityPaths:
