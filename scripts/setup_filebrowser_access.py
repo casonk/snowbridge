@@ -18,6 +18,7 @@ try:
     import tomllib
 except ModuleNotFoundError:  # Python 3.10
     import tomli as tomllib
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import NoReturn
@@ -541,8 +542,24 @@ def require_host_tools() -> None:
             fail(f"required host command not found: {command_name}")
 
 
-def run_command(command: list[str], dry_run: bool, check: bool = True) -> subprocess.CompletedProcess[str]:
-    rendered = " ".join(shlex.quote(part) for part in command)
+REDACTED = "<redacted>"
+
+
+def render_command(command: list[str], secrets: Sequence[str] = ()) -> str:
+    """The command as one shell-quoted line, with any argument equal to a secret hidden.
+
+    A user's password is an argument of the container command that sets it, and the rendered
+    line is printed by a dry run and put in the error for a failed command, so it must never
+    carry the password.
+    """
+    hidden = {secret for secret in secrets if secret}
+    return " ".join(shlex.quote(REDACTED if part in hidden else part) for part in command)
+
+
+def run_command(
+    command: list[str], dry_run: bool, check: bool = True, secrets: Sequence[str] = ()
+) -> subprocess.CompletedProcess[str]:
+    rendered = render_command(command, secrets)
     if dry_run:
         log(f"$ {rendered}")
         return subprocess.CompletedProcess(command, 0, "", "")
@@ -744,7 +761,7 @@ def apply_filebrowser_state(
             runtime_spec.share_mount_path,
             extra_args,
         )
-        run_command(user_command, dry_run)
+        run_command(user_command, dry_run, secrets=[user.password])
 
 
 def restart_web_stack(
