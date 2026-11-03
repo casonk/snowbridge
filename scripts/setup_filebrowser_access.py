@@ -18,6 +18,7 @@ try:
     import tomllib
 except ModuleNotFoundError:  # Python 3.10
     import tomli as tomllib
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import NoReturn
@@ -283,6 +284,24 @@ def normalize_password_assignments(config_path: Path, dry_run: bool) -> str:
     return normalized_text
 
 
+def toml_error_location(exc: Exception) -> str:
+    """``line:column: message`` for a TOML syntax error, on any supported Python.
+
+    ``tomllib.TOMLDecodeError`` only gained ``lineno``/``colno``/``msg`` in Python 3.14 (``tomli``
+    has them); earlier versions carry the position only in the message text, so fall back to it.
+    """
+    lineno = getattr(exc, "lineno", None)
+    colno = getattr(exc, "colno", None)
+    text = str(exc)
+    match = re.search(r"\s*\(at line (\d+), column (\d+)\)\s*$", text)
+    if lineno is None and match:
+        lineno, colno = int(match.group(1)), int(match.group(2))
+    message = getattr(exc, "msg", None) or (text[: match.start()] if match else text)
+    if lineno is None:
+        return message
+    return f"{lineno}:{colno}: {message}"
+
+
 def load_toml_config(config_path: Path, dry_run: bool) -> dict:
     if not config_path.is_file():
         fail(f"config not found: {config_path}")
@@ -294,7 +313,7 @@ def load_toml_config(config_path: Path, dry_run: bool) -> dict:
         try:
             return tomllib.loads(normalized_text)
         except tomllib.TOMLDecodeError as exc:
-            fail(f"{config_path}:{exc.lineno}:{exc.colno}: {exc.msg}")
+            fail(f"{config_path}:{toml_error_location(exc)}")
 
 
 def parse_runtime_spec(data: dict, config_path: Path) -> RuntimeSpec:
@@ -541,8 +560,24 @@ def require_host_tools() -> None:
             fail(f"required host command not found: {command_name}")
 
 
-def run_command(command: list[str], dry_run: bool, check: bool = True) -> subprocess.CompletedProcess[str]:
-    rendered = " ".join(shlex.quote(part) for part in command)
+REDACTED = "<redacted>"
+
+
+def render_command(command: list[str], secrets: Sequence[str] = ()) -> str:
+    """The command as one shell-quoted line, with any argument equal to a secret hidden.
+
+    A user's password is an argument of the container command that sets it, and the rendered
+    line is printed by a dry run and put in the error for a failed command, so it must never
+    carry the password.
+    """
+    hidden = {secret for secret in secrets if secret}
+    return " ".join(shlex.quote(REDACTED if part in hidden else part) for part in command)
+
+
+def run_command(
+    command: list[str], dry_run: bool, check: bool = True, secrets: Sequence[str] = ()
+) -> subprocess.CompletedProcess[str]:
+    rendered = render_command(command, secrets)
     if dry_run:
         log(f"$ {rendered}")
         return subprocess.CompletedProcess(command, 0, "", "")
@@ -744,7 +779,7 @@ def apply_filebrowser_state(
             runtime_spec.share_mount_path,
             extra_args,
         )
-        run_command(user_command, dry_run)
+        run_command(user_command, dry_run, secrets=[user.password])
 
 
 def restart_web_stack(
