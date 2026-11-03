@@ -147,15 +147,6 @@ def test_a_slug_can_never_contain_a_path_separator():
     assert "/" not in mod.slugify_device_name("../../etc/passwd") and ".." not in mod.slugify_device_name("../../etc/passwd")
 
 
-def test_owner_and_group_must_exist():
-    got = mod.resolve_ownership(ME, MY_GROUP)
-    assert (got.uid, got.gid) == (os.getuid(), os.getgid())
-    with pytest.raises(mod.SetupError, match="owner account not found"):
-        mod.resolve_ownership("no-such-user-xyz", MY_GROUP)
-    with pytest.raises(mod.SetupError, match="group not found"):
-        mod.resolve_ownership(ME, "no-such-group-xyz")
-
-
 def test_publishing_requires_root(monkeypatch):
     monkeypatch.undo()
     monkeypatch.setattr(mod.os, "geteuid", lambda: 1000)
@@ -163,11 +154,6 @@ def test_publishing_requires_root(monkeypatch):
         mod.require_root()
     monkeypatch.setattr(mod.os, "geteuid", lambda: 0)
     mod.require_root()
-
-
-def test_stable_ids_are_uuids_that_depend_on_the_inputs():
-    a = mod.stable_uuid("x", "d1")
-    assert a == mod.stable_uuid("x", "d1") and a != mod.stable_uuid("x", "d2")
 
 
 # --- running openssl and installing it ----------------------------------------------------
@@ -306,68 +292,6 @@ def test_modes_hold_even_under_a_restrictive_umask(tmp_path, me):
 
 
 # --- reading the root certificate ---------------------------------------------------------
-
-
-def test_certificates_are_read_as_pem_or_der(tmp_path):
-    pem = tmp_path / "a.crt"
-    pem.write_text(PEM)
-    der = tmp_path / "a.der"
-    der.write_bytes(DER)
-    assert mod.load_certificate_der(pem) == DER and mod.load_certificate_der(der) == DER
-    with pytest.raises(mod.SetupError, match="certificate not found"):
-        mod.load_certificate_der(tmp_path / "none")
-
-
-def test_undecodable_pem_is_reported(tmp_path):
-    bad = tmp_path / "bad.crt"
-    bad.write_bytes(b"-----BEGIN CERTIFICATE-----\n\xff\xfe\n-----END CERTIFICATE-----\n")
-    with pytest.raises(mod.SetupError, match="not ASCII-readable"):
-        mod.load_certificate_der(bad)
-    worse = tmp_path / "worse.crt"
-    worse.write_text("-----BEGIN CERTIFICATE-----\n!!!notbase64!!!\n-----END CERTIFICATE-----\n")
-    with pytest.raises(mod.SetupError, match="unable to parse PEM certificate"):
-        mod.load_certificate_der(worse)
-
-
-@pytest.mark.parametrize(
-    "body",
-    [
-        PRIVATE_KEY_PEM,
-        PRIVATE_KEY_PEM.replace("PRIVATE KEY", "RSA PRIVATE KEY"),
-        PRIVATE_KEY_PEM.replace("PRIVATE KEY", "ENCRYPTED PRIVATE KEY"),
-        PEM + PRIVATE_KEY_PEM,
-    ],
-)
-def test_private_key_material_is_never_accepted_as_the_root_certificate(tmp_path, body):
-    path = tmp_path / "ca.key"
-    path.write_text(body)
-    with pytest.raises(mod.SetupError, match="private key"):
-        mod.load_certificate_der(path)
-
-
-@pytest.mark.parametrize(
-    "data",
-    [b"\x30\x82\x01\x0a\x02\x01\x00" + b"\x01" * 20, b"\x31\x03\x30\x00\x00" + b"\x00" * 8, b"plain text", b""],
-)
-def test_binary_or_text_that_is_not_a_certificate_is_refused(tmp_path, data):
-    path = tmp_path / "x.der"
-    path.write_bytes(data)
-    with pytest.raises(mod.SetupError, match="not a PEM or DER certificate"):
-        mod.load_certificate_der(path)
-
-
-def test_an_empty_pem_body_is_not_a_certificate(tmp_path):
-    path = tmp_path / "empty.crt"
-    path.write_text("-----BEGIN CERTIFICATE-----\n!!!\n-----END CERTIFICATE-----\n")
-    with pytest.raises(mod.SetupError, match="not a PEM or DER certificate"):
-        mod.load_certificate_der(path)
-
-
-def test_a_key_hidden_inside_a_pem_certificate_wrapper_is_refused(tmp_path):
-    path = tmp_path / "wrapped.pem"
-    path.write_text(ssl.DER_cert_to_PEM_cert(b"\x30\x82\x01\x0a\x02\x01\x00" + b"\x01" * 20))
-    with pytest.raises(mod.SetupError, match="not a PEM or DER certificate"):
-        mod.load_certificate_der(path)
 
 
 # --- paths --------------------------------------------------------------------------------
@@ -759,3 +683,20 @@ def test_a_rotation_that_fails_halfway_does_not_leave_the_old_certificate_next_t
     with pytest.raises(mod.SetupError):
         issue(world, rotate=True)
     assert not paths.cert_path.exists() and not paths.p12_path.exists()  # old pair is gone, not mismatched
+
+
+def test_the_exporter_uses_the_shared_helpers_not_private_copies():
+    from scripts import caddy_profile_common as common
+
+    for name in ("SetupError", "Ownership", "fail", "log", "resolve_ownership",
+                 "load_certificate_der", "stable_uuid"):  # fmt: skip
+        assert getattr(mod, name) is getattr(common, name), name
+
+
+def test_the_script_runs_when_executed_directly_as_the_install_docs_do(tmp_path):
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--device-name", "!!!"],
+        capture_output=True, text=True, cwd=tmp_path, timeout=60,
+    )  # fmt: skip
+    assert result.returncode == 1 and "error: device name must contain" in result.stderr
+    assert "Traceback" not in result.stderr  # the sibling import works outside the package
