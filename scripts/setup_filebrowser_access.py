@@ -284,6 +284,24 @@ def normalize_password_assignments(config_path: Path, dry_run: bool) -> str:
     return normalized_text
 
 
+def toml_error_location(exc: Exception) -> str:
+    """``line:column: message`` for a TOML syntax error, on any supported Python.
+
+    ``tomllib.TOMLDecodeError`` only gained ``lineno``/``colno``/``msg`` in Python 3.14 (``tomli``
+    has them); earlier versions carry the position only in the message text, so fall back to it.
+    """
+    lineno = getattr(exc, "lineno", None)
+    colno = getattr(exc, "colno", None)
+    text = str(exc)
+    match = re.search(r"\s*\(at line (\d+), column (\d+)\)\s*$", text)
+    if lineno is None and match:
+        lineno, colno = int(match.group(1)), int(match.group(2))
+    message = getattr(exc, "msg", None) or (text[: match.start()] if match else text)
+    if lineno is None:
+        return message
+    return f"{lineno}:{colno}: {message}"
+
+
 def load_toml_config(config_path: Path, dry_run: bool) -> dict:
     if not config_path.is_file():
         fail(f"config not found: {config_path}")
@@ -295,7 +313,7 @@ def load_toml_config(config_path: Path, dry_run: bool) -> dict:
         try:
             return tomllib.loads(normalized_text)
         except tomllib.TOMLDecodeError as exc:
-            fail(f"{config_path}:{exc.lineno}:{exc.colno}: {exc.msg}")
+            fail(f"{config_path}:{toml_error_location(exc)}")
 
 
 def parse_runtime_spec(data: dict, config_path: Path) -> RuntimeSpec:

@@ -194,6 +194,20 @@ def test_loading_a_config_handles_missing_valid_repairable_and_broken_files(tmp_
         mod.load_toml_config(broken, dry_run=False)
 
 
+def test_a_toml_error_location_is_reported_on_every_python_version():
+    class Old(Exception):  # Python 3.11 to 3.13: the position is only in the message text
+        pass
+
+    class New(Exception):  # Python 3.14 and tomli: the position is an attribute
+        lineno, colno, msg = 7, 3, "Invalid value"
+
+    assert mod.toml_error_location(Old("Expected ']' at the end of a table declaration (at line 1, column 5)")) == (
+        "1:5: Expected ']' at the end of a table declaration")
+    assert mod.toml_error_location(New("Invalid value (at line 7, column 3)")) == "7:3: Invalid value"
+    assert mod.toml_error_location(Old("something without a position")) == "something without a position"
+    assert mod.toml_error_location(Old("bad (at line 2, column 9)\n")) == "2:9: bad"
+
+
 # --- the config sections ------------------------------------------------------------------
 
 
@@ -737,3 +751,20 @@ def test_a_lookup_that_cannot_even_import_auto_pass_is_a_setup_error(monkeypatch
 def test_a_blank_entry_name_resolves_to_nothing(fake_auto_pass):
     assert mod._resolve_keepass_value("   ", "password") == ""
     assert fake_auto_pass.asked == []
+
+
+def test_a_broken_config_gives_a_clean_error_even_when_the_parser_has_no_position_attributes(tmp_path, monkeypatch):
+    class Python312Error(mod.tomllib.TOMLDecodeError):
+        def __init__(self, text):  # like Python 3.11 to 3.13: only the message carries the position
+            Exception.__init__(self, text)
+
+    def broken(*args, **kwargs):
+        raise Python312Error("Expected ']' at the end of a table declaration (at line 1, column 5)")
+
+    config = tmp_path / "broken.toml"
+    config.write_text("[app\n")
+    monkeypatch.setattr(mod.tomllib, "load", broken)
+    monkeypatch.setattr(mod.tomllib, "loads", broken)
+    with pytest.raises(mod.SetupError) as info:
+        mod.load_toml_config(config, dry_run=True)
+    assert str(info.value) == f"{config}:1:5: Expected ']' at the end of a table declaration"
