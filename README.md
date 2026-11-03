@@ -91,6 +91,7 @@ custom client app or a separate sync workflow.
 - `scripts/prefetch_filebrowser_folder_icons.py`: scheduled, read-only File Browser client that asks the fork's protected prefetch API for up to 40 cached suggestions per run
 - `scripts/export_caddy_root_profile.py`: generates an iPhone-installable `.mobileconfig` for Caddy's local CA and stages it into the SMB share
 - `scripts/export_caddy_mtls_profile.py`: issues a per-device mTLS client identity, packages it with the private Caddy root CA into an iPhone-installable `.mobileconfig`, and stages the results into the SMB share
+- `scripts/caddy_profile_common.py`: the helpers the two profile exporters share (reading a CA certificate and refusing a private key in its place, looking up the staging owner, stable profile identifiers); not run directly.
 - `scripts/debug_private_access.sh`: collects a single report covering WireGuard, dnsmasq, firewalld, Samba, Caddy, and File Browser state for private-access debugging
 - `scripts/cloud_accounts.py`: creates and validates the ignored cloud account
   registry and checks encrypted rclone aliases plus backend types without

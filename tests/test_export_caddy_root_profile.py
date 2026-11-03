@@ -71,11 +71,6 @@ def run(tmp_path, *args, cert=None):
 # --- small helpers ------------------------------------------------------------------------
 
 
-def test_fail_raises_the_modules_own_error():
-    with pytest.raises(mod.SetupError, match="boom"):
-        mod.fail("boom")
-
-
 def test_publishing_requires_root_unless_it_is_a_dry_run(monkeypatch):
     monkeypatch.undo()
     monkeypatch.setattr(mod.os, "geteuid", lambda: 1000)
@@ -83,22 +78,6 @@ def test_publishing_requires_root_unless_it_is_a_dry_run(monkeypatch):
         mod.require_root()
     monkeypatch.setattr(mod.os, "geteuid", lambda: 0)
     mod.require_root()
-
-
-def test_owner_and_group_must_exist():
-    got = mod.resolve_ownership(ME, MY_GROUP)
-    assert (got.uid, got.gid) == (os.getuid(), os.getgid())
-    with pytest.raises(mod.SetupError, match="owner account not found: no-such-user-xyz"):
-        mod.resolve_ownership("no-such-user-xyz", MY_GROUP)
-    with pytest.raises(mod.SetupError, match="group not found: no-such-group-xyz"):
-        mod.resolve_ownership(ME, "no-such-group-xyz")
-
-
-def test_stable_ids_depend_on_the_certificate_and_look_like_uuids():
-    a = mod.stable_uuid("label", "digest-a")
-    assert a == mod.stable_uuid("label", "digest-a") == a.upper()
-    assert a != mod.stable_uuid("label", "digest-b") and a != mod.stable_uuid("other", "digest-a")
-    assert str(uuid.UUID(a)).upper() == a
 
 
 # --- staging files ------------------------------------------------------------------------
@@ -134,89 +113,6 @@ def test_copying_keeps_the_content_and_applies_the_mode(tmp_path, me):
 
 
 # --- reading the certificate --------------------------------------------------------------
-
-
-def test_a_missing_certificate_is_an_error(tmp_path):
-    with pytest.raises(mod.SetupError, match="certificate not found"):
-        mod.load_certificate_der(tmp_path / "absent.crt")
-    with pytest.raises(mod.SetupError, match="certificate not found"):
-        mod.load_certificate_der(tmp_path)  # a directory is not a certificate
-
-
-def test_a_pem_certificate_is_converted_to_der(tmp_path):
-    path = tmp_path / "root.crt"
-    path.write_text(PEM)
-    assert mod.load_certificate_der(path) == DER
-
-
-def test_a_der_certificate_is_used_as_is(tmp_path):
-    path = tmp_path / "root.der"
-    path.write_bytes(DER)
-    assert mod.load_certificate_der(path) == DER
-
-
-def test_a_pem_that_cannot_be_decoded_is_reported(tmp_path):
-    bad = tmp_path / "bad.crt"
-    bad.write_bytes(b"-----BEGIN CERTIFICATE-----\n\xff\xfe\n-----END CERTIFICATE-----\n")
-    with pytest.raises(mod.SetupError, match="not ASCII-readable"):
-        mod.load_certificate_der(bad)
-    worse = tmp_path / "worse.crt"
-    worse.write_text("-----BEGIN CERTIFICATE-----\n!!!notbase64!!!\n-----END CERTIFICATE-----\n")
-    with pytest.raises(mod.SetupError, match="unable to parse PEM certificate"):
-        mod.load_certificate_der(worse)
-
-
-@pytest.mark.parametrize(
-    "body",
-    [
-        PRIVATE_KEY_PEM,
-        PRIVATE_KEY_PEM.replace("PRIVATE KEY", "RSA PRIVATE KEY"),
-        PRIVATE_KEY_PEM.replace("PRIVATE KEY", "EC PRIVATE KEY"),
-        PRIVATE_KEY_PEM.replace("PRIVATE KEY", "ENCRYPTED PRIVATE KEY"),
-        PEM + PRIVATE_KEY_PEM,  # a certificate bundled with its key
-    ],
-)
-def test_private_key_material_is_never_accepted_as_a_certificate(tmp_path, body):
-    path = tmp_path / "root.key"
-    path.write_text(body)
-    with pytest.raises(mod.SetupError, match="private key"):
-        mod.load_certificate_der(path)
-
-
-@pytest.mark.parametrize(
-    "key_der",
-    [
-        b"\x30\x82\x01\x0a\x02\x01\x00" + b"\x01" * 20,  # PKCS#8 / RSA: SEQUENCE { INTEGER ...
-        b"\x30\x13\x02\x01\x00" + b"\x01" * 20,  # same with a short-form length
-    ],
-)
-def test_a_binary_der_private_key_is_refused_too(tmp_path, key_der):
-    path = tmp_path / "root.key.der"
-    path.write_bytes(key_der)
-    with pytest.raises(mod.SetupError, match="not a PEM or DER certificate"):
-        mod.load_certificate_der(path)
-
-
-def test_a_der_certificate_with_a_short_form_length_is_accepted(tmp_path):
-    path = tmp_path / "tiny.der"
-    path.write_bytes(b"\x30\x07\x30\x03\x02\x01\x02\x05\x00")
-    assert mod.load_certificate_der(path).startswith(b"\x30\x07")
-
-
-def test_a_truncated_der_header_is_refused(tmp_path):
-    for data in (b"\x30", b"\x30\x82", b"\x30\x82\x01\x0a"):
-        path = tmp_path / "short.der"
-        path.write_bytes(data)
-        with pytest.raises(mod.SetupError, match="not a PEM or DER certificate"):
-            mod.load_certificate_der(path)
-
-
-def test_something_that_is_not_a_certificate_at_all_is_refused(tmp_path):
-    for name, data in (("notes.txt", b"just some text\n"), ("empty", b"")):
-        path = tmp_path / name
-        path.write_bytes(data)
-        with pytest.raises(mod.SetupError, match="not a PEM or DER certificate"):
-            mod.load_certificate_der(path)
 
 
 # --- the profile --------------------------------------------------------------------------
@@ -349,21 +245,6 @@ def test_the_certificate_file_name_in_the_profile_is_the_source_files_name(tmp_p
     assert code == 0 and payload["PayloadCertificateFileName"] == "my-root.pem"
 
 
-def test_der_must_start_with_a_sequence_not_merely_contain_one(tmp_path):
-    path = tmp_path / "set.der"
-    path.write_bytes(b"\x31\x03\x30\x00\x00" + b"\x00" * 8)  # SET { SEQUENCE ... }, not a certificate
-    with pytest.raises(mod.SetupError, match="not a PEM or DER certificate"):
-        mod.load_certificate_der(path)
-
-
-def test_a_pem_wrapper_around_something_that_is_not_a_certificate_is_refused(tmp_path):
-    key_shaped = b"\x30\x82\x01\x0a\x02\x01\x00" + b"\x01" * 20  # SEQUENCE { INTEGER ...
-    path = tmp_path / "labelled-certificate.pem"
-    path.write_text(ssl.DER_cert_to_PEM_cert(key_shaped))  # labelled CERTIFICATE, but a key inside
-    with pytest.raises(mod.SetupError, match="not a PEM or DER certificate"):
-        mod.load_certificate_der(path)
-
-
 def test_staged_files_get_their_mode_even_under_a_restrictive_umask(tmp_path, me):
     target = tmp_path / "share" / "profile"
     old = os.umask(0o077)
@@ -389,3 +270,24 @@ def test_the_certificate_copy_keeps_the_original_timestamp(tmp_path, me):
     os.utime(source, (1_000_000_000, 1_000_000_000))
     mod.copy_file(source, tmp_path / "share" / "copy.crt", 0o644, me, dry_run=False)
     assert int((tmp_path / "share" / "copy.crt").stat().st_mtime) == 1_000_000_000
+
+
+def test_the_exporter_uses_the_shared_helpers_not_private_copies():
+    from scripts import caddy_profile_common as common
+
+    for name in ("SetupError", "Ownership", "fail", "log", "resolve_ownership",
+                 "load_certificate_der", "stable_uuid"):  # fmt: skip
+        assert getattr(mod, name) is getattr(common, name), name
+
+
+def test_the_script_runs_when_executed_directly_as_the_install_docs_do(tmp_path):
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--dry-run", "--cert", str(tmp_path / "absent.crt"),
+         "--owner", ME, "--group", MY_GROUP],  # the default account may not exist on this machine
+        capture_output=True, text=True, cwd=tmp_path, timeout=60,
+    )  # fmt: skip
+    assert result.returncode == 1 and "error: certificate not found" in result.stderr
+    assert "Traceback" not in result.stderr  # the sibling import works outside the package
