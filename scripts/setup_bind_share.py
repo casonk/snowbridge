@@ -11,8 +11,10 @@ import pwd
 import grp
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass
 
 
@@ -20,13 +22,24 @@ MANAGED_BLOCK_START = "# --- snowbridge bind mounts: managed block start ---"
 MANAGED_BLOCK_END = "# --- snowbridge bind mounts: managed block end ---"
 DEFAULT_CONFIG = pathlib.Path("../config/share-layout/folders.local.ini")
 FOLDER_SECTION_PREFIX = "folder "
+# Directories that must never be bind-mounted into the share or have ACLs applied recursively:
+# virtual filesystems and the system's own trees. The filesystem root itself is refused too.
 PROTECTED_SOURCE_PREFIXES: tuple[pathlib.Path, ...] = (
     pathlib.Path("/tmp"),
     pathlib.Path("/proc"),
     pathlib.Path("/sys"),
     pathlib.Path("/dev"),
     pathlib.Path("/run"),
+    pathlib.Path("/etc"),
+    pathlib.Path("/boot"),
+    pathlib.Path("/usr"),
+    pathlib.Path("/bin"),
+    pathlib.Path("/sbin"),
+    pathlib.Path("/lib"),
+    pathlib.Path("/lib64"),
+    pathlib.Path("/root"),
 )
+FILESYSTEM_ROOT = pathlib.Path("/")
 
 
 class ConfigError(RuntimeError):
@@ -170,11 +183,24 @@ def validate_target(value: str, label: str) -> pathlib.PurePosixPath:
 
 
 def validate_source(source: pathlib.Path, label: str) -> None:
-    for protected in PROTECTED_SOURCE_PREFIXES:
-        if source == protected or source.is_relative_to(protected):
-            raise ConfigError(
-                f"{label} source is a system-protected path: {source}"
-            )
+    """Refuse a source that is, or leads into, a protected directory.
+
+    The path is checked as normalised (so ``/srv/../tmp/x`` is seen as ``/tmp/x``) and as fully
+    resolved (so a symlink into ``/etc`` is seen as ``/etc``); either spelling being protected is
+    enough to refuse it.
+    """
+    spellings = {
+        pathlib.Path(os.path.normpath(source)),
+        pathlib.Path(os.path.realpath(source)),
+    }
+    for candidate in spellings:
+        protected_hit = candidate == FILESYSTEM_ROOT or any(
+            candidate == protected or candidate.is_relative_to(protected)
+            for protected in PROTECTED_SOURCE_PREFIXES
+        )
+        if protected_hit:
+            detail = f" (resolves to {candidate})" if candidate != source else ""
+            raise ConfigError(f"{label} source is a system-protected path: {source}{detail}")
 
 
 def load_config(config_path: pathlib.Path) -> tuple[GlobalSettings, list[FolderMount]]:
@@ -689,6 +715,41 @@ def build_fstab_block(
     return "\n".join(lines) + "\n"
 
 
+def atomic_write_text(path: pathlib.Path, text: str) -> None:
+    """Replace *path* with *text* all at once, keeping its mode and owner.
+
+    ``/etc/fstab`` is read at boot, so a write that fails part way (disk full, power loss) must
+    never leave it truncated: the new content goes to a temporary file in the same directory, is
+    flushed to disk, and only then renamed over the original.
+    """
+    try:
+        info = path.stat()
+        mode, owner = stat.S_IMODE(info.st_mode), (info.st_uid, info.st_gid)
+    except FileNotFoundError:
+        mode, owner = 0o644, None
+    descriptor, temporary = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary, mode)
+        if owner is not None:
+            try:
+                os.chown(temporary, *owner)
+            except PermissionError:  # not running as root: the new file stays ours
+                pass
+        os.replace(temporary, path)
+    except BaseException:
+        pathlib.Path(temporary).unlink(missing_ok=True)
+        raise
+    directory = os.open(path.parent, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
 def write_fstab_block(
     fstab_path: pathlib.Path,
     config_path: pathlib.Path,
@@ -701,15 +762,27 @@ def write_fstab_block(
         print(block, end="")
         return
 
-    existing = fstab_path.read_text(encoding="utf-8") if fstab_path.exists() else ""
-    if MANAGED_BLOCK_START in existing and MANAGED_BLOCK_END in existing:
+    target = pathlib.Path(os.path.realpath(fstab_path))  # update through a symlink, never replace it
+    existing = target.read_text(encoding="utf-8") if target.exists() else ""
+    starts, ends = existing.count(MANAGED_BLOCK_START), existing.count(MANAGED_BLOCK_END)
+    balanced = starts == ends <= 1 and (
+        starts == 0 or existing.index(MANAGED_BLOCK_START) < existing.index(MANAGED_BLOCK_END)
+    )
+    if not balanced:
+        # A stray or doubled marker would make the next run replace everything between the first
+        # start and the last end, silently deleting the lines in between: refuse, change nothing.
+        raise ConfigError(
+            f"{target} has an unbalanced managed block ({starts} start / {ends} end marker(s)); "
+            "fix it by hand, then rerun"
+        )
+    if starts:
         start = existing.index(MANAGED_BLOCK_START)
         end = existing.index(MANAGED_BLOCK_END) + len(MANAGED_BLOCK_END)
         updated = existing[:start].rstrip() + "\n\n" + block + existing[end:].lstrip("\n")
     else:
         separator = "" if not existing or existing.endswith("\n") else "\n"
         updated = existing + separator + ("\n" if existing else "") + block
-    fstab_path.write_text(updated, encoding="utf-8")
+    atomic_write_text(target, updated)
 
 
 def main() -> int:
