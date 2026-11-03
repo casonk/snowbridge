@@ -285,7 +285,8 @@ def test_the_script_runs_when_executed_directly_as_the_install_docs_do(tmp_path)
     import sys
 
     result = subprocess.run(
-        [sys.executable, str(SCRIPT), "--dry-run", "--cert", str(tmp_path / "absent.crt")],
+        [sys.executable, str(SCRIPT), "--dry-run", "--cert", str(tmp_path / "absent.crt"),
+         "--owner", ME, "--group", MY_GROUP],  # the default account may not exist on this machine
         capture_output=True, text=True, cwd=tmp_path, timeout=60,
     )  # fmt: skip
     assert result.returncode == 1 and "error: certificate not found" in result.stderr
