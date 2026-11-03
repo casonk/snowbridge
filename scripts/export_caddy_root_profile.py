@@ -158,8 +158,13 @@ def load_certificate_der(cert_path: Path) -> bytes:
         fail(f"certificate not found: {cert_path}")
 
     raw = cert_path.read_bytes()
+    # The profile and the raw copy are staged on a share other devices can read, so a CA private
+    # key (for example root.key next to root.crt) must never be accepted by mistake.
+    if b"PRIVATE KEY" in raw:
+        fail(f"refusing to stage {cert_path}: it contains private key material, not a certificate")
+
     if b"-----BEGIN CERTIFICATE-----" not in raw:
-        return raw
+        return _require_certificate_structure(raw, cert_path)
 
     try:
         pem_text = raw.decode("ascii")
@@ -172,8 +177,21 @@ def load_certificate_der(cert_path: Path) -> bytes:
         fail(f"unable to parse PEM certificate at {cert_path}: {exc}")
 
     if isinstance(der_bytes, str):
-        return der_bytes.encode("latin1")
-    return der_bytes
+        der_bytes = der_bytes.encode("latin1")
+    return _require_certificate_structure(der_bytes, cert_path)
+
+
+def _require_certificate_structure(der: bytes, source: Path) -> bytes:
+    """Accept DER only if it is shaped like an X.509 certificate.
+
+    A certificate is SEQUENCE { tbsCertificate SEQUENCE, ... }; a DER private key (PKCS#8, RSA)
+    is SEQUENCE { INTEGER version, ... }, and arbitrary text is neither.
+    """
+    if len(der) >= 3 and der[0] == 0x30:
+        offset = 2 + (der[1] & 0x7F if der[1] & 0x80 else 0)
+        if offset < len(der) and der[offset] == 0x30:
+            return der
+    fail(f"not a PEM or DER certificate: {source}")
 
 
 def stable_uuid(label: str, digest: str) -> str:
