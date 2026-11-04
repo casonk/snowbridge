@@ -4,6 +4,8 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- Endpoint monitor: create the regenerated WireGuard QR code owner-only (it encodes the private key), rewrite profiles atomically keeping their mode, and report a malformed or out-of-range Endpoint port as a monitor error.
+
 - Move the certificate loading (including the refusal of a CA private key in place of a certificate), owner lookup and stable profile identifiers that `export_caddy_root_profile.py` and `export_caddy_mtls_profile.py` each carried a copy of into `scripts/caddy_profile_common.py`, so a fix lands in one place. Behaviour is unchanged; both scripts still run directly (`sudo python3 scripts/export_caddy_*.py`).
 - Describe the local-configuration store generically in the KeePass cold-start
   section instead of naming a private repository.
