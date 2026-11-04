@@ -4,12 +4,15 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import ipaddress
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
+import tempfile
 try:
     import tomllib
 except ModuleNotFoundError:  # Python 3.10
@@ -293,6 +296,12 @@ def detect_public_ip(urls: tuple[str, ...], bind_interface: str | None = None) -
     raise MonitorError("unable to detect public IP")
 
 
+def _parse_port(text: str, original: str) -> int:
+    if not text.isascii() or not text.isdigit() or not 1 <= int(text) <= 65535:
+        raise MonitorError(f"invalid Endpoint port in: {original}")
+    return int(text)
+
+
 def parse_endpoint_value(value: str) -> EndpointValue:
     stripped = value.strip()
     if not stripped:
@@ -308,12 +317,12 @@ def parse_endpoint_value(value: str) -> EndpointValue:
             return EndpointValue(host=host, port=None)
         if not remainder.startswith(":"):
             raise MonitorError(f"invalid bracketed Endpoint value: {value}")
-        return EndpointValue(host=host, port=int(remainder[1:]))
+        return EndpointValue(host=host, port=_parse_port(remainder[1:], value))
 
     if stripped.count(":") == 1:
         host, port_text = stripped.rsplit(":", 1)
         if port_text.isdigit():
-            return EndpointValue(host=host, port=int(port_text))
+            return EndpointValue(host=host, port=_parse_port(port_text, value))
 
     return EndpointValue(host=stripped, port=None)
 
@@ -347,6 +356,30 @@ def _is_direct_ip_endpoint(host: str) -> bool:
         return False
 
 
+def _atomic_write_text(path: Path, text: str) -> None:
+    """Replace *path* without ever exposing a truncated or looser-mode file.
+
+    Profiles hold the WireGuard private key, so the replacement keeps the
+    original permissions and is never readable by more than the original was.
+    """
+    try:
+        mode = stat.S_IMODE(path.stat().st_mode)
+    except FileNotFoundError:
+        mode = 0o600
+    descriptor, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            os.fchmod(handle.fileno(), mode)
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp_name, path)
+    except BaseException:
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(temp_name)
+        raise
+
+
 def update_profile_endpoint(profile: ProfileConfig, public_ip: str, *, dry_run: bool) -> ProfileOutcome:
     try:
         lines = profile.config_path.read_text(encoding="utf-8").splitlines(keepends=True)
@@ -365,7 +398,7 @@ def update_profile_endpoint(profile: ProfileConfig, public_ip: str, *, dry_run: 
             changed = old_endpoint != new_endpoint
             if changed and not dry_run:
                 lines[index] = f"{prefix}{new_endpoint}{suffix}"
-                profile.config_path.write_text("".join(lines), encoding="utf-8")
+                _atomic_write_text(profile.config_path, "".join(lines))
             return ProfileOutcome(
                 name=profile.name,
                 config_path=profile.config_path,
@@ -392,6 +425,13 @@ def render_profile_qr(profile: ProfileConfig, *, dry_run: bool) -> None:
         return
 
     profile.qr_path.parent.mkdir(parents=True, exist_ok=True)
+    # The QR encodes the whole profile, private key included: make the file
+    # owner-only before qrencode writes into it (it keeps an existing mode).
+    descriptor = os.open(profile.qr_path, os.O_WRONLY | os.O_CREAT, 0o600)
+    try:
+        os.fchmod(descriptor, 0o600)
+    finally:
+        os.close(descriptor)
     subprocess.run(
         ["qrencode", "-o", str(profile.qr_path)],
         input=profile.config_path.read_bytes(),
