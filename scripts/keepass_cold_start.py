@@ -91,7 +91,14 @@ def publish(
             return
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         backup = target_dir / f"{master.name}.pre-cold-start-{timestamp}"
-        os.replace(master, backup)
+        if os.path.lexists(backup):
+            fail(f"backup already exists; refusing to overwrite it: {backup}")
+        # Keep the master in place until the merged copy replaces it, so an
+        # interruption can never leave the authoritative vault missing.
+        try:
+            os.link(master, backup)
+        except OSError:
+            shutil.copy2(master, backup)
         os.replace(working, master)
         print(f"published {master}")
         print(f"backup    {backup}")
@@ -132,9 +139,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         master = validate_vault(args.master, "master")
         candidates = [validate_vault(path, "candidate") for path in args.candidate]
-        if len(set(candidates)) != len(candidates):
+        # Compare real locations so a symlinked directory cannot present the
+        # same vault under a second name.
+        real_candidates = [path.resolve() for path in candidates]
+        if len(set(real_candidates)) != len(real_candidates):
             fail("candidate vaults must be distinct")
-        if master in candidates:
+        if master.resolve() in real_candidates:
             fail("master must not also be a candidate")
         if shutil.which("keepassxc-cli") is None:
             fail("keepassxc-cli is not installed")
