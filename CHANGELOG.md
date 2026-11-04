@@ -4,6 +4,8 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- KeePassXC cold start: keep the authoritative vault in place until the merged copy replaces it (the backup is now a hard link or copy, so an interruption cannot leave it missing), refuse to overwrite an existing same-second backup, and compare real paths so a symlinked directory cannot pass the vault as its own candidate.
+
 - Endpoint monitor: create the regenerated WireGuard QR code owner-only (it encodes the private key), rewrite profiles atomically keeping their mode, and report a malformed or out-of-range Endpoint port as a monitor error.
 
 - Move the certificate loading (including the refusal of a CA private key in place of a certificate), owner lookup and stable profile identifiers that `export_caddy_root_profile.py` and `export_caddy_mtls_profile.py` each carried a copy of into `scripts/caddy_profile_common.py`, so a fix lands in one place. Behaviour is unchanged; both scripts still run directly (`sudo python3 scripts/export_caddy_*.py`).
