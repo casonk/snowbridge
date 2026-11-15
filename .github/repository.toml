@@ -4,6 +4,7 @@
 [repository]
 # One line shown on GitHub. Keep it free of private repository names and local paths.
 description = "snowbridge is a Samba-first home fileshare operations repo for securely exposing bind-mounted host folders to trusted devices over LAN or   WireGuard, with optional File Browser + Caddy web access including private mTLS-based iPhone support."
+topics = ["samba", "smb", "file-sharing", "home-server", "wireguard", "filebrowser", "python"]
 
 [main_branch]
 # Direct commits and pushes to main are refused unless this is true.
