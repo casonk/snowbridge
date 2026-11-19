@@ -4,6 +4,8 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- Add the portfolio's deployment-modes contract for File Browser: `deploy/deploy.sh --mode dev|host|k3s`. The `k3s` mode runs the fork as a restricted pod (read-only root, no capabilities, Cilium deny-all egress) behind the loopback forwarder, so Caddy is unchanged. The pod mounts each real source folder of the share rather than the bind aliases (a local volume does not carry nested mounts), adopts the host folders' SELinux level instead of relabelling them, and `verify.sh` must pass before the host container is stopped. `deploy/host/install-host-unit.sh` installs a user unit for the rootful host container plus a one-line sudoers rule. `start_snowbridge.sh` and `check_filebrowser_backend.sh` leave the host container stopped while the pod serves. See `docs/deployment.md`.
+
 - The File Browser fork now lives in its own private repository (branch `main`), rebased onto the final upstream release v2.63.23 (upstream is archived) with fixes for the advisories it left open. `activate_filebrowser_folder_icons.sh` expects `vendor/filebrowser-upstream` on `main`.
 
 - Add `scripts/render_filebrowser_theme.py`, which renders clockwork's portfolio themes into File Browser's branding directory (`custom.css` maps File Browser's variables to the portfolio tokens; `theme.js` adds the theme rotator). The branding directory is set once in File Browser's database with `config set -d /database/filebrowser.db --branding.files /config/branding`. The fork serves `theme.js` and loads it before first paint; a stock image still gets the CSS.
