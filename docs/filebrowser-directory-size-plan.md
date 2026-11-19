@@ -20,8 +20,9 @@ and the upstream proposal clear.
 The current local upstream workspace for this effort lives at:
 
 - `vendor/filebrowser-upstream`
-- branch: `snowbridge/dirsize`
-- current patch commit: `acd3a8d` (`feat: add on-demand directory size loading`)
+- branch: `main` of the private fork repository (based on
+  upstream v2.63.23; the original work was `snowbridge/dirsize`, patch commit
+  `acd3a8d` `feat: add on-demand directory size loading`)
 
 `snowbridge` now supports a single custom-image override for both:
 

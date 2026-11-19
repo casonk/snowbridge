@@ -50,8 +50,11 @@ Browser listing ─► cached manual override, else cached model suggestion
   validates every result, and the color follows the icon category. Renaming
   or moving a folder gives it a fresh path and therefore a new suggestion.
 
-The fork branch is `snowbridge/ai-folder-icons` in
-`vendor/filebrowser-upstream`, based on `snowbridge/dirsize`. Backend code is
+The fork is a private repository, checked out
+as `vendor/filebrowser-upstream` on branch `main`. It is based on the final
+upstream release (v2.63.23; upstream is archived) and adds directory sizes, the
+icons below, the portfolio theme loader and fixes for the advisories upstream
+left open. Backend code is
 under `foldericons/`; the route handlers are in `http/foldericons.go`.
 That nested fork checkout is gitignored by Snowbridge and must be preserved
 separately; this repository's commits do not contain its source changes.
@@ -114,7 +117,7 @@ manually.
    image:
 
    ```bash
-   git -C vendor/filebrowser-upstream switch snowbridge/ai-folder-icons
+   git -C vendor/filebrowser-upstream switch main
    ./scripts/setup_filebrowser_fork_workspace.sh --install-only
    (cd vendor/filebrowser-upstream/frontend && pnpm run build)
    (cd vendor/filebrowser-upstream && CGO_ENABLED=0 go build -ldflags "-s -w" -o filebrowser .)

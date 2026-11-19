@@ -65,6 +65,7 @@ class RuntimeSpec:
 @dataclass
 class AppSpec:
     root: str
+    branding_files: str = ""
 
 
 @dataclass
@@ -357,7 +358,10 @@ def parse_app_spec(data: dict, config_path: Path) -> AppSpec:
     app = data.get("app", {})
     if not isinstance(app, dict):
         fail(f"invalid [app] section in {config_path}")
-    return AppSpec(root=str(app.get("root", "/srv")))
+    return AppSpec(
+        root=str(app.get("root", "/srv")),
+        branding_files=str(app.get("branding_files", "")),
+    )
 
 
 def parse_auth_spec(data: dict, config_path: Path, runtime_spec: RuntimeSpec) -> AuthSpec | None:
@@ -700,7 +704,15 @@ def apply_filebrowser_state(
         config_dir,
         runtime_spec.filebrowser_image,
         runtime_spec.share_mount_path,
-        ["config", "set", "--root", app_spec.root, "-d", runtime_spec.database_path],
+        [
+            "config",
+            "set",
+            "--root",
+            app_spec.root,
+            *(["--branding.files", app_spec.branding_files] if app_spec.branding_files else []),
+            "-d",
+            runtime_spec.database_path,
+        ],
     )
     run_command(config_set_command, dry_run)
 

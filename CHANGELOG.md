@@ -4,6 +4,10 @@ All notable changes to `snowbridge` are documented here.
 
 ## Unreleased
 
+- The File Browser fork now lives in its own private repository (branch `main`), rebased onto the final upstream release v2.63.23 (upstream is archived) with fixes for the advisories it left open. `activate_filebrowser_folder_icons.sh` expects `vendor/filebrowser-upstream` on `main`.
+
+- Add `scripts/render_filebrowser_theme.py`, which renders clockwork's portfolio themes into File Browser's branding directory (`custom.css` maps File Browser's variables to the portfolio tokens; `theme.js` adds the theme rotator). The branding directory is set once in File Browser's database with `config set -d /database/filebrowser.db --branding.files /config/branding`. The fork serves `theme.js` and loads it before first paint; a stock image still gets the CSS.
+
 - KeePassXC cold start: keep the authoritative vault in place until the merged copy replaces it (the backup is now a hard link or copy, so an interruption cannot leave it missing), refuse to overwrite an existing same-second backup, and compare real paths so a symlinked directory cannot pass the vault as its own candidate.
 
 - Endpoint monitor: create the regenerated WireGuard QR code owner-only (it encodes the private key), rewrite profiles atomically keeping their mode, and report a malformed or out-of-range Endpoint port as a monitor error.
