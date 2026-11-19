@@ -233,6 +233,9 @@ def test_runtime_defaults_and_overrides(tmp_path):
 def test_the_app_section(tmp_path):
     assert mod.parse_app_spec({}, tmp_path / "c.toml").root == "/srv"
     assert mod.parse_app_spec({"app": {"root": "/srv/share"}}, tmp_path / "c.toml").root == "/srv/share"
+    assert mod.parse_app_spec({}, tmp_path / "c.toml").branding_files == ""
+    branded = mod.parse_app_spec({"app": {"branding_files": "/config/branding"}}, tmp_path / "c.toml")
+    assert branded.branding_files == "/config/branding"
     with pytest.raises(mod.SetupError, match=r"invalid \[app\]"):
         mod.parse_app_spec({"app": []}, tmp_path / "c.toml")
 
@@ -768,3 +771,12 @@ def test_a_broken_config_gives_a_clean_error_even_when_the_parser_has_no_positio
     with pytest.raises(mod.SetupError) as info:
         mod.load_toml_config(config, dry_run=True)
     assert str(info.value) == f"{config}:1:5: Expected ']' at the end of a table declaration"
+
+
+def test_branding_files_are_applied_when_configured(calls, monkeypatch):
+    monkeypatch.setattr(mod, "filebrowser_user_exists", lambda *a: False)
+    mod.apply_filebrowser_state(
+        "podman", 968, 969, "/s", "/d", "/c", runtime(), mod.AppSpec("/srv", "/config/branding"), None, [], False,
+    )  # fmt: skip
+    assert "--branding.files" in tail(calls[0][0])
+    assert tail(calls[0][0])[tail(calls[0][0]).index("--branding.files") + 1] == "/config/branding"

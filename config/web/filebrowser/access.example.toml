@@ -31,6 +31,9 @@ restart_strategy = "recreate"
 
 [app]
 root = "/srv"
+# Optional: portfolio theme files rendered by scripts/render_filebrowser_theme.py,
+# as seen inside the container (the config dir is mounted at /config).
+# branding_files = "/config/branding"
 
 # Optional [auth] override:
 #

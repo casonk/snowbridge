@@ -160,8 +160,8 @@ fi
   fail "fork binary is missing; build the File Browser fork first"
 [[ -f "${WORKSPACE}/frontend/dist/index.html" ]] ||
   fail "fork frontend bundle is missing; build the File Browser frontend first"
-[[ "$(git -C "${WORKSPACE}" branch --show-current)" == "snowbridge/ai-folder-icons" ]] ||
-  fail "vendor/filebrowser-upstream must be on branch snowbridge/ai-folder-icons"
+[[ "$(git -C "${WORKSPACE}" branch --show-current)" == "main" ]] ||
+  fail "vendor/filebrowser-upstream must be on branch main"
 if [[ ! -e "${MANIFEST}" ]]; then
   python3 - "${MANIFEST_TEMPLATE}" "${MANIFEST}" "${REPO_ROOT}" <<'PY'
 import sys
