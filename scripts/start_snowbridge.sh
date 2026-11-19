@@ -107,14 +107,20 @@ else
     exit 1
 fi
 
-"${compose_cmd[@]}" \
-    --env-file "${ENV_FILE}" \
-    -f "${COMPOSE_FILE}" \
-    up -d --force-recreate
+# shellcheck source=lib_deploy_mode.sh
+source "${REPO_ROOT}/scripts/lib_deploy_mode.sh"
+if k3s_serves_filebrowser "${REPO_ROOT}"; then
+    echo "    File Browser is served by the K3s pod (deploy/deploy.sh --mode k3s); leaving the host container stopped"
+else
+    "${compose_cmd[@]}" \
+        --env-file "${ENV_FILE}" \
+        -f "${COMPOSE_FILE}" \
+        up -d --force-recreate
 
-bash "${REPO_ROOT}/scripts/check_filebrowser_backend.sh" \
-    --env-file "${ENV_FILE}" \
-    --compose-file "${COMPOSE_FILE}" \
-    --wait-attempts 15
+    bash "${REPO_ROOT}/scripts/check_filebrowser_backend.sh" \
+        --env-file "${ENV_FILE}" \
+        --compose-file "${COMPOSE_FILE}" \
+        --wait-attempts 15
+fi
 
 echo "==> snowbridge is up."

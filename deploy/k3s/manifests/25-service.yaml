@@ -1,0 +1,12 @@
+# The fixed ClusterIP is named by the host-side forwarder (systemd/snowbridge-files-proxy.service) and registered in
+# traction-control's address table.
+apiVersion: v1
+kind: Service
+metadata:
+  name: snowbridge-files-web
+  namespace: snowbridge-files
+spec:
+  type: ClusterIP
+  clusterIP: 10.43.0.64   # fixed: the host-side forwarder names it
+  selector: {app: snowbridge-files-web}
+  ports: [{name: http, port: 8080, targetPort: http}]

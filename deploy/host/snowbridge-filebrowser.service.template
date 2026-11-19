@@ -1,0 +1,13 @@
+[Unit]
+Description=File Browser host container (rootful compose, started through a scoped sudo rule)
+
+[Service]
+# The container is owned by root's podman. This unit only starts and stops it, through the exact commands that
+# install-host-unit.sh prints as a sudoers rule. Nothing else is permitted by that rule.
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/sudo -n @PODMAN_COMPOSE@ -f @COMPOSE_FILE@ start filebrowser
+ExecStop=/usr/bin/sudo -n @PODMAN_COMPOSE@ -f @COMPOSE_FILE@ stop filebrowser
+
+[Install]
+WantedBy=default.target
