@@ -10,6 +10,7 @@ Mark items `[x]` when complete and move them to Done.
 
 ## Pending
 
+- [ ] [codecov:2026-11-19] **Raise patch coverage on PR #39: 89.4737% patched, 8 changed lines have no test coverage.** Files: scripts/render_filebrowser_theme.py (8 missing, 89.18%). Add tests for the uncovered lines. (codecov-pr:39, https://github.com/casonk/snowbridge/pull/39#issuecomment-7013222837)
 - [ ] [manual:2026-10-23] **Recover and reconcile the Air KeePass vault** — the small Air candidate could not be unlocked during the cold-start ingest and was not merged. Keep the original vault; verify the correct unlock credentials and file integrity, compare its contents against the consolidated master, then ingest any missing entries without overwriting conflicting records.
 
 - [ ] [manual:2026-10-15] **Ask GitHub Support to purge pre-rewrite commits** — this
