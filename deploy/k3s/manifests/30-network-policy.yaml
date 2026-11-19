@@ -1,0 +1,18 @@
+# Only the node may connect (the loopback forwarder behind the host's Caddy), and the pod may reach nothing: no
+# internet, no DNS, no cluster services, no other host port. File Browser needs no outbound connection; the local
+# model for folder icons is reached over a unix socket in the config volume, which a network policy does not cover
+# (verify.sh reports whether it works). Deny rules win in Cilium, so the deny holds even if an allow is added later.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: snowbridge-files-web
+  namespace: snowbridge-files
+spec:
+  endpointSelector:
+    matchLabels: {app: snowbridge-files-web}
+  ingress:
+    - fromEntities: [host]
+      toPorts:
+        - ports: [{port: "8080", protocol: TCP}]
+  egressDeny:
+    - toEntities: [all]

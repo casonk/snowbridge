@@ -1,0 +1,11 @@
+[Unit]
+Description=Forward loopback to the snowbridge-files pod's ClusterIP
+Requires=snowbridge-files-proxy.socket
+After=snowbridge-files-proxy.socket
+# A page load or a burst of documents is many short connections; never let the start-rate limit take the port down.
+StartLimitIntervalSec=0
+
+[Service]
+# No --exit-idle-time: the forwarder stays up. (=0 meant "exit as soon as idle", one start per connection.)
+ExecStart=/usr/lib/systemd/systemd-socket-proxyd 10.43.0.64:8080
+PrivateTmp=yes

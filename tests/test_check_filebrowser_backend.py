@@ -56,8 +56,8 @@ class CheckFileBrowserBackendTests(unittest.TestCase):
             time.sleep(0.01)
         return proc.pid
 
-    def _run(self) -> subprocess.CompletedProcess[str]:
-        env = {**os.environ, "PATH": f"{self.bin}:/usr/bin:/bin"}
+    def _run(self, **extra_env: str) -> subprocess.CompletedProcess[str]:
+        env = {**os.environ, "PATH": f"{self.bin}:/usr/bin:/bin", **extra_env}
         return subprocess.run(
             ["bash", str(SCRIPT), "--url", "http://127.0.0.1:8080/"],
             capture_output=True,
@@ -97,6 +97,34 @@ class CheckFileBrowserBackendTests(unittest.TestCase):
         result = self._run()
 
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+
+    def _k3s_marker(self) -> dict[str, str]:
+        state = self.tmp / "state"
+        state.mkdir()
+        (state / "deploy-mode").write_text("k3s\n", encoding="utf-8")
+        return {"SNOWBRIDGE_FILES_STATE_DIR": str(state)}
+
+    def test_k3s_mode_never_recreates_the_host_container(self) -> None:
+        # The pod holds the port and the host container is stopped on purpose: even with a
+        # container that looks orphaned, the script must only probe, never run compose.
+        self._fake_podman("true", 0)
+        self._write_tool("podman-compose", "#!/usr/bin/env bash\necho compose-ran >&2\nexit 99\n")
+
+        result = self._run(**self._k3s_marker())
+
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        self.assertIn("served by the K3s pod", result.stdout + result.stderr)
+        self.assertNotIn("compose-ran", result.stdout + result.stderr)
+
+    def test_k3s_mode_reports_an_unhealthy_pod_without_touching_compose(self) -> None:
+        self._write_tool("curl", "#!/usr/bin/env bash\nprintf 000\nexit 7\n")
+        self._write_tool("podman-compose", "#!/usr/bin/env bash\necho compose-ran >&2\nexit 99\n")
+
+        result = self._run(**self._k3s_marker())
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("deploy/deploy.sh --mode k3s status", result.stdout + result.stderr)
+        self.assertNotIn("compose-ran", result.stdout + result.stderr)
 
 
 if __name__ == "__main__":

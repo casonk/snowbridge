@@ -4,6 +4,8 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib_deploy_mode.sh
+source "${REPO_ROOT}/scripts/lib_deploy_mode.sh"
 ENV_FILE="${REPO_ROOT}/config/web/filebrowser/filebrowser.env.local"
 COMPOSE_FILE="${REPO_ROOT}/config/web/filebrowser/docker-compose.local.yml"
 if [[ ! -f "${COMPOSE_FILE}" ]]; then
@@ -240,6 +242,16 @@ restart_backend() {
 main() {
   parse_args "$@"
   command_exists curl || fail "curl not found"
+
+  # While the K3s pod holds the port the host container is stopped on purpose.
+  # Probe whatever answers, but never recreate the host container over it.
+  if k3s_serves_filebrowser "${REPO_ROOT}"; then
+    [[ -n "${URL}" ]] || URL="http://127.0.0.1:${FILEBROWSER_HTTP_PORT:-8080}/"
+    log "File Browser is served by the K3s pod; not touching the host container"
+    wait_for_backend && exit 0
+    fail "the K3s pod is not answering at ${URL}; run deploy/deploy.sh --mode k3s status"
+  fi
+
   load_env_if_needed
 
   if wait_for_backend && ! container_orphaned; then
