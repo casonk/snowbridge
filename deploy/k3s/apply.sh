@@ -26,9 +26,10 @@ if [ -f "$CONFIG_FILE" ]; then
 fi
 "${cm[@]}" | kubectl apply -f -
 
+kubectl apply -f "$HERE/manifests/25-service.yaml"
 kubectl apply -f "$HERE/manifests/30-network-policy.yaml"
 python3 -I "$HERE/render_volumes.py" workload <"$HERE/manifests/20-deployment.yaml" \
-  | sed -e "s/@@UID@@/$POD_UID/" -e "s/@@GID@@/$POD_GID/" -e "s/@@SELINUX_LEVEL@@/$SELINUX_LEVEL/" \
+  | sed -e "s/\"@@UID@@\"/$POD_UID/" -e "s/\"@@GID@@\"/$POD_GID/" -e "s/@@SELINUX_LEVEL@@/$SELINUX_LEVEL/" \
   | kubectl apply -f -
 kubectl -n "$NS" rollout restart deploy/snowbridge-files-web >/dev/null
 kubectl -n "$NS" rollout status deploy/snowbridge-files-web --timeout=180s
