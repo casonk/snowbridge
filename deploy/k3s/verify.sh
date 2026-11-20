@@ -19,7 +19,13 @@ ready="$(kubectl -n "$NS" get pod "$pod" -o jsonpath='{.status.containerStatuses
 [ "$ready" = true ] || { echo "nothing was verified: pod $pod is not ready" >&2; exit 2; }
 
 # 1. the node reaches the service (this is the path the forwarder uses)
-curl -fsS --max-time 5 "http://$CLUSTER_IP:$PORT/health" >/dev/null && ok "node reaches the service" || fail "node cannot reach http://$CLUSTER_IP:$PORT/health"
+# The service address can lag a few seconds behind a ready pod (endpoint programming), so retry briefly.
+reached=""
+for _ in $(seq 1 15); do
+  if curl -fsS --max-time 5 "http://$CLUSTER_IP:$PORT/health" >/dev/null 2>&1; then reached=1; break; fi
+  sleep 2
+done
+[ -n "$reached" ] && ok "node reaches the service" || fail "node cannot reach http://$CLUSTER_IP:$PORT/health"
 
 # 2. a burst: a real page load is many requests at once, and one request passing proved nothing before
 burst_fail=0
