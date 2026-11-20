@@ -124,7 +124,12 @@ case "$cmd:$mode" in
     trap - ERR
     set_marker k3s
     ;;
-  down:k3s) "$0" --mode host up; echo "rolled back to the host service; the pod is left running (kubectl delete ns $NAMESPACE removes it)" ;;
+  down:k3s)
+    # The pod holds the database lock, so stop it (keeping the manifests) before the host container starts.
+    kc -n "$NAMESPACE" scale deploy/snowbridge-files-web --replicas=0
+    kc -n "$NAMESPACE" wait --for=delete pod --all --timeout=60s || true
+    "$0" --mode host up
+    echo "rolled back to the host service; the pod is scaled to 0 (kubectl delete ns $NAMESPACE removes it)" ;;
   status:k3s) show_units; kc -n "$NAMESPACE" get pods 2>&1 || true ;;
   verify:k3s) "$K3S_DIR/verify.sh" ;;
 esac
