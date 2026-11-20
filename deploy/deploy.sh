@@ -110,6 +110,12 @@ case "$cmd:$mode" in
     require_cluster_tools
     "$K3S_DIR/prepare-host.sh"
     "$K3S_DIR/build-image.sh"
+    # The database has one owner at a time: release it from the host service before the pod starts,
+    # and put the host service back if anything below fails.
+    if unit_installed && systemctl --user is-active --quiet "$UNIT"; then
+      systemctl --user stop "$UNIT"
+      trap '"$K3S_DIR/bridge.sh" off || true' ERR
+    fi
     "$K3S_DIR/apply.sh"
     "$K3S_DIR/verify.sh"
     # `bridge on` stops and disables the host service; if it cannot come up, put the host service back.
@@ -118,7 +124,12 @@ case "$cmd:$mode" in
     trap - ERR
     set_marker k3s
     ;;
-  down:k3s) "$0" --mode host up; echo "rolled back to the host service; the pod is left running (kubectl delete ns $NAMESPACE removes it)" ;;
+  down:k3s)
+    # The pod holds the database lock, so stop it (keeping the manifests) before the host container starts.
+    kc -n "$NAMESPACE" scale deploy/snowbridge-files-web --replicas=0
+    kc -n "$NAMESPACE" wait --for=delete pod --all --timeout=60s || true
+    "$0" --mode host up
+    echo "rolled back to the host service; the pod is scaled to 0 (kubectl delete ns $NAMESPACE removes it)" ;;
   status:k3s) show_units; kc -n "$NAMESPACE" get pods 2>&1 || true ;;
   verify:k3s) "$K3S_DIR/verify.sh" ;;
 esac
