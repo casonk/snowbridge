@@ -110,7 +110,7 @@ manually.
 
    ```text
    FILEBROWSER_AI_FOLDER_ICONS=true
-   FILEBROWSER_IMAGE=localhost/filebrowser-snowbridge:ai-icons
+   FILEBROWSER_IMAGE=localhost/snowbridge-filebrowser:ai-icons
    ```
 
 5. Build the fork binary as your normal user, then package and deploy the
@@ -122,7 +122,7 @@ manually.
    (cd vendor/filebrowser-upstream/frontend && pnpm run build)
    (cd vendor/filebrowser-upstream && CGO_ENABLED=0 go build -ldflags "-s -w" -o filebrowser .)
    sudo ./scripts/build_filebrowser_fork_image.sh --skip-binary-build \
-     --image localhost/filebrowser-snowbridge:ai-icons
+     --image localhost/snowbridge-filebrowser:ai-icons
    sudo ./scripts/setup_caddy_filebrowser.sh --mode private-vpn-mtls --recreate \
      --compose-file config/web/filebrowser/docker-compose.local.yml
    ```

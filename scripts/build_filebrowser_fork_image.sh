@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 DEFAULT_WORKSPACE="${REPO_ROOT}/vendor/filebrowser-upstream"
-DEFAULT_IMAGE="localhost/filebrowser-snowbridge:dirsize"
+DEFAULT_IMAGE="localhost/snowbridge-filebrowser:dirsize"
 WORKSPACE="${DEFAULT_WORKSPACE}"
 IMAGE="${DEFAULT_IMAGE}"
 CONTAINER_TOOL=""
@@ -29,7 +29,7 @@ Build and tag a local File Browser image from the patched upstream checkout.
 
 Options:
   --workspace PATH            Fork workspace path. Default: vendor/filebrowser-upstream
-  --image NAME[:TAG]          Image tag to build. Default: localhost/filebrowser-snowbridge:dirsize
+  --image NAME[:TAG]          Image tag to build. Default: localhost/snowbridge-filebrowser:dirsize
   --container-tool TOOL       Build with `podman` or `docker`. Auto-detected when omitted.
   --skip-binary-build         Reuse an existing workspace `filebrowser` binary.
   --pull                      Ask the container builder to refresh base images.
@@ -49,7 +49,7 @@ Notes:
 Typical flow:
   ./scripts/setup_filebrowser_fork_workspace.sh
   ./scripts/build_filebrowser_fork_image.sh
-  # then set FILEBROWSER_IMAGE=localhost/filebrowser-snowbridge:dirsize
+  # then set FILEBROWSER_IMAGE=localhost/snowbridge-filebrowser:dirsize
 EOF
 }
 
@@ -252,7 +252,7 @@ build_image() {
 
   args+=(
     --file "${STAGING_DIR}/Dockerfile"
-    --label "org.opencontainers.image.title=filebrowser-snowbridge"
+    --label "org.opencontainers.image.title=snowbridge-filebrowser"
     --label "org.opencontainers.image.version=${WORKSPACE_VERSION}"
     --label "org.opencontainers.image.revision=${WORKSPACE_COMMIT}"
     --tag "${IMAGE}"

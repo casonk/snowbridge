@@ -12,7 +12,7 @@ PRIVATE_MTLS_CADDY_LOCAL="${REPO_ROOT}/config/web/caddy/Caddyfile.private-vpn-mt
 PUBLIC_CADDY_LOCAL="${REPO_ROOT}/config/web/caddy/Caddyfile.public.local"
 PUBLIC_PRIVATE_IP_CADDY_LOCAL="${REPO_ROOT}/config/web/caddy/Caddyfile.public-private-ip.local"
 
-DEFAULT_IMAGE="localhost/filebrowser-snowbridge:dirsize"
+DEFAULT_IMAGE="localhost/snowbridge-filebrowser:dirsize"
 MODE="private-vpn"
 ENV_FILE="${ENV_LOCAL_DEFAULT}"
 IMAGE="${DEFAULT_IMAGE}"
@@ -31,7 +31,7 @@ Build the local File Browser fork image, write the chosen image tag into
 config/web/filebrowser/filebrowser.env.local, and recreate the web stack.
 
 Options:
-  --image NAME[:TAG]          Image tag to deploy. Default: localhost/filebrowser-snowbridge:dirsize
+  --image NAME[:TAG]          Image tag to deploy. Default: localhost/snowbridge-filebrowser:dirsize
   --mode private-vpn|private-vpn-mtls|public|public-private-ip
                               Caddy/File Browser web mode to recreate. Default: private-vpn
   --env-file PATH             Env file to update. Default: config/web/filebrowser/filebrowser.env.local
