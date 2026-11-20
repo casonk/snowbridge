@@ -110,6 +110,12 @@ case "$cmd:$mode" in
     require_cluster_tools
     "$K3S_DIR/prepare-host.sh"
     "$K3S_DIR/build-image.sh"
+    # The database has one owner at a time: release it from the host service before the pod starts,
+    # and put the host service back if anything below fails.
+    if unit_installed && systemctl --user is-active --quiet "$UNIT"; then
+      systemctl --user stop "$UNIT"
+      trap '"$K3S_DIR/bridge.sh" off || true' ERR
+    fi
     "$K3S_DIR/apply.sh"
     "$K3S_DIR/verify.sh"
     # `bridge on` stops and disables the host service; if it cannot come up, put the host service back.
